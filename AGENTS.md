@@ -12,7 +12,7 @@ Kimi Ads is a local skill bundle for paid media audits, planning, creative revie
   the main skill at `agents/` and dispatched to Kimi's built-in `coder`
   subagent (Kimi has no custom subagent directory).
 - `ads/references/*.md`: scoring, platform specs, compliance, benchmarks, and implementation references.
-- `scripts/*.py`: optional local utilities for page fetches, screenshots, landing-page analysis, image generation, and PDF reports.
+- `scripts/*.py`: optional local utilities for page fetches, image generation, and PDF reports.
 - `scripts/uac_experiment.py`: deterministic UAC fixture replay, ledger review,
   structured analysis, and Markdown report helper.
 - `kimi.plugin.json`: Kimi plugin manifest (`"skills": "./skills/"`).

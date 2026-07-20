@@ -24,9 +24,11 @@ Read resources from the first existing location:
   `~/.kimi-code/skills/ads-google-app/assets/`, `assets/`, or
   `../skills/ads-google-app/assets/`
 - Deterministic helper: `${KIMI_SKILL_DIR}/../ads/scripts/uac_experiment.py`,
+  `${KIMI_SKILL_DIR}/../../scripts/uac_experiment.py` (plugin install),
   `~/.kimi-code/skills/ads/scripts/uac_experiment.py`,
   `../../scripts/uac_experiment.py`, or `scripts/uac_experiment.py`
 - Versioned policy defaults: `${KIMI_SKILL_DIR}/../ads/scripts/kimi_ads/uac/policies/`,
+  `${KIMI_SKILL_DIR}/../../scripts/kimi_ads/uac/policies/` (plugin install),
   `~/.kimi-code/skills/ads/scripts/kimi_ads/uac/policies/`,
   or `../../scripts/kimi_ads/uac/policies/`
 - Natural-language workflow: `${KIMI_SKILL_DIR}/references/agent-workflow.md`,

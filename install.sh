@@ -345,13 +345,24 @@ main() {
 
     # Copy agents. Hosts with a separate agents directory (codex etc.) receive
     # the persona briefs there; for Kimi Code CLI they are installed into the
-    # main skill at <skill-base>/ads/agents instead.
+    # main skill at <skill-base>/ads/agents instead. The source glob is tested
+    # first so a missing source tree only warns, while a real copy failure
+    # (permissions, full disk, ...) aborts loudly under `set -e`.
     echo "→ Installing subagents..."
+    local AGENTS_TARGET
     if [ -n "${AGENT_DIR}" ]; then
-        cp "${TEMP_DIR}/kimi-ads/agents/"*.md "${AGENT_DIR}/" 2>/dev/null || true
+        AGENTS_TARGET="${AGENT_DIR}"
     else
-        mkdir -p "${SKILL_DIR}/agents"
-        cp "${TEMP_DIR}/kimi-ads/agents/"*.md "${SKILL_DIR}/agents/" 2>/dev/null || true
+        AGENTS_TARGET="${SKILL_DIR}/agents"
+        mkdir -p "${AGENTS_TARGET}"
+    fi
+    shopt -s nullglob
+    local agent_briefs=("${TEMP_DIR}/kimi-ads/agents/"*.md)
+    shopt -u nullglob
+    if [ "${#agent_briefs[@]}" -gt 0 ]; then
+        cp "${agent_briefs[@]}" "${AGENTS_TARGET}/"
+    else
+        echo "  ⚠ No agent briefs found under ${TEMP_DIR}/kimi-ads/agents — skipping." >&2
     fi
 
     # Copy scripts (optional Python tools)
@@ -400,6 +411,14 @@ main() {
     echo "ℹ Image generation uses scripts/generate_image.py with ADS_IMAGE_PROVIDER."
     echo "  Set GOOGLE_API_KEY, OPENAI_API_KEY, STABILITY_API_KEY, or REPLICATE_API_TOKEN as needed."
 
+    # Derive the bundle counts from what was actually installed, so the
+    # banner cannot drift away from the real payload as skills come and go.
+    local SUB_SKILL_COUNT AGENT_COUNT REFERENCE_COUNT TEMPLATE_COUNT
+    SUB_SKILL_COUNT=$(find "${SKILL_BASE}" -mindepth 1 -maxdepth 1 -type d -name 'ads-*' | wc -l | tr -d '[:space:]')
+    AGENT_COUNT=$(find "${AGENTS_TARGET}" -mindepth 1 -maxdepth 1 -type f -name '*.md' | wc -l | tr -d '[:space:]')
+    REFERENCE_COUNT=$(find "${SKILL_DIR}/references" -type f -name '*.md' | wc -l | tr -d '[:space:]')
+    TEMPLATE_COUNT=$(find "${SKILL_BASE}" -type f -path '*/assets/*.md' | wc -l | tr -d '[:space:]')
+
     echo ""
     echo "✓ Kimi Ads installed successfully for ${HOST_LABEL}!"
     echo ""
@@ -408,15 +427,15 @@ main() {
     if [ -n "${AGENT_DIR}" ]; then
         echo "    Agents: ${AGENT_DIR}"
     else
-        echo "    Agents: ${SKILL_DIR}/agents (persona briefs)"
+        echo "    Agents: ${AGENTS_TARGET} (persona briefs)"
     fi
     echo ""
     echo "  Bundled:"
     echo "    • 1 main skill (ads orchestrator)"
-    echo "    • 26 sub-skills (platform + functional + creative + agency ops)"
-    echo "    • 10 agents (6 audit + 4 creative)"
-    echo "    • 28 reference files"
-    echo "    • 15 templates (12 industry + 3 ops memory)"
+    echo "    • ${SUB_SKILL_COUNT} sub-skills (platform + functional + creative + agency ops)"
+    echo "    • ${AGENT_COUNT} agents (audit + creative personas)"
+    echo "    • ${REFERENCE_COUNT} reference files (main skill)"
+    echo "    • ${TEMPLATE_COUNT} templates (sub-skill Markdown assets)"
     echo ""
     echo "Usage:"
     echo "  1. Start Kimi Code CLI"

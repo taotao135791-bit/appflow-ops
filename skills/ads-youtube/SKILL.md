@@ -7,6 +7,7 @@ description: >-
   VAC→Demand Gen migration, Shorts creative requirements, CTV shoppable ads, and frequency
   capping. Use when user says YouTube Ads, video ads, pre-roll, bumper ads, skippable
   in-stream, YouTube campaign, YouTube Shorts ads, Demand Gen, VAC, or CTV YouTube ads.
+  中文触发: YouTube 广告, 视频贴片广告, YouTube 投放诊断.
 ---
 
 # YouTube Ads Analysis

@@ -30,12 +30,21 @@ def test_ordinary_ci_enforces_quality_coverage_and_operator_smokes(
         "init-workspace",
         "--workspace",
         "examples/replays/example-anonymized --json",
-        "references/agent-workflow.md",
+        "scripts/ci/check_install_layout.py",
+        "scripts/ci/check_uac_decide_output.py",
+        "scripts/ci/check_uac_policies.py",
+        "scripts/ci/check_numeric_cap.py",
+        "shellcheck install.sh",
+        "pip-audit --strict",
         "uac-report.md",
     ]:
         assert contract in workflow
 
     assert "privacy_doctor.py --history" not in workflow
+
+    # The installed-artifact contract itself lives in the shared CI script.
+    install_layout = _read(repo_root, "scripts/ci/check_install_layout.py")
+    assert "references/agent-workflow.md" in install_layout
 
 
 def test_release_privacy_gate_requires_complete_history(repo_root: Path) -> None:

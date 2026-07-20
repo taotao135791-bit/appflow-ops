@@ -35,6 +35,7 @@ import struct
 import sys
 import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 # Single source of truth for credential redaction (see scripts/url_utils.py).
@@ -218,7 +219,7 @@ def generate_gemini(
             else "image/jpeg"
         )
         ref_part = types.Part.from_bytes(data=ref_bytes, mime_type=mime)
-        contents = [
+        contents: Any = [
             ref_part,
             f"Generate an ad creative that matches the visual style, color palette, "
             f"and aesthetic of the brand shown in the reference image. {prompt}",
@@ -255,6 +256,10 @@ def generate_gemini(
                     continue
             raise
 
+    # Unreachable with MAX_RETRIES >= 1: the final attempt always returns or
+    # raises. mypy cannot prove that, so fail loudly instead of falling off.
+    raise RuntimeError("Gemini image generation failed after all retries")
+
 
 def generate_openai(
     prompt: str, width: int, height: int, api_key: str, model: str
@@ -286,7 +291,13 @@ def generate_openai(
         size=size,
         response_format="b64_json",
     )
-    return base64.b64decode(response.data[0].b64_json)
+    data = response.data
+    if not data:
+        raise RuntimeError("No image data in OpenAI response")
+    b64_json = data[0].b64_json
+    if b64_json is None:
+        raise RuntimeError("No image data in OpenAI response")
+    return base64.b64decode(b64_json)
 
 
 def generate_stability(

@@ -5,10 +5,10 @@ description: >-
   Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads, Microsoft Ads, and Apple Ads accounts
   via 6 parallel audit agents. Amazon Ads, cross-platform attribution, and server-side
   tracking are covered by their standalone sub-skills (ads-amazon, ads-attribution,
-  ads-server-side-tracking) — Wave 3 will add their paired agents so they can dispatch in
-  parallel here. Generates health score per platform and aggregate score (0-100). Use when
-  user says audit, full ad check, analyze my ads, account health check, paid media audit,
-  paid advertising audit, ad spend audit, advertising audit, or PPC audit.
+  ads-server-side-tracking). Generates health score per platform and aggregate score
+  (0-100). Use when user says audit, full ad check, analyze my ads, account health check,
+  paid media audit, paid advertising audit, ad spend audit, advertising audit, or PPC
+  audit. 中文触发: 广告账户审计, 账户体检, 全平台广告诊断, 广告健康度评分.
 ---
 
 # Full Multi-Platform Ads Audit
@@ -41,7 +41,8 @@ audit feels mechanical, you are skipping a principle.
    built-in `coder` subagent for each specialist. The persona briefs ship
    inside the installed ads skill — read the persona file first (resolve
    `agents/<name>.md` as `${KIMI_SKILL_DIR}/agents/<name>.md` when running as
-   the ads skill, else `~/.kimi-code/skills/ads/agents/<name>.md`, or the repo
+   the ads skill, then `${KIMI_SKILL_DIR}/../../agents/<name>.md` in a plugin
+   install, then `~/.kimi-code/skills/ads/agents/<name>.md`, or the repo
    `agents/<name>.md`) and pass its full content as the subagent's brief:
    - `ads-google-app` sub-skill: UAC measurement, learning eligibility,
      optimization feasibility, permission boundary, and one experiment loop

@@ -4,7 +4,7 @@ description: >-
   Strategic paid advertising planning with industry-specific templates. Covers platform
   selection, campaign architecture, budget planning, creative strategy, and phased
   implementation roadmap. Use when user says ad plan, ad strategy, campaign planning,
-  media plan, PPC strategy, or advertising plan.
+  media plan, PPC strategy, or advertising plan. 中文触发: 投放方案, 广告策划案, 媒体计划.
 ---
 
 # Strategic Paid Advertising Plan

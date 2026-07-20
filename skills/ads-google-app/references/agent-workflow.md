@@ -52,7 +52,8 @@ the complete schema by hand.
 Use the first available helper:
 
 1. Installed Kimi helper:
-   `${KIMI_SKILL_DIR}/../ads/scripts/uac_experiment.py` (manual install:
+   `${KIMI_SKILL_DIR}/../ads/scripts/uac_experiment.py` (plugin install:
+   `${KIMI_SKILL_DIR}/../../scripts/uac_experiment.py`; manual install:
    `~/.kimi-code/skills/ads/scripts/uac_experiment.py`), with the installed
    virtual environment Python when present.
 2. Source checkout: `python3 scripts/uac_experiment.py`.

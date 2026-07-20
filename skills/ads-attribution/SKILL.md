@@ -8,7 +8,7 @@ description: >-
   attribution audit, attribution model, AdAttributionKit, AAK, view-through attribution,
   GA4 attribution, Consent Mode V2, conversion window, attribution window, MMP audit,
   AppsFlyer audit, Adjust audit, Branch audit, Singular audit, cross-device attribution,
-  or cross-platform attribution.
+  or cross-platform attribution. 中文触发: 归因对不上, 归因审计, 转化窗口, MMP 数据打架.
 ---
 
 # Cross-Platform Attribution Health Audit

@@ -13,12 +13,12 @@ import json
 import re
 from datetime import date
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, cast
 
 try:
     import yaml
 except ImportError:  # pragma: no cover - exercised by the CLI dependency error
-    yaml = None
+    yaml = None  # type: ignore[assignment]
 
 
 class MetadataError(ValueError):
@@ -244,6 +244,9 @@ def evaluate_metadata(
         if entry_errors:
             checks.append(_check(check_id, topic, "FAIL", "; ".join(entry_errors)))
             continue
+        # The guard above rejects non-positive-integer values, so this is
+        # always an int past the continue; cast only documents that to mypy.
+        review_after = cast(int, review_after)
         if rule_type == "heuristic":
             risky_files = 0
             for knowledge_path in resolved_paths:

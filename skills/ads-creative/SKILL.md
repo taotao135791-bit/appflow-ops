@@ -6,6 +6,7 @@ description: >-
   compliance, scores creative diversity for Andromeda Entity-ID retrieval, and provides
   production priorities. Use when user says creative audit, ad creative, creative fatigue,
   creative diversity score, ad variation audit, ad copy, ad design, or creative review.
+  中文触发: 素材疲劳, 素材审查, 文案评审.
 ---
 
 <!-- Updated: 2026-04-13 | v1.5 -->

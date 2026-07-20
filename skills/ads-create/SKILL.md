@@ -6,6 +6,7 @@ description: >-
   and copy briefs. Outputs campaign-brief.md to the current directory. Run after /ads dna
   and before /ads generate. Triggers on: create campaign, campaign brief, ad concepts,
   write ad copy, campaign strategy, ad messaging, creative brief, generate concepts.
+  中文触发: 写广告文案, 出创意方向, 广告策划 brief.
 ---
 
 # Ads Create: Campaign Concept & Copy Brief Generator

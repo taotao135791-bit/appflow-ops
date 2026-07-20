@@ -322,4 +322,5 @@ Offer the user one of these outputs:
 - internal action list
 - PDF via `scripts/generate_report.py` for audit-style reports
 
-When generating a PDF, follow the PDF report quality gate in `ads/SKILL.md`.
+When generating a PDF, follow the Quality Gates in
+`ads/references/orchestrator.md`.

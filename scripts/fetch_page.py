@@ -23,12 +23,16 @@ except ImportError:
 
 
 DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (compatible; KimiAds/2.0.0; +https://github.com/taotao135791-bit/kimi-ads)",
+    "User-Agent": "Mozilla/5.0 (compatible; KimiAds/2.1.0; +https://github.com/taotao135791-bit/kimi-ads)",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.5",
     "Accept-Encoding": "gzip, deflate",
     "Connection": "keep-alive",
 }
+
+# Hard cap on response bodies: a hostile or misconfigured server must not
+# exhaust memory with an unbounded response.
+MAX_BODY_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
 def fetch_page(
@@ -43,7 +47,7 @@ def fetch_page(
     Returns:
         Dictionary with url, status_code, content, headers, redirect_chain, error
     """
-    result = {
+    result: dict = {
         "url": url,
         "status_code": None,
         "content": None,
@@ -74,6 +78,7 @@ def fetch_page(
                 headers=DEFAULT_HEADERS,
                 timeout=timeout,
                 allow_redirects=False,
+                stream=True,
             )
 
             if not follow_redirects or response.status_code not in (
@@ -93,18 +98,42 @@ def fetch_page(
             try:
                 next_url = validate_url(next_url)
             except ValueError as e:
+                response.close()
                 result["error"] = f"Blocked redirect: {sanitize_error(e)}"
                 return result
 
             redirect_chain.append(current_url)
             current_url = next_url
+            # Redirect hop bodies are not needed; release the connection.
+            response.close()
         else:
+            response.close()
             result["error"] = f"Too many redirects (max {max_redirects})"
             return result
 
         result["url"] = current_url
         result["status_code"] = response.status_code
+
+        # Stream the body up to MAX_BODY_BYTES rather than reading it
+        # unbounded via response.text.
+        chunks = []
+        bytes_read = 0
+        for chunk in response.iter_content(chunk_size=65536):
+            bytes_read += len(chunk)
+            if bytes_read > MAX_BODY_BYTES:
+                response.close()
+                limit_mb = MAX_BODY_BYTES // (1024 * 1024)
+                result["error"] = f"Response body exceeded the {limit_mb} MB limit"
+                return result
+            chunks.append(chunk)
+        response.close()
+
+        # Feed the capped bytes back through Response.text so encoding
+        # detection behaves exactly as before.
+        response._content = b"".join(chunks)
+        response._content_consumed = True
         result["content"] = response.text
+
         result["headers"] = dict(response.headers)
         result["redirect_chain"] = redirect_chain
 

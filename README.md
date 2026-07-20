@@ -19,10 +19,10 @@ Kimi Ads 是一套围绕 Kimi 组织的广告决策工作流。优化师用自�
 
 ## 非程序员最短路径
 
-`v2.0.0` tag 发布后，推荐先安装这个固定版本：
+推荐先安装当前稳定版本 `v2.1.0`：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
 ```
 
 然后打开 Kimi，附上导出表、粘贴表格或说明已打开的后台，直接说：
@@ -307,31 +307,31 @@ python3 scripts/uac_experiment.py migrate-ledger ADS-EXPERIMENTS.yaml --write
 
 ## 安装
 
-推荐固定版本。`v2.0.0` tag 发布后，Unix/macOS 使用：
+推荐固定版本。当前稳定版本为 `v2.1.0`，Unix/macOS 使用：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
 ```
 
 如果已经 clone 仓库，可以在仓库目录运行：
 
 ```bash
-bash install.sh --ref=v2.0.0
+bash install.sh --ref=v2.1.0
 ```
 
 自定义安装目录：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- \
-  --ref=v2.0.0 --target=kimi \
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- \
+  --ref=v2.1.0 --target=kimi \
   --skill-dir="$HOME/custom/skills" --agent-dir="$HOME/custom/agents"
 ```
 
-Windows PowerShell（tag 发布后）：
+Windows PowerShell：
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v2.0.0
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.1.0
 ```
 
 `--ref` / `-Ref` 只接受 `vX.Y.Z` 形式的最终 tag，不接受 branch、commit、`main` 或 prerelease。`main` 是滚动开发快照，可能不稳定；只有想试用最新开发状态时才使用：
@@ -375,6 +375,14 @@ irm "https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/$KnownGood/inst
 
 ```text
 /plugins install https://github.com/taotao135791-bit/kimi-ads
+```
+
+注意：`/plugins install` 不会创建 Python 虚拟环境。如果需要 PDF 报告或页面抓取等
+Python 辅助脚本，请在 Kimi 的插件托管目录（即插件安装后仓库所在目录）中手动安装
+一次依赖：
+
+```bash
+pip3 install -r <插件托管目录>/requirements.txt
 ```
 
 ## 快速开始

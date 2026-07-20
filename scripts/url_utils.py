@@ -1,9 +1,8 @@
 """Shared URL validation utilities with SSRF protection.
 
-Used by fetch_page.py, analyze_landing.py, capture_screenshot.py, and
-generate_image.py to validate user-supplied URLs before making HTTP requests
-or launching browsers, and to sanitize exception messages before surfacing
-them to the user.
+Used by fetch_page.py and generate_image.py to validate user-supplied URLs
+before making HTTP requests, and to sanitize exception messages before
+surfacing them to the user.
 """
 
 import ipaddress

@@ -62,7 +62,8 @@ fallback inputs.
 - Budget and bidding data for G36-G41
 
 **What stays manual:**
-- Landing page analysis (G59-G61): use `analyze_landing.py`
+- Landing page analysis (G59-G61): use `scripts/fetch_page.py` for public
+  pages, or Kimi WebBridge for pages that need a real browser session
 - Creative quality assessment (subjective)
 - Consent Mode V2 verification (requires GTM/tag audit)
 

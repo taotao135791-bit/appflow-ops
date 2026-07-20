@@ -7,7 +7,7 @@ description: >-
   coverage (Today/Search/Product Pages), Maximize Conversions bidding, and goal CPA
   benchmarks by country. Use when user says Apple Ads, Apple Search Ads, ASA, App Store
   ads, Apple ads, Search Ads, AdAttributionKit, view-through attribution, or is
-  advertising a mobile app on iOS.
+  advertising a mobile app on iOS. 中文触发: 苹果广告, ASA 投放, App Store 搜索广告.
 ---
 
 # Apple Ads (formerly Apple Search Ads) Deep Analysis

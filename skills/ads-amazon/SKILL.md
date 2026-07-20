@@ -8,7 +8,7 @@ description: >-
   campaign mix, ASIN targeting, and DSP retargeting. Use when user says Amazon Ads, Amazon
   advertising, Amazon PPC, Amazon search ads, Sponsored Products, Sponsored Brands,
   Sponsored Display, Amazon DSP, ACOS, TACOS, retail media audit, Amazon Marketing
-  Services, AMS, or Amazon seller advertising.
+  Services, AMS, or Amazon seller advertising. 中文触发: 亚马逊广告, 亚马逊 PPC, ACOS 优化.
 ---
 
 # Amazon Ads Deep Analysis
@@ -24,13 +24,10 @@ For any `ads/references/<file>.md` path below, read the first existing path:
 Amazon owns ~80% of US retail media (~$56B in 2025). This sub-skill audits
 the three Sponsored ad types plus basic DSP visibility for sellers and
 vendors. Detailed Amazon DSP audit (programmatic / Twitch / Fire TV / Freevee
-/ Prime Video) is queued for Wave 3 in `ads-retail-media`.
+/ Prime Video) is out of scope for this sub-skill.
 
 > **Note:** This is a leaf sub-skill. The thresholds and rules below live
-> inline. In Wave 3, once `ads-walmart` ships and the `ads-retail-media`
-> orchestrator extracts the shared retail-media logic, a dedicated
-> `retail-media-specs.md` reference file will replace these inline rules
-> (planned, not yet created — do not link to it from other files).
+> inline in this file.
 
 ## Process
 

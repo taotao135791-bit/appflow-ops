@@ -2,6 +2,46 @@
 
 All notable changes to Kimi Ads are documented here.
 
+## 2.1.0 — 2026-07-20
+
+### Playwright removal and WebBridge-only browser work
+
+- Removed Playwright entirely: deleted `scripts/capture_screenshot.py` and
+  `scripts/analyze_landing.py`. All browser work now goes through Kimi
+  WebBridge in the user's real, fully visible logged-in browser; the bundle
+  ships no headless browser tooling.
+- Reworded the Live Dashboard Tool Gate in `skills/ads/SKILL.md` and the
+  `webbridge-live-audit.md` / `orchestrator.md` references (plus the `ads/`
+  mirror) to state the WebBridge-only rule without referencing the deleted
+  scripts.
+- Added a 10 MB hard cap on `scripts/fetch_page.py` response bodies so a
+  hostile or misconfigured server cannot exhaust memory.
+
+### Skill prompts and packaging
+
+- Added Chinese trigger phrases across all sub-skill descriptions so
+  natural-language routing works in Chinese as well as English.
+- Deduplicated the template-adapter guidance shared by `ads-ops` and
+  `ads-report`; `ads-report` now owns it.
+- Added plugin-layout fallback chains for agent persona briefs and scripts so
+  skills resolve correctly from both manual and plugin installs.
+
+### CI and release hardening
+
+- Extracted inline `python -c` assertions from `ci.yml` into
+  `scripts/ci/check_install_layout.py`, `check_uac_decide_output.py`,
+  `check_uac_policies.py`, and `check_numeric_cap.py`; the installer smoke now
+  verifies the installed layout through `check_install_layout.py`.
+- Added `shellcheck` (installer scripts) and `pip-audit` (runtime and
+  development dependencies) jobs, and SHA-pinned all GitHub Actions.
+
+### UAC core modularization
+
+- Split the UAC modules under `scripts/kimi_ads/uac/` into focused submodules
+  with facade re-exports, so existing imports keep working.
+- Extended mypy coverage from `scripts/kimi_ads/uac` to the top-level scripts
+  via pyproject overrides, and wired the new check into CI.
+
 ## 2.0.0 — 2026-07-20
 
 ### Migration to Kimi Code CLI
@@ -31,8 +71,8 @@ All notable changes to Kimi Ads are documented here.
 - Routing shorthand (`/ads audit`, `/ads uac`, ...) is unchanged and can also
   be reached through the `/skill:ads` invocation; all skill, ledger, replay,
   and workspace contracts from 1.9.x remain readable.
-- This entry prepares `v2.0.0`; it does not claim that a remote tag or GitHub
-  Release exists.
+- The `v2.0.0` tag and GitHub Release were published together with this
+  entry; 2.1.0 is now the current stable pin.
 
 ## 1.9.2 — 2026-07-14
 

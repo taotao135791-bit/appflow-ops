@@ -3,12 +3,12 @@ name: ads-ops
 description: >-
   Daily agency advertising operations skill. Use for repetitive media-buying work such as
   daily account patrols, anomaly triage, client-safe replies, creative request briefs,
-  report cleanup from CSV/XLSX exports, arbitrary client template adaptation, optimization
-  changelogs, weekly/monthly meeting summaries, action tracking, and junior operator
-  checklists. Triggers on patrol, daily check, anomaly, sudden drop, sudden spike, client
-  reply, client explanation, creative request, design brief, material request, clean
-  report, report cleanup, adapt template, template mapping, client-report-map, changelog,
-  change history, weekly meeting, monthly review, and agency operations.
+  report cleanup from CSV/XLSX exports, optimization changelogs, weekly/monthly meeting
+  summaries, action tracking, and junior operator checklists. Triggers on patrol, daily
+  check, anomaly, sudden drop, sudden spike, client reply, client explanation, creative
+  request, design brief, material request, clean report, report cleanup, changelog,
+  change history, weekly meeting, monthly review, and agency operations. 中文触发: 每日巡检,
+  突然掉量, 怎么跟甲方说, 素材需求单.
 ---
 
 # Ads Ops: Daily Agency Operations
@@ -45,7 +45,7 @@ document inspection.
 | "怎么跟甲方说", "client reply", "客户解释" | Client Reply |
 | "给设计提需求", "素材需求单", "creative request" | Creative Request |
 | "清洗报表", "合并导出表", "clean CSV/XLSX" | Report Cleanup |
-| "适配甲方模板", "template mapping", "adapt template" | Template Adapter |
+| "适配甲方模板", "template mapping", "adapt template" | Hand off to `ads-report` |
 | "记录今天改了什么", "change log" | Change Log |
 | "周会/月会", "meeting summary", "复盘" | Meeting Summary |
 | "记录项目背景", "记住甲方要求", "日报格式", "长期 KPI" | Project Memory Docs |
@@ -277,64 +277,9 @@ Flag:
 
 ## Template Adapter
 
-Purpose: handle the reality that every client daily/weekly report template is
-different. Do not force one report layout. Instead, map the template to a
-standard internal data model, then fill a draft.
-
-Workflow:
-1. Inspect the template read-only through Kimi WebBridge, local file reading,
-   pasted table, or screenshot.
-2. Extract only the structure: sheet/tab names, section names, table columns,
-   date fields, narrative blocks, formulas, required fields, and formatting
-   constraints.
-3. Build a field mapping from template labels to internal fields.
-4. Identify missing inputs and whether they require platform export, backend,
-   MMP, CRM, Shopify/app store, or client confirmation.
-5. Fill a local draft by default. Ask before writing into any shared template.
-6. Optionally save an anonymized `client-report-map.yaml` for future reuse.
-
-Standard internal fields:
-```text
-date, platform, account_scope, campaign, ad_group_or_ad_set, creative_or_ad,
-geo, device, spend, impressions, clicks, ctr, cpc, installs, registrations,
-leads, qualified_leads, payments, purchases, revenue, value, cvr, cpa, cpi,
-cpl, roas, budget_pacing, day_over_day_change, week_over_week_change,
-risk_note, action, client_request
-```
-
-Mapping output:
-```markdown
-# Client Report Template Mapping
-
-## Template Detected
-- Type:
-- Format:
-- Date field:
-- Main table:
-- Narrative section:
-
-## Field Mapping
-| Template Field | Internal Field | Source | Formula | Required | Status |
-| --- | --- | --- | --- | --- | --- |
-
-## Missing Inputs
-1.
-2.
-3.
-
-## Fill Plan
-1.
-2.
-3.
-```
-
-Quality checks:
-- date range and timezone match the dashboard/export
-- currency and units are consistent
-- derived metrics use the correct denominator
-- required template fields are filled or marked blocked
-- backend-only metrics are not invented from platform data
-- client-facing narrative does not include internal blame or private notes
+Template adaptation, template mapping, and `client-report-map.yaml` are owned
+by the `ads-report` skill: hand off to its Client Template Adapter workflow
+instead of running a local mapping here.
 
 ## Change Log
 

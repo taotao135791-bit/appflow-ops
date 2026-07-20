@@ -144,7 +144,7 @@ def test_operator_docs_prefer_private_workspace_without_hiding_stop_condition(
 def test_uac_version_and_docs_are_present(repo_root):
     manifest = json.loads(_read(repo_root, "kimi.plugin.json"))
     version = _read(repo_root, "VERSION").strip()
-    assert manifest["version"] == version == "2.0.0"
+    assert manifest["version"] == version == "2.1.0"
     assert "UAC" in _read(repo_root, "README.md")
     assert "UAC" in _read(repo_root, "README.en.md")
     assert f"## {version}" in _read(repo_root, "CHANGELOG.md")
@@ -174,6 +174,10 @@ def test_uac_schema_template_and_example_set_is_complete(repo_root):
 def test_ci_installer_smoke_covers_numeric_quick_decision_package(repo_root):
     workflow = _read(repo_root, ".github/workflows/ci.yml")
 
+    # The required-file list lives in the shared CI layout check, which the
+    # installer smoke runs on both Unix and Windows.
+    assert workflow.count("scripts/ci/check_install_layout.py") >= 2
+    install_layout = _read(repo_root, "scripts/ci/check_install_layout.py")
     for installed_artifact in [
         "UAC-QUICK-NUMERIC.example.yaml",
         "scripts/kimi_ads/uac/signals.py",
@@ -183,11 +187,18 @@ def test_ci_installer_smoke_covers_numeric_quick_decision_package(repo_root):
         "scripts/kimi_ads/uac/policies/uac-numeric-policy-v1.yaml",
         "scripts/kimi_ads/uac/policies/uac-signal-policy-v1.yaml",
     ]:
-        assert installed_artifact in workflow
+        assert installed_artifact in install_layout
 
     assert workflow.count("UAC-QUICK-NUMERIC.example.yaml") >= 3
-    assert "Numeric Quick Decision output is not deterministic" in workflow
-    assert "has_numeric_evidence" in workflow
-    assert "STAGED_OPTIMIZATION" in workflow
-    assert "REQUIRES_FRESH_REVIEW" in workflow
-    assert "uac-numeric-policy-v1" in workflow
+    assert "scripts/ci/check_uac_decide_output.py" in workflow
+    assert "scripts/ci/check_numeric_cap.py" in workflow
+
+    # The numeric Quick Decision contract itself lives in the CI scripts.
+    decide_check = _read(repo_root, "scripts/ci/check_uac_decide_output.py")
+    assert "decide output is not deterministic" in decide_check
+    assert "has_numeric_evidence" in decide_check
+    assert "uac-numeric-policy-v1" in decide_check
+
+    numeric_cap = _read(repo_root, "scripts/ci/check_numeric_cap.py")
+    assert "STAGED_OPTIMIZATION" in numeric_cap
+    assert "REQUIRES_FRESH_REVIEW" in numeric_cap

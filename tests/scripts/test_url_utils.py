@@ -70,7 +70,7 @@ def test_blocks_non_http_schemes(url):
 
 def test_dns_resolution_failure_fails_closed():
     """A hostname that cannot be resolved should raise, not be allowed
-    through to the requests/playwright layer."""
+    through to the requests layer."""
     with pytest.raises(ValueError):
         validate_url("http://nonexistent-hostname-for-kimi-ads-tests.invalid")
 

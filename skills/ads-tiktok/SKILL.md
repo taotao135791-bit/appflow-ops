@@ -6,7 +6,7 @@ description: >-
   divestiture). Evaluates 28 checks with emphasis on creative-first strategy, safe zone
   compliance, creative diversity for retrieval, and Smart+ campaigns. Use when user says
   TikTok Ads, TikTok marketing, TikTok Shop, Spark Ads, Smart+, USDS, creative diversity
-  for retrieval, or TikTok campaign.
+  for retrieval, or TikTok campaign. 中文触发: TikTok 广告, 抖音海外版投放, TikTok 素材诊断.
 ---
 
 # TikTok Ads Deep Analysis

@@ -8,7 +8,7 @@ description: >-
   creative-as-targeting scoring. Use when user says Meta Ads, Facebook Ads, Instagram Ads,
   Threads ads, Advantage+, ASC, AAC, Andromeda, GEM, Lattice, Entity-ID clustering,
   creative diversity, Sales optimization, Leads optimization, App optimization, or Meta
-  campaign.
+  campaign. 中文触发: Facebook 广告, Meta 广告审计, 素材多样性, 像素和 CAPI.
 ---
 
 # Meta Ads Deep Analysis

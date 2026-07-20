@@ -6,6 +6,7 @@ description: >-
   unique Microsoft features (LinkedIn audience targeting, in-market audiences), and cost
   advantage assessment. Use when user says Microsoft Ads, Bing Ads, Bing PPC, Bing search
   ads, Copilot ads, Microsoft search ads, Google import audit, or Microsoft campaign.
+  中文触发: 必应广告, Bing 投放, 微软广告审计.
 ---
 
 # Microsoft Ads Deep Analysis

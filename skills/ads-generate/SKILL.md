@@ -2,10 +2,11 @@
 name: ads-generate
 description: >-
   AI image generation for paid ad creatives. Reads campaign-brief.md and
-  brand-profile.json to produce platform-sized ad images using image provider. Requires
-  image provider (v1.4.1+) with image provider tooling configured. Triggers on: generate
-  ads, create images, make ad creatives, generate visuals, create ad images, generate
-  campaign images, make the images, generate from brief.
+  brand-profile.json to produce platform-sized ad images. Requires ADS_IMAGE_PROVIDER
+  and a configured image-generation API key (GOOGLE_API_KEY, OPENAI_API_KEY,
+  STABILITY_API_KEY, or REPLICATE_API_TOKEN). Triggers on: generate ads, create images,
+  make ad creatives, generate visuals, create ad images, generate campaign images, make
+  the images, generate from brief. 中文触发: 生成广告图, AI 出素材图, 按 brief 批量出图.
 ---
 
 # Ads Generate: AI Ad Image Generator
@@ -35,7 +36,8 @@ These `/ads ...` entries are Kimi routing shorthand, not shell commands.
 
 **Required before running:**
 
-- Requires image provider (v1.4.1+) with image provider tooling configured
+- Requires ADS_IMAGE_PROVIDER and a configured image-generation API key
+  (GOOGLE_API_KEY, OPENAI_API_KEY, STABILITY_API_KEY, or REPLICATE_API_TOKEN)
 - Run `configure ADS_IMAGE_PROVIDER` to configure API key and MCP
 - Fallback: if provider is not available, use `scripts/generate_image.py` (deprecated)
 

@@ -6,6 +6,7 @@ description: >-
   calculator, and platform-specific experiment setup guides (Meta Experiments, Google
   Experiments, LinkedIn A/B). Use when user says A/B test, split test, experiment design,
   test hypothesis, statistical significance, sample size, or test duration.
+  中文触发: AB 测试设计, 实验显著性, 测试要跑多久.
 ---
 
 # A/B Test Design & Experiment Planning

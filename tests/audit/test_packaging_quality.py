@@ -91,19 +91,20 @@ def test_private_dashboard_tool_gate_requires_webbridge(repo_root):
     ]
     required = [
         "MUST use Kimi WebBridge",
-        "MUST NOT use headless",
-        "Playwright",
+        "MUST NOT use any headless or scripted browser automation",
         "screenshot scripts",
         "page HTML extraction",
         "network scraping",
         "against logged-in dashboards",
-        "public landing pages",
-        "do not contain logged-in account data",
+        "ships no headless browser tooling",
+        "scripts/fetch_page.py",
     ]
 
     failures: list[str] = []
     for relative_path in files:
-        text = _read(repo_root, relative_path)
+        # Normalize line wrapping so structural phrases match across
+        # differently reflowed Markdown copies.
+        text = re.sub(r"\s+", " ", _read(repo_root, relative_path))
         missing = [phrase for phrase in required if phrase not in text]
         if missing:
             failures.append(f"{relative_path} missing {missing}")

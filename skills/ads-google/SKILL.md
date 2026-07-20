@@ -7,7 +7,7 @@ description: >-
   AI Brief, text customization, FUE, brand exclusions) and Smart Bidding signals. Use when
   user says Google Ads, Google PPC, search ads, PMax, Performance Max, AI Max, AI Brief,
   broad match audit, Quality Score check, search terms audit, Smart Bidding, or Google
-  campaign.
+  campaign. 中文触发: 谷歌广告审计, 搜索词报告分析, PMax 诊断.
 ---
 
 # Google Ads Deep Analysis

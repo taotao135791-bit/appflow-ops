@@ -7,7 +7,7 @@ description: >-
   server-side tracking, sGTM, server-side GTM, server-side tagging, CAPI, Conversions API,
   CAPI Gateway, Meta Conversions API, event deduplication, event_id, pixel debug, pixel
   health, Pixel/CAPI audit, first-party tracking, iOS 14.5 recovery, or server-side hit
-  ratio.
+  ratio. 中文触发: 服务端回传, CAPI 配置, 事件去重.
 ---
 
 # Server-Side Tracking Pipeline Audit

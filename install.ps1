@@ -274,14 +274,20 @@ function Main {
         # Copy agents. Hosts with a separate agents directory (codex etc.)
         # receive the persona briefs there; for Kimi Code CLI they are
         # installed into the main skill at <skill-base>\ads\agents instead.
+        # The source listing is tested first so a missing source tree only
+        # warns, while a real copy failure still throws under ErrorAction Stop.
         Write-Host "Installing subagents..."
         $AgentsSource = Join-Path $SourceDir "agents"
-        if ($AgentDirResolved) {
-            Copy-Item (Join-Path $AgentsSource "*.md") -Destination $AgentDirResolved -Force
+        $AgentsTarget = $AgentDirResolved
+        if (-not $AgentsTarget) {
+            $AgentsTarget = Join-Path $SkillDirResolved "agents"
+            New-Item -ItemType Directory -Path $AgentsTarget -Force | Out-Null
+        }
+        $AgentBriefs = @(Get-ChildItem -Path $AgentsSource -Filter "*.md" -File -ErrorAction SilentlyContinue)
+        if ($AgentBriefs.Count -gt 0) {
+            Copy-Item $AgentBriefs.FullName -Destination $AgentsTarget -Force
         } else {
-            $SkillAgentsDir = Join-Path $SkillDirResolved "agents"
-            New-Item -ItemType Directory -Path $SkillAgentsDir -Force | Out-Null
-            Copy-Item (Join-Path $AgentsSource "*.md") -Destination $SkillAgentsDir -Force
+            Write-Host "  Warning: no agent briefs found under $AgentsSource - skipping." -ForegroundColor Yellow
         }
 
         # Copy scripts (optional Python tools)
@@ -339,6 +345,20 @@ function Main {
         Write-Host "i  Image generation uses scripts/generate_image.py with ADS_IMAGE_PROVIDER." -ForegroundColor Yellow
         Write-Host "   Set GOOGLE_API_KEY, OPENAI_API_KEY, STABILITY_API_KEY, or REPLICATE_API_TOKEN as needed."
 
+        # Derive the bundle counts from what was actually installed, so the
+        # banner cannot drift away from the real payload as skills come and go.
+        $SubSkillCount = @(Get-ChildItem $SkillBase -Directory -Filter "ads-*").Count
+        $AgentCount = @(Get-ChildItem $AgentsTarget -Filter "*.md" -File).Count
+        $ReferenceCount = @(Get-ChildItem (Join-Path $SkillDirResolved "references") -Filter "*.md" -File).Count
+        $TemplateCount = @(
+            Get-ChildItem $SkillBase -Directory -Filter "ads-*" | ForEach-Object {
+                $InstalledAssets = Join-Path $_.FullName "assets"
+                if (Test-Path $InstalledAssets) {
+                    Get-ChildItem $InstalledAssets -Filter "*.md" -File
+                }
+            }
+        ).Count
+
         Write-Host ""
         Write-Host "Kimi Ads installed successfully for $HostLabel!" -ForegroundColor Green
         Write-Host ""
@@ -347,15 +367,15 @@ function Main {
         if ($AgentDirResolved) {
             Write-Host "    Agents: $AgentDirResolved"
         } else {
-            Write-Host "    Agents: $SkillDirResolved\agents (persona briefs)"
+            Write-Host "    Agents: $AgentsTarget (persona briefs)"
         }
         Write-Host ""
         Write-Host "  Bundled:"
         Write-Host "    - 1 main skill (ads orchestrator)"
-        Write-Host "    - 26 sub-skills (platform + functional + creative + agency ops)"
-        Write-Host "    - 10 agents (6 audit + 4 creative)"
-        Write-Host "    - 28 reference files"
-        Write-Host "    - 15 templates (12 industry + 3 ops memory)"
+        Write-Host "    - $SubSkillCount sub-skills (platform + functional + creative + agency ops)"
+        Write-Host "    - $AgentCount agents (audit + creative personas)"
+        Write-Host "    - $ReferenceCount reference files (main skill)"
+        Write-Host "    - $TemplateCount templates (sub-skill Markdown assets)"
         Write-Host ""
         Write-Host "Usage:"
         Write-Host "  1. Start Kimi Code CLI"

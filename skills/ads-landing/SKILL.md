@@ -5,7 +5,7 @@ description: >-
   page speed, mobile experience, trust signals, form optimization, and conversion rate
   potential. Use when user says landing page, post-click experience, landing page audit,
   LP audit, conversion rate, landing page CRO, post-click CRO, or landing page
-  optimization.
+  optimization. 中文触发: 落地页体检, 落地页转化率低, 页面和广告不匹配.
 ---
 
 <!-- Updated: 2026-04-13 | v1.5 -->

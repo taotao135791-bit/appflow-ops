@@ -6,6 +6,7 @@ description: >-
   brand-profile.json to the current directory. Run before /ads create or /ads generate for
   brand-consistent creative. Triggers on: brand DNA, brand profile, extract brand, brand
   identity, brand colors, what is the brand voice, analyze brand, brand style guide.
+  中文触发: 品牌调性提取, 分析官网品牌风格, 品牌 DNA.
 ---
 
 # Ads DNA: Brand DNA Extractor
@@ -66,36 +67,33 @@ After fetching pages, capture 3 screenshots for comprehensive brand anchoring.
 These serve as visual style references during `/ads generate`; the same approach
 Pomelli uses to anchor ad images to the actual brand aesthetic.
 
-Capture the following (script path resolves to
-`${KIMI_SKILL_DIR}/../ads/scripts/capture_screenshot.py`; in a manual install
-use `~/.kimi-code/skills/ads/scripts/capture_screenshot.py`):
+Screenshots MUST be captured via **Kimi WebBridge** in the user's visible
+browser. This bundle ships no headless or scripted browser tooling: every
+browser operation must be visible to the user. Do not attempt to install or
+run any headless browser.
 
-1. **Homepage hero section** (above the fold):
-```bash
-python "${KIMI_SKILL_DIR}/../ads/scripts/capture_screenshot.py" [url]
-```
-Saves: `./brand-screenshots/{domain}_homepage.png`
+For each page, navigate with WebBridge, take a screenshot at normal desktop
+window width, then narrow the window to a mobile-like width and screenshot
+again to capture the responsive layout:
 
-2. **Product or services page**:
-```bash
-python "${KIMI_SKILL_DIR}/../ads/scripts/capture_screenshot.py" [url]/products
-```
-Saves: `./brand-screenshots/{domain}_product.png`
-
-3. **About page** (brand personality):
-```bash
-python "${KIMI_SKILL_DIR}/../ads/scripts/capture_screenshot.py" [url]/about
-```
-Saves: `./brand-screenshots/{domain}_about.png`
+1. **Homepage hero section** (above the fold): navigate to `[url]`.
+   Saves: `./brand-screenshots/{domain}_homepage.png`
+   (mobile-narrow variant: `{domain}_homepage_mobile.png`)
+2. **Product or services page**: navigate to `[url]/products`.
+   Saves: `./brand-screenshots/{domain}_product.png`
+   (mobile-narrow variant: `{domain}_product_mobile.png`)
+3. **About page** (brand personality): navigate to `[url]/about`.
+   Saves: `./brand-screenshots/{domain}_about.png`
+   (mobile-narrow variant: `{domain}_about_mobile.png`)
 
 If a page is not found or returns an error, skip it gracefully and continue
 with the remaining pages.
 
 **If `--quick` flag was provided**: skip screenshot capture entirely.
 
-**If capture fails** (Playwright not installed, network error, JS-heavy SPA that times out):
-- Log: `"Screenshot capture skipped; run: python3 -m playwright install chromium"`
-- Continue without screenshots
+**If WebBridge is unavailable** (not installed or not connected):
+- Log: `"Screenshot capture skipped; Kimi WebBridge unavailable. Falling back to HTML-only analysis via fetch_page.py."`
+- Continue without screenshots (Step 3 works from the fetched HTML regardless)
 - Do NOT set the `screenshots` field in brand-profile.json
 
 ### Step 3: Extract Brand Elements
@@ -177,8 +175,9 @@ If screenshots were captured successfully in Step 2b, include a `screenshots` fi
 }
 ```
 Include only the screenshots that were successfully captured. If a page was not
-found or errored, omit that key. Omit the `screenshots` field entirely if Step 2b
-was skipped or all captures failed.
+found or errored, omit that key. Mobile-narrow captures may be added with a
+`_mobile` key suffix (e.g. `"homepage_mobile"`). Omit the `screenshots` field
+entirely if Step 2b was skipped or WebBridge was unavailable.
 
 ### Step 6: Confirm and Summarize
 
@@ -208,8 +207,9 @@ the homepage or about page screenshot.
 
 - **Sparse content**: Sites with <200 words of body text produce lower-confidence profiles.
   Note: "Low confidence extraction; limited content available for analysis."
-- **Dynamic sites**: JavaScript-rendered content may not be captured. Playwright is not
-  used by default. If the site appears to be SPA/React with no static HTML, note this.
+- **Dynamic sites**: JavaScript-rendered content may not be captured by HTML
+  fetching. If the site appears to be SPA/React with no static HTML, inspect the
+  rendered page via Kimi WebBridge in the user's visible browser, or note this.
 - **Multi-brand enterprises**: This tool creates one profile per URL. Run separately
   for each brand/product line.
 - **Dark mode sites**: If body background is #333 or darker, swap background/text values.

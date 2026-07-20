@@ -7,6 +7,7 @@ description: >-
   and identifies competitive gaps and opportunities. Use when user says competitor ads, ad
   spy, competitive analysis, competitor PPC, ad intelligence, Meta Ad Library, Facebook Ad
   Library, Google Ads Transparency, competitor creative, or competitor research.
+  中文触发: 竞品广告分析, 扒竞品素材, 竞品投放情报.
 ---
 
 <!-- Updated: 2026-04-13 | v1.5 -->

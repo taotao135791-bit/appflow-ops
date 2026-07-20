@@ -1,12 +1,13 @@
 ---
 name: ads-photoshoot
 description: >-
-  Product photography enhancement for ad creatives using image provider image generation.
-  Takes a product image and generates 5 professional photography styles for ad use:
-  Studio, Floating, Ingredient, In Use, and Lifestyle. Requires image provider (v1.4.1+)
-  with image provider tooling. Triggers on: product photo, product photography,
-  photoshoot, enhance product image, product shoot, product photos for ads, generate
-  product photos, studio shot, lifestyle photo.
+  Product photography enhancement for ad creatives using AI image generation. Takes a
+  product image and generates 5 professional photography styles for ad use: Studio,
+  Floating, Ingredient, In Use, and Lifestyle. Requires ADS_IMAGE_PROVIDER and a
+  configured image-generation API key (GOOGLE_API_KEY, OPENAI_API_KEY, STABILITY_API_KEY,
+  or REPLICATE_API_TOKEN). Triggers on: product photo, product photography, photoshoot,
+  enhance product image, product shoot, product photos for ads, generate product photos,
+  studio shot, lifestyle photo. 中文触发: 产品图精修, AI 产品场景图, 电商产品摄影图.
 ---
 
 # Ads Photoshoot: AI Product Photography
@@ -36,7 +37,8 @@ These `/ads ...` entries are Kimi routing shorthand, not shell commands.
 
 ## Environment Setup
 
-Requires image provider (v1.4.1+) with image provider tooling configured.
+Requires ADS_IMAGE_PROVIDER and a configured image-generation API key
+(GOOGLE_API_KEY, OPENAI_API_KEY, STABILITY_API_KEY, or REPLICATE_API_TOKEN).
 Run `configure ADS_IMAGE_PROVIDER` to configure API key and MCP.
 
 ## Process

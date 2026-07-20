@@ -21,12 +21,14 @@ that exact action.
 For logged-in ad platforms, analytics dashboards, MMP dashboards, client report
 templates opened in a browser, or any page containing private account data,
 MUST use Kimi WebBridge (the browser bridge that drives the user's real,
-logged-in Chrome/Edge session) for live UI inspection. MUST NOT use headless
-Playwright, screenshot scripts, page HTML extraction, or network scraping
-against logged-in dashboards. If WebBridge is not installed or not connected,
-ask for exports, pasted tables, or user-provided screenshots instead.
-Headless browser and script tools are allowed only for public landing pages,
-public brand sites, or local files that do not contain logged-in account data.
+logged-in Chrome/Edge session) for live UI inspection. MUST NOT use any
+headless or scripted browser automation, screenshot scripts, page HTML
+extraction, or network scraping against logged-in dashboards. If WebBridge is
+not installed or not connected, ask for exports, pasted tables, or
+user-provided screenshots instead. This bundle ships no headless browser
+tooling; any rendered-page work (including screenshots of public pages) goes
+through Kimi WebBridge in the user's visible browser. Raw HTTP fetching of
+public pages with `scripts/fetch_page.py` is fine.
 
 If live UI access is unavailable, use exports, pasted metrics, user-provided
 screenshots, local files, or read-only MCP/API data.

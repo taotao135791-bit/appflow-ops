@@ -6,7 +6,7 @@ description: >-
   analysis, and MER (Marketing Efficiency Ratio) assessment. Requires zero API access.
   Works with pasted data from exports. Use when user says PPC math, ad calculator,
   break-even, budget forecast, ROAS calculator, CPA calculator, impression share, LTV CAC,
-  or MER.
+  or MER. 中文触发: 算一下 CPA, ROAS 保本点, 预算测算.
 ---
 
 # PPC Financial Calculator & Modeling

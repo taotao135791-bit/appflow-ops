@@ -175,11 +175,31 @@ campaign-structure gate also passes.
 
 Keep campaign level, bid, and budget in separate structured sections. When the
 operator supplies mature multi-day facts and explicit business bounds, derive
-the signals first and return at most one bounded numeric change. Read
-`docs/quick-ops-numeric-decisions.md` in a source checkout for the input fields,
-units, evidence types, thresholds, and complete output contract; read
-`docs/numeric-safety-policy.md` for policy overrides, staged plans, operational
-correction, and Numeric Replay calibration.
+the signals first and return at most one bounded numeric change.
+
+The numeric-decision contract in short:
+
+1. Build a candidate from account evidence, bounded between the current value
+   and the declared business bound (CPA ceiling, ROAS floor, or budget cap).
+2. Intersect that candidate with the business bound, the effective versioned
+   single-change limit, and the user's permission boundary. The bundled
+   default policy caps each single increase or decrease at 20% per variable;
+   a missing business bound returns `null`/`NO_CHANGE` rather than an
+   invented number.
+3. Change only one numeric variable per ordinary operation. When the bounded
+   candidate exceeds the cap, return only stage one of a staged plan and mark
+   every later stage `REQUIRES_FRESH_REVIEW`: re-verify mature efficiency,
+   conversion delay, delivery, and business bounds before each next stage.
+4. Label every calculation input as account evidence, business constraint,
+   platform guidance (safety only), heuristic, or insufficient evidence, and
+   never emit a number the current permissions cannot execute.
+
+In a source checkout, `docs/quick-ops-numeric-decisions.md` (input fields,
+units, evidence types, thresholds, complete output contract) and
+`docs/numeric-safety-policy.md` (policy overrides, staged plans, operational
+correction, Numeric Replay calibration) are an optional deep dive only; the
+docs/ directory is not installed with the skills, so never treat it as
+required reading at runtime.
 
 Use these sources in order:
 

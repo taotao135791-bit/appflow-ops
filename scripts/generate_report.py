@@ -28,7 +28,7 @@ from datetime import datetime
 
 # Version stamp shown in PDF header/footer. Keep in sync with
 # kimi.plugin.json `version`.
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 try:
     from reportlab.lib import colors
@@ -37,7 +37,7 @@ try:
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import inch
     from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.pdfbase.ttfonts import TTFError, TTFont
     from reportlab.platypus import (
         SimpleDocTemplate,
         Paragraph,
@@ -99,8 +99,9 @@ for path in [
             pdfmetrics.registerFont(TTFont("TimesNewRoman", path))
             BODY_FONT = "TimesNewRoman"
             break
-        except Exception:
-            pass
+        except (TTFError, OSError):
+            # Unreadable or invalid font file; try the next candidate.
+            continue
 
 PAGE_WIDTH = 7.0 * inch  # letter minus margins
 MAX_IMG_W = 6.5 * inch
@@ -135,7 +136,7 @@ def parse_markdown(filepath: str) -> dict:
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
 
-    data = {
+    data: dict = {
         "title": "",
         "health_score": None,
         "grade": "",
@@ -152,7 +153,7 @@ def parse_markdown(filepath: str) -> dict:
     section_title = None
     section_items = []
     in_table = False
-    table_rows = []
+    table_rows: list = []
     table_headers = []
 
     for line in lines:
@@ -399,7 +400,7 @@ def build_result_distribution_chart(result_counts: dict) -> str | None:
 
     fig, ax = plt.subplots(figsize=(3.5, 3))
     fig.patch.set_facecolor("white")
-    wedges, texts, autotexts = ax.pie(
+    wedges, texts, autotexts = ax.pie(  # type: ignore[misc]
         sizes,
         labels=labels,
         colors=chart_colors,

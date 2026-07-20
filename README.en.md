@@ -10,10 +10,10 @@ Kimi Ads organizes paid-media decisions around Kimi. Operators describe goals, p
 
 ## Shortest path for non-programmers
 
-After the `v2.0.0` tag is published, install that fixed version:
+Install the current stable version `v2.1.0`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
 ```
 
 Then open Kimi, attach an export, paste a table, or say that the dashboard is already open, and ask naturally:
@@ -270,31 +270,31 @@ The normalization output is an envelope containing `normalized`, `missing_fields
 
 ## Install
 
-Prefer a fixed version. After the `v2.0.0` tag is published, use this on Unix/macOS:
+Prefer a fixed version. The current stable release is `v2.1.0`; use this on Unix/macOS:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
 ```
 
 If you already cloned the repository, run this from the repo directory:
 
 ```bash
-bash install.sh --ref=v2.0.0
+bash install.sh --ref=v2.1.0
 ```
 
 Install to a custom location:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- \
-  --ref=v2.0.0 --target=kimi \
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- \
+  --ref=v2.1.0 --target=kimi \
   --skill-dir="$HOME/custom/skills" --agent-dir="$HOME/custom/agents"
 ```
 
-Windows PowerShell, after the tag is published:
+Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v2.0.0
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.1.0
 ```
 
 `--ref` / `-Ref` accepts only a final `vX.Y.Z` tag, not a branch, commit, `main`, or prerelease. `main` is a rolling development snapshot and may be unstable. Use it only when you intentionally want the latest development state:
@@ -340,6 +340,15 @@ Alternatively, install the whole repository as a plugin from inside Kimi Code CL
 
 ```text
 /plugins install https://github.com/taotao135791-bit/kimi-ads
+```
+
+Note: `/plugins install` does not create the Python virtual environment. If you
+need the PDF report or page-fetch helpers, install the Python dependencies once
+from the managed plugin directory (the directory where Kimi placed the
+repository):
+
+```bash
+pip3 install -r <plugin-dir>/requirements.txt
 ```
 
 ## Quick Start

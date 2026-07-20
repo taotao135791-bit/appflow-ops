@@ -6,7 +6,7 @@ description: >-
   changed and the operator needs practical media-buying levers. Handles
   install-heavy/pay-light, registration-heavy/payment-light, lead-heavy/low-quality,
   low-CPI/poor-ROI, high-spend/no-revenue, payment KPI pressure, limited client
-  permissions, and client-facing explanation needs.
+  permissions, and client-facing explanation needs. 中文触发: 安装多付费少, KPI 不能改, 线索多质量差, 低价没回收.
 ---
 
 # Agency Lever Diagnosis

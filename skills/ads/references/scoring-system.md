@@ -190,9 +190,8 @@ Cross-platform checks are scored at 100% weight in the aggregate score (not with
 
 Note: catalog-tracked checks are verified bidirectionally by the eval harness
 (`tests/audit/test_check_coverage.py`). Apple, Amazon, and Attribution +
-Server-side checks live inline in their respective SKILL.md files; their
-dedicated audit reference files (`apple-audit.md`, `amazon-audit.md`,
-`attribution-audit.md`) and catalog entries land in Wave 3.
+Server-side checks live inline in their respective SKILL.md files and are not
+separately catalog-tracked.
 
 ---
 

@@ -19,12 +19,15 @@ templates opened in a browser, or any page containing private account data:
 - If WebBridge is not installed or not connected, tell the user to install it
   (https://www.kimi.com/zh-cn/features/webbridge) or ask for exports, pasted
   tables, or user-provided screenshots instead.
-- MUST NOT use headless Playwright, screenshot scripts, page HTML extraction,
-  or network scraping against logged-in dashboards.
+- MUST NOT use any headless or scripted browser automation, screenshot
+  scripts, page HTML extraction, or network scraping against logged-in
+  dashboards.
 - MUST NOT take screenshots of private dashboards unless the user explicitly
   asks for a current-work deliverable that requires screenshots.
-- Headless browser and script tools are allowed only for public landing pages,
-  public brand sites, or local files that do not contain logged-in account data.
+- This bundle ships no headless browser tooling; any rendered-page work
+  (including screenshots of public pages) goes through Kimi WebBridge in the
+  user's visible browser. Raw HTTP fetching of public pages with
+  `scripts/fetch_page.py` is fine.
 
 ## Guided Access Script
 

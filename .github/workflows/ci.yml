@@ -24,10 +24,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -59,10 +59,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
           cache: pip
@@ -76,6 +76,18 @@ jobs:
           ruff check .
           ruff format --check .
           python -m mypy scripts/kimi_ads/uac
+
+      - name: Type-check top-level scripts
+        run: >-
+          python -m mypy
+          scripts/fetch_page.py
+          scripts/generate_image.py
+          scripts/generate_report.py
+          scripts/knowledge_doctor.py
+          scripts/privacy_doctor.py
+          scripts/sync_skill_layout.py
+          scripts/uac_experiment.py
+          scripts/url_utils.py
 
       - name: Run fixture, schema, CLI compatibility, workspace, and privacy contracts
         run: |
@@ -122,26 +134,23 @@ jobs:
             --json \
             --json-output "${RUNNER_TEMP}/uac-quick-decision.json" \
             --markdown-output "${RUNNER_TEMP}/uac-quick-decision.md"
-          python -c "import json; from pathlib import Path; result=json.loads(Path('${RUNNER_TEMP}/uac-quick-decision.json').read_text(encoding='utf-8')); assert result['mode'] == 'quick_decision'; assert result['account_write'] is False; assert result['ledger_write'] is False"
-          grep -q '^结论：' "${RUNNER_TEMP}/uac-quick-decision.md"
+          python scripts/ci/check_uac_decide_output.py \
+            --json "${RUNNER_TEMP}/uac-quick-decision.json" \
+            --profile quick-ops \
+            --markdown "${RUNNER_TEMP}/uac-quick-decision.md"
 
       - name: Run deterministic numeric Quick Decision smoke
         run: |
-          python -c "import sys; sys.path.insert(0, 'scripts'); from kimi_ads.uac.policy_loader import load_policy_set; policies=load_policy_set(); assert policies['uac_numeric'].policy_version == 'uac-numeric-policy-v1'; assert policies['uac_signal'].policy_version == 'uac-signal-policy-v1'; assert not any(policy.degraded for policy in policies.values())"
-          python scripts/uac_experiment.py decide \
+          python scripts/ci/check_uac_policies.py
+          python scripts/ci/check_uac_decide_output.py \
             skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml \
-            --json-output "${RUNNER_TEMP}/uac-quick-numeric-a.json"
-          python scripts/uac_experiment.py decide \
-            skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml \
-            --json-output "${RUNNER_TEMP}/uac-quick-numeric-b.json"
-          cmp "${RUNNER_TEMP}/uac-quick-numeric-a.json" \
-            "${RUNNER_TEMP}/uac-quick-numeric-b.json"
-          python -c "import json; from pathlib import Path; result=json.loads(Path('${RUNNER_TEMP}/uac-quick-numeric-a.json').read_text(encoding='utf-8')); assert result['mode'] == 'quick_decision'; assert result['derived_signals']['has_numeric_evidence'] is True; assert result['constraint_analysis']['primary_constraint'] == 'TARGET_LIKELY_TOO_TIGHT'; assert result['target_recommendation']['recommended_action'] == 'INCREASE'; assert result['target_recommendation']['recommended_value'] == 5.5; assert result['target_recommendation']['numeric_safety']['operation_classification'] == 'NORMAL_OPTIMIZATION'; assert result['policy']['numeric']['policy_version'] == 'uac-numeric-policy-v1'; assert result['budget_recommendation']['recommended_action'] == 'NO_CHANGE'; assert result['calculation_evidence']; assert result['account_write'] is False; assert result['ledger_write'] is False"
-          python -c "from pathlib import Path; import yaml; source=Path('skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml'); case=yaml.safe_load(source.read_text(encoding='utf-8')); case['goal'].update({'target_cpa': 2.0, 'maximum_acceptable_cpa': 8.0}); output=Path('${RUNNER_TEMP}/uac-quick-numeric-staged-input.yaml'); output.write_text(yaml.safe_dump(case, sort_keys=False), encoding='utf-8')"
-          python scripts/uac_experiment.py decide \
-            "${RUNNER_TEMP}/uac-quick-numeric-staged-input.yaml" \
+            --profile numeric \
+            --determinism \
+            --json-output "${RUNNER_TEMP}/uac-quick-numeric-a.json" \
+            --determinism-output "${RUNNER_TEMP}/uac-quick-numeric-b.json"
+          python scripts/ci/check_numeric_cap.py \
+            --staged-input-output "${RUNNER_TEMP}/uac-quick-numeric-staged-input.yaml" \
             --json-output "${RUNNER_TEMP}/uac-quick-numeric-staged.json"
-          python -c "import json; from pathlib import Path; result=json.loads(Path('${RUNNER_TEMP}/uac-quick-numeric-staged.json').read_text(encoding='utf-8')); safety=result['target_recommendation']['numeric_safety']; assert safety['raw_candidate'] == 5.0; assert safety['change_limited_candidate'] == 2.4; assert safety['final_recommendation'] == 2.4; assert safety['operation_classification'] == 'STAGED_OPTIMIZATION'; assert safety['staged_plan']['immediate_stage'] == 1; assert safety['staged_plan']['stages'][0]['immediate'] is True; assert all(stage['approval_state'] == 'REQUIRES_FRESH_REVIEW' and stage['automatic_execution'] is False for stage in safety['staged_plan']['stages'][1:]); assert result['account_write'] is False; assert result['ledger_write'] is False"
 
       - name: Run private workspace workflow smoke
         run: |
@@ -181,10 +190,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
           cache: pip
@@ -202,7 +211,7 @@ jobs:
           --cov-fail-under=80
 
       - name: Upload UAC coverage XML
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: uac-core-coverage-${{ github.sha }}
           path: coverage.xml
@@ -218,10 +227,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
 
@@ -239,24 +248,9 @@ jobs:
             --target=cursor \
             --skill-dir="${RUNNER_TEMP}/kimi-ads-skills" \
             --agent-dir="${RUNNER_TEMP}/kimi-ads-agents"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-INPUT.example.yaml"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-OPS.example.yaml"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/ads-experiments.schema.json"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/uac-quick-decision.schema.json"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/SKILL.md"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/references/agent-workflow.md"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/references/quick-ops.md"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/engine.py"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/quick_ops.py"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/signals.py"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/numeric_decision.py"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/policy_loader.py"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/policies/uac-heuristic-policy.schema.json"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/policies/uac-numeric-policy-v1.yaml"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/policies/uac-signal-policy-v1.yaml"
-          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/VERSION"
+          python scripts/ci/check_install_layout.py \
+            --skill-dir "${RUNNER_TEMP}/kimi-ads-skills" \
+            --agents-dir "${RUNNER_TEMP}/kimi-ads-agents"
           mkdir -p "${RUNNER_TEMP}/installed-uac-project"
           cp "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-INPUT.example.yaml" \
             "${RUNNER_TEMP}/installed-uac-project/UAC-INPUT.yaml"
@@ -268,15 +262,13 @@ jobs:
           python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" decide \
             "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-OPS.example.yaml" \
             --json
-          numeric_input="${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml"
-          numeric_a="${RUNNER_TEMP}/installed-uac-numeric-a.json"
-          numeric_b="${RUNNER_TEMP}/installed-uac-numeric-b.json"
-          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" decide \
-            "${numeric_input}" --json-output "${numeric_a}"
-          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" decide \
-            "${numeric_input}" --json-output "${numeric_b}"
-          cmp "${numeric_a}" "${numeric_b}"
-          python -c "import json; from pathlib import Path; result=json.loads(Path('${numeric_a}').read_text(encoding='utf-8')); assert result['derived_signals']['has_numeric_evidence'] is True; assert result['constraint_analysis']['primary_constraint'] == 'TARGET_LIKELY_TOO_TIGHT'; assert result['target_recommendation']['recommended_action'] == 'INCREASE'; assert result['target_recommendation']['recommended_value'] == 5.5; assert result['target_recommendation']['numeric_safety']['policy_version'] == 'uac-numeric-policy-v1'; assert result['policy']['signal']['policy_version'] == 'uac-signal-policy-v1'; assert result['budget_recommendation']['recommended_action'] == 'NO_CHANGE'; assert result['account_write'] is False; assert result['ledger_write'] is False"
+          python scripts/ci/check_uac_decide_output.py \
+            --script "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" \
+            "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml" \
+            --profile numeric \
+            --determinism \
+            --json-output "${RUNNER_TEMP}/installed-uac-numeric-a.json" \
+            --determinism-output "${RUNNER_TEMP}/installed-uac-numeric-b.json"
 
       - name: Run Windows installer
         if: runner.os == 'Windows'
@@ -287,31 +279,9 @@ jobs:
           $skillDir = Join-Path $env:RUNNER_TEMP "kimi-ads-skills"
           $agentDir = Join-Path $env:RUNNER_TEMP "kimi-ads-agents"
           ./install.ps1 -Target cursor -SkillDir $skillDir -AgentDir $agentDir
-          $required = @(
-            (Join-Path $skillDir "ads-google-app/assets/UAC-INPUT.example.yaml"),
-            (Join-Path $skillDir "ads-google-app/assets/UAC-QUICK-OPS.example.yaml"),
-            (Join-Path $skillDir "ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml"),
-            (Join-Path $skillDir "ads-google-app/assets/ads-experiments.schema.json"),
-            (Join-Path $skillDir "ads-google-app/assets/uac-quick-decision.schema.json"),
-            (Join-Path $skillDir "ads-google-app/SKILL.md"),
-            (Join-Path $skillDir "ads-google-app/references/agent-workflow.md"),
-            (Join-Path $skillDir "ads-google-app/references/quick-ops.md"),
-            (Join-Path $skillDir "ads/scripts/uac_experiment.py"),
-            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/engine.py"),
-            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/quick_ops.py"),
-            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/signals.py"),
-            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/numeric_decision.py"),
-            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/policy_loader.py"),
-            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/policies/uac-heuristic-policy.schema.json"),
-            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/policies/uac-numeric-policy-v1.yaml"),
-            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/policies/uac-signal-policy-v1.yaml"),
-            (Join-Path $skillDir "ads/VERSION")
-          )
-          foreach ($path in $required) {
-            if (-not (Test-Path $path -PathType Leaf)) {
-              throw "Missing installed artifact: $path"
-            }
-          }
+          python scripts/ci/check_install_layout.py `
+            --skill-dir $skillDir `
+            --agents-dir $agentDir
           $projectDir = Join-Path $env:RUNNER_TEMP "installed-uac-project"
           New-Item -ItemType Directory -Path $projectDir -Force | Out-Null
           Copy-Item (Join-Path $skillDir "ads-google-app/assets/UAC-INPUT.example.yaml") `
@@ -326,38 +296,48 @@ jobs:
           $numericInput = Join-Path $skillDir "ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml"
           $numericA = Join-Path $env:RUNNER_TEMP "installed-uac-numeric-a.json"
           $numericB = Join-Path $env:RUNNER_TEMP "installed-uac-numeric-b.json"
-          python $installedScript decide $numericInput --json-output $numericA
-          python $installedScript decide $numericInput --json-output $numericB
-          $numericTextA = Get-Content -LiteralPath $numericA -Raw -Encoding UTF8
-          $numericTextB = Get-Content -LiteralPath $numericB -Raw -Encoding UTF8
-          if ($numericTextA -cne $numericTextB) {
-            throw "Numeric Quick Decision output is not deterministic"
-          }
-          $numericResult = $numericTextA | ConvertFrom-Json
-          if (-not $numericResult.derived_signals.has_numeric_evidence) {
-            throw "Numeric Quick Decision did not detect numeric evidence"
-          }
-          if ($numericResult.constraint_analysis.primary_constraint -ne "TARGET_LIKELY_TOO_TIGHT") {
-            throw "Numeric Quick Decision result changed from its stable example contract"
-          }
-          if ($numericResult.target_recommendation.recommended_action -ne "INCREASE") {
-            throw "Numeric Quick Decision result changed from its stable example contract"
-          }
-          if ($numericResult.target_recommendation.recommended_value -ne 5.5) {
-            throw "Numeric Quick Decision result changed from its stable example contract"
-          }
-          if ($numericResult.target_recommendation.numeric_safety.policy_version -ne "uac-numeric-policy-v1") {
-            throw "Numeric Quick Decision did not load its installed numeric policy"
-          }
-          if ($numericResult.policy.signal.policy_version -ne "uac-signal-policy-v1") {
-            throw "Numeric Quick Decision did not load its installed signal policy"
-          }
-          if ($numericResult.budget_recommendation.recommended_action -ne "NO_CHANGE") {
-            throw "Numeric Quick Decision result changed from its stable example contract"
-          }
-          if ($numericResult.account_write -ne $false) {
-            throw "Numeric Quick Decision must remain read-only"
-          }
-          if ($numericResult.ledger_write -ne $false) {
-            throw "Numeric Quick Decision must remain read-only"
-          }
+          python scripts/ci/check_uac_decide_output.py `
+            --script $installedScript `
+            $numericInput `
+            --profile numeric `
+            --determinism `
+            --json-output $numericA `
+            --determinism-output $numericB
+
+  shellcheck:
+    name: shellcheck / ubuntu-latest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Lint installer shell scripts
+        run: shellcheck install.sh uninstall.sh
+
+  dependency-audit:
+    name: pip-audit / ubuntu-latest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Install pip-audit
+        run: python -m pip install --disable-pip-version-check pip-audit
+
+      - name: Audit runtime and development dependencies
+        run: >-
+          pip-audit --strict
+          --requirement requirements.txt
+          --requirement requirements-dev.txt

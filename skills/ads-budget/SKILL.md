@@ -5,7 +5,7 @@ description: >-
   distribution, bidding strategy appropriateness, scaling readiness, and identifies
   campaigns to kill or scale. Uses 70/20/10 rule, 3x Kill Rule, and 20% scaling rule. Use
   when user says budget allocation, bidding strategy, ad spend, ROAS target, media budget,
-  or scaling.
+  or scaling. 中文触发: 预算怎么分, 要不要加预算, 出价策略, 哪些计划该停.
 ---
 
 <!-- Updated: 2026-04-13 | v1.5 -->
