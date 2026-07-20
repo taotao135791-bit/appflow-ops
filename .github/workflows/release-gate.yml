@@ -50,6 +50,9 @@ jobs:
           if manifest.get("version") != version:
               raise SystemExit("plugin manifest version does not match VERSION")
           PY
+          # actions/checkout re-points the local tag ref at the commit, so
+          # re-fetch the real tag object before asserting it is annotated.
+          git fetch --no-tags origin "+refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
           test "$(git cat-file -t "refs/tags/${GITHUB_REF_NAME}")" = "tag"
           git fetch --no-tags origin main
           test "$(git rev-parse HEAD^{commit})" = "$(git rev-parse FETCH_HEAD^{commit})"

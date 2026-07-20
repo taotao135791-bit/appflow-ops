@@ -22,6 +22,11 @@ import argparse
 import sys
 from pathlib import Path
 
+# Windows consoles default to cp1252; keep the ✓/✗ markers from crashing CI.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 REQUIRED_SKILL_FILES = [
     "ads/SKILL.md",
     "ads/VERSION",

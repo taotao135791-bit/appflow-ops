@@ -35,6 +35,9 @@ module = [
 ]
 disallow_untyped_defs = false
 check_untyped_defs = true
+# Third-party stub versions drift between environments (e.g. matplotlib's
+# ax.pie return type), so a needed "type: ignore" here can be unused there.
+warn_unused_ignores = false
 
 # requests ships no type stubs in this environment; only the top-level
 # scripts use it, and they guard the import at runtime.

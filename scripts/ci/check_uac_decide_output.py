@@ -34,6 +34,11 @@ import sys
 import tempfile
 from pathlib import Path
 
+# Windows consoles default to cp1252; keep the ✓/✗ markers from crashing CI.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SCRIPT = REPO_ROOT / "scripts" / "uac_experiment.py"
 CONCLUSION_PREFIX = "结论："
