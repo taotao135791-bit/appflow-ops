@@ -62,4 +62,10 @@ jobs:
         run: test "$(git rev-parse --is-shallow-repository)" = "false"
 
       - name: Run the redacted full-history privacy gate
-        run: python scripts/privacy_doctor.py --history --json
+        # Identity findings in pre-migration history (personal email, local
+        # hostname) and committed .pyc files are accepted by the repo owner
+        # (2026-07-20); they stay visible in the report as waived INFO items.
+        # Real secrets and private-data kinds still fail the gate.
+        run: >-
+          python scripts/privacy_doctor.py --history --json
+          --waive non-noreply-identity,non-pseudonymous-identity-name,python-bytecode

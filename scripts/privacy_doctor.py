@@ -880,6 +880,15 @@ def _parser() -> argparse.ArgumentParser:
         "--json", action="store_true", help="emit machine-readable JSON"
     )
     parser.add_argument(
+        "--waive",
+        default="",
+        metavar="KIND[,KIND...]",
+        help=(
+            "finding kinds to report (marked waived, severity INFO) without "
+            "failing the audit — for exposure the repo owner has accepted"
+        ),
+    )
+    parser.add_argument(
         "--repo-root",
         type=Path,
         default=Path(__file__).resolve().parents[1],
@@ -897,6 +906,13 @@ def main(argv: list[str] | None = None) -> int:
     except PrivacyAuditError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    waived = {kind.strip() for kind in args.waive.split(",") if kind.strip()}
+    if waived:
+        for finding in report["findings"]:
+            if finding["kind"] in waived:
+                finding["severity"] = "INFO"
+                finding["waived"] = True
+    active = [f for f in report["findings"] if not f.get("waived")]
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
@@ -910,7 +926,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         print(report["redaction"])
         print(report["limitations"])
-    return 1 if report["findings"] else 0
+    return 1 if active else 0
 
 
 if __name__ == "__main__":
