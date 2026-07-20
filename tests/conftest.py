@@ -1,4 +1,4 @@
-"""Pytest configuration for the codex-ads eval harness.
+"""Pytest configuration for the kimi-ads eval harness.
 
 Shared fixtures:
 - ``repo_root``        — path to the repo root

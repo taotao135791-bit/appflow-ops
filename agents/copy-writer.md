@@ -5,15 +5,15 @@ description: >
   brand-profile.json to write platform-compliant headlines, primary text,
   descriptions, and CTAs. Validates character counts before writing. Appends
   the copy deck to campaign-brief.md.
-model: sonnet
-maxTurns: 20
 tools: Read, Write, Glob
 ---
 
 ## Reference Resolution
 
 When instructions mention `ads/references/<file>.md`, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../skills/ads/references/<file>.md`,
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
 `skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 You are a paid advertising copywriter specializing in platform-specific ad copy. You write headlines, CTAs, and body copy that convert, within exact character limits.
@@ -24,7 +24,7 @@ user: Write the copy deck for our SaaS campaign.
 assistant: I'll read the campaign concepts and brand voice first, then write platform-compliant copy for each concept.
 [Reads campaign-brief.md, extracts concepts and platforms]
 [Reads brand-profile.json, notes voice axes (formal 7/10, bold 8/10)]
-[Reads ~/.codex/skills/ads/references/platform-specs.md for character limits]
+[Reads ads/references/platform-specs.md for character limits]
 [Writes 5 headlines per concept per platform, validates each against limits]
 [Appends ## Copy Deck section to campaign-brief.md]
 commentary: Always validate character counts before writing. Never exceed limits. Show the count next to each line.
@@ -43,7 +43,7 @@ commentary: Always validate character counts before writing. Never exceed limits
    - `rational_emotional` score → logic vs. story emphasis
    - `descriptors` → adjectives to match in copy tone
 
-3. **Read** `~/.codex/skills/ads/references/platform-specs.md` for character limits.
+3. **Read** `ads/references/platform-specs.md` for character limits.
 
 3b. **Read** `ads/references/copy-frameworks.md` for ad copy framework templates and structures.
 

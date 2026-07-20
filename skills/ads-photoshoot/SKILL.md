@@ -14,8 +14,10 @@ description: >-
 ## Reference Resolution
 
 For any `ads/references/<file>.md` path below, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../ads/references/<file>.md`,
-`../skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
+`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 Transforms a product image or description into professional ad-ready photography
 in 5 distinct visual styles. Each style generates at two sizes: 1:1 (Meta/LinkedIn)
@@ -23,7 +25,7 @@ and 9:16 (TikTok/Reels/Stories).
 
 ## Quick Reference
 
-These `/ads ...` entries are Codex routing shorthand, not shell commands.
+These `/ads ...` entries are Kimi routing shorthand, not shell commands.
 
 | Shorthand | What it does |
 |---------|-------------|
@@ -226,7 +228,7 @@ Before generating, show:
 
 ## Reference Files
 
-- `~/.codex/skills/ads/references/image-providers.md`: API setup and pricing
-- `~/.codex/skills/ads/references/brand-dna-template.md`: Brand injection schema
-- `~/.codex/skills/ads/references/meta-creative-specs.md`: Safe zone for 9:16
-- `~/.codex/skills/ads/references/tiktok-creative-specs.md`: Safe zone constraints
+- `ads/references/image-providers.md`: API setup and pricing
+- `ads/references/brand-dna-template.md`: Brand injection schema
+- `ads/references/meta-creative-specs.md`: Safe zone for 9:16
+- `ads/references/tiktok-creative-specs.md`: Safe zone constraints

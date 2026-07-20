@@ -1,30 +1,30 @@
-# Codex Ads 快速启动
+# Kimi Ads 快速启动
 
-Codex Ads 是一个 Codex-first 广告决策工作流。**不用背 `/ads` 命令，也不用先学 YAML**：把导出表、表格、截图或只读后台交给 Codex，再复制一句自然语言。
+Kimi Ads 是一个 Kimi-first 广告决策工作流。**不用背 `/ads` 命令，也不用先学 YAML**：把导出表、表格、截图或只读后台交给 Kimi，再复制一句自然语言。
 
 ## 先安装稳定通道
 
-`v1.9.2` tag 当前需要先发布；发布后推荐固定这个版本：
+`v2.0.0` tag 当前需要先发布；发布后推荐固定这个版本：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.sh | bash -s -- --ref=v1.9.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
 ```
 
 Windows：
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v1.9.2
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.0.0
 ```
 
 `main` 是可能不稳定的滚动开发快照，不是默认稳定通道。需要回滚时，重新安装一个真实存在、已验证的旧 tag；这不会撤销广告账户操作或自动降级 ledger `1.1`，所以 schema 迁移前必须保留 `1.0` 备份。完整安装和回滚命令见 [README](README.md#安装)。
 
 ## 第一次使用
 
-先打开 Codex，然后说：
+先打开 Kimi，然后说：
 
 ```text
-我要用 Codex Ads 做广告优化。之后请默认只读看数，不修改广告后台；如果需要日报、周报或甲方汇报，请先问我模板在哪里。
+我要用 Kimi Ads 做广告优化。之后请默认只读看数，不修改广告后台；如果需要日报、周报或甲方汇报，请先问我模板在哪里。
 ```
 
 如果你已经打开广告后台，可以这样说：
@@ -35,7 +35,7 @@ irm https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.
 
 ## 先记住这些边界
 
-自然语言路径包含 Agent 推理：Codex 负责理解上下文、整理证据和追问缺口。Doctor、normalize、UAC 规则、台账校验、迁移和 replay 是本地确定性能力；它们不调用广告或模型 API，也不会修改平台。
+自然语言路径包含 Agent 推理：Kimi 负责理解上下文、整理证据和追问缺口。Doctor、normalize、UAC 规则、台账校验、迁移和 replay 是本地确定性能力；它们不调用广告或模型 API，也不会修改平台。
 
 - 不保证增长、降低 CPA 或提高 ROAS。
 - 不替代产品、支付墙、SDK/埋点、MMP 或后端回传。
@@ -98,7 +98,7 @@ Google UAC 日常 Quick Ops（不会默认生成完整报告或实验）：
 6. 我附上了多日成熟数据、当前 tCPA/预算和业务 CPA 上限；只给一个数值建议，另一个变量保持不变。
 ```
 
-这些 AC 名称是团队内部口径，不是 tCPA 数值。Codex 会优先核对真实账户设置和项目 glossary；没有确认口径、价值信号或权限时，保持当前而不是强行切换。
+这些 AC 名称是团队内部口径，不是 tCPA 数值。Kimi 会优先核对真实账户设置和项目 glossary；没有确认口径、价值信号或权限时，保持当前而不是强行切换。
 
 想先看可复现样例，可直接使用完全合成的 [`UAC-QUICK-NUMERIC.example.yaml`](skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml)；它演示保持 AC2.5、只改 tCPA、预算不动和成熟回滚门槛。
 
@@ -112,7 +112,7 @@ UAC 项目不需要背命令，按进度直接说下面五句话即可：
 5. 复盘当前实验。（同时附上同口径的最新数据）
 ```
 
-Codex 会把真实资料放进默认忽略的私有 workspace，内部完成字段整理、Doctor、分析和台账校验。第 3 步先只展示草案；只有你确认草案后才写入本地台账。写入台账也不等于授权修改 Google Ads，真实账户操作仍需另一次精确确认。
+Kimi 会把真实资料放进默认忽略的私有 workspace，内部完成字段整理、Doctor、分析和台账校验。第 3 步先只展示草案；只有你确认草案后才写入本地台账。写入台账也不等于授权修改 Google Ads，真实账户操作仍需另一次精确确认。
 
 导出日报：
 
@@ -156,7 +156,7 @@ Codex 会把真实资料放进默认忽略的私有 workspace，内部完成字�
 
 1. **导入**：附上导出表或粘贴数据，包含日期、campaign/OS/国家粒度、浅层到支付指标、素材、最近改动、转化延迟和对账状态。
 2. **声明权限**：明确“只能改预算、tCPA、素材”，并把产品、支付墙、SDK、MMP、后端回传和商店页列为不可触碰项。
-3. **Doctor**：让 Codex 运行只读 Doctor，先检查版本、依赖、输入、台账、schema 和未完成实验。
+3. **Doctor**：让 Kimi 运行只读 Doctor，先检查版本、依赖、输入、台账、schema 和未完成实验。
 4. **分析**：运行 UAC 分析，查看测量、学习资格、权限和优化可行性。
 5. **判断行动**：只在证据和成熟度通过门禁时才进入实验；否则补数据、请求客户支持、等待或不操作。
 6. **创建与确认实验**：先展示一个未批准的单变量草案，不写台账；用户确认草案后才追加本地 `proposed` 记录。它不会修改 Google Ads；人工另行批准并在平台执行后才记为 `observing`，拒绝则记为 `cancelled`。
@@ -166,7 +166,7 @@ Codex 会把真实资料放进默认忽略的私有 workspace，内部完成字�
 
 ## 高级：确定性检查和 schema 1.1
 
-普通用户可以让 Codex 运行下面的工具。以下是源码 checkout 命令；一行安装的相对路径不在当前项目里，默认安装脚本在 `~/.codex/skills/ads/scripts/`。
+普通用户可以让 Kimi 运行下面的工具。以下是源码 checkout 命令；一行安装的相对路径不在当前项目里，默认安装脚本在 `~/.kimi-code/skills/ads/scripts/`。
 
 ```bash
 # 创建默认忽略的私有项目；把原始摘要放进它的 input/ 后继续
@@ -203,10 +203,10 @@ Workspace normalize 总会写 draft 和 `NORMALIZATION.json`，仅在严格合�
 2. 切到正确账号。
 3. 选好日期范围，比如昨天、过去 7 天、过去 30 天、本周或本月。
 4. 如果要日报/周报，打开甲方模板，或给模板路径/链接/文件名关键词。
-5. 告诉 Codex：只读看数，不修改任何设置。
+5. 告诉 Kimi：只读看数，不修改任何设置。
 ```
 
-Codex Ads 默认只会看：
+Kimi Ads 默认只会看：
 
 - 概览、广告系列表、素材表、转化目标、诊断、建议、分国家/设备/网络/素材数据
 - 甲方模板的结构、字段、日期格式、表格样式
@@ -221,25 +221,25 @@ Codex Ads 默认只会看：
 每个优化师可以在项目目录放一个自己的经验文件：
 
 ```text
-CODEX_ADS_OPTIMIZER.md
+KIMI_ADS_OPTIMIZER.md
 ```
 
-你可以这样让 Codex 创建：
+你可以这样让 Kimi 创建：
 
 ```text
-帮我创建一个 CODEX_ADS_OPTIMIZER.md，记录我的投放判断习惯。我的风格是：先看转化目标，再看预算消耗，再看国家和素材；给甲方汇报要直接，但不要太激进。
+帮我创建一个 KIMI_ADS_OPTIMIZER.md，记录我的投放判断习惯。我的风格是：先看转化目标，再看预算消耗，再看国家和素材；给甲方汇报要直接，但不要太激进。
 ```
 
-也可以让 Codex 根据你平时的话术整理：
+也可以让 Kimi 根据你平时的话术整理：
 
 ```text
-根据我下面这段优化经验，整理成 CODEX_ADS_OPTIMIZER.md，以后分析账户时先按我的规则判断。
+根据我下面这段优化经验，整理成 KIMI_ADS_OPTIMIZER.md，以后分析账户时先按我的规则判断。
 ```
 
 开启投手风格学习：
 
 ```text
-帮我在 CODEX_ADS_OPTIMIZER.md 里开启投手风格学习模式。
+帮我在 KIMI_ADS_OPTIMIZER.md 里开启投手风格学习模式。
 默认用 suggest_only：你可以根据我的纠正提出可沉淀规则，但必须先问我确认，不要自动写入。
 学习到的规则要放在“从使用经验学习到的偏好”，不能覆盖我手动填写的规则，也不能保存客户信息或具体账号数据。
 ```
@@ -274,7 +274,7 @@ CODEX_ADS_OPTIMIZER.md
 ## 优化师配置模板
 
 ```markdown
-# Codex Ads Optimizer Profile
+# Kimi Ads Optimizer Profile
 
 ## 我的投放风格
 - 
@@ -297,7 +297,7 @@ CODEX_ADS_OPTIMIZER.md
 ## 甲方汇报口径
 - 
 
-## 我不希望 Codex 做的事
+## 我不希望 Kimi 做的事
 - 
 ```
 

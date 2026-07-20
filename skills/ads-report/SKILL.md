@@ -3,7 +3,7 @@ name: ads-report
 description: >-
   Guided reporting workflow for paid advertising. Exports daily performance reports,
   weekly creative reports, client-ready summaries, and adapts arbitrary client report
-  templates using Computer Use read-only dashboard/template inspection plus user-provided
+  templates using Kimi WebBridge read-only dashboard/template inspection plus user-provided
   files. Use when user says daily report, export daily report, 日报, weekly creative report,
   素材周报, client template, report template, 甲方模板, adapt template, template mapping,
   client-report-map, or reporting.
@@ -14,12 +14,14 @@ description: >-
 ## Reference Resolution
 
 For any `ads/references/<file>.md` path below, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../ads/references/<file>.md`,
-`../skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
+`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 Creates repeatable client-facing reports from live ad platform data, exports,
-screenshots, pasted metrics, or templates. Default mode is Computer Use-assisted
-read-only inspection when the user is logged in.
+screenshots, pasted metrics, or templates. Default mode is Kimi
+WebBridge-assisted read-only inspection when the user is logged in.
 
 For UAC/App campaigns, load `ads-google-app`. Use `UAC-ANALYSIS.json` as the
 single fact source when present; derive the Markdown report, client summary,
@@ -28,7 +30,7 @@ document independently.
 
 ## Routing Shorthand
 
-These `/ads ...` entries are Codex routing shorthand, not shell commands.
+These `/ads ...` entries are Kimi routing shorthand, not shell commands.
 
 | Shorthand | What it does |
 | --- | --- |
@@ -39,7 +41,7 @@ These `/ads ...` entries are Codex routing shorthand, not shell commands.
 
 ## Guided Access First
 
-Before live collection, read `ads/references/computer-use-live-audit.md` and
+Before live collection, read `ads/references/webbridge-live-audit.md` and
 use this short guided access prompt:
 
 ```text

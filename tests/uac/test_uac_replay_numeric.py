@@ -14,16 +14,16 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from codex_ads.uac.replay import (  # noqa: E402
+from kimi_ads.uac.replay import (  # noqa: E402
     REPLAY_FILES,
     evaluate_replay,
     render_replay,
     replay_path,
 )
-from codex_ads.uac.policy_loader import load_policy_set  # noqa: E402
-from codex_ads.uac.types import ContractError  # noqa: E402
+from kimi_ads.uac.policy_loader import load_policy_set  # noqa: E402
+from kimi_ads.uac.types import ContractError  # noqa: E402
 
-replay_module = importlib.import_module("codex_ads.uac.replay")
+replay_module = importlib.import_module("kimi_ads.uac.replay")
 
 
 def _documents(case_dir: Path) -> dict[str, dict[str, Any]]:
@@ -52,7 +52,7 @@ def make_numeric_case(repo_root: Path, tmp_path: Path) -> Callable[[str], Path]:
         for document in documents.values():
             document["case_id"] = name
         _add_numeric_input(documents["snapshot-before.yaml"]["uac_input"])
-        system = documents["system-recommendation.yaml"]["codex_ads"]
+        system = documents["system-recommendation.yaml"]["kimi_ads"]
         system["recommended_variables"] = ["bid"]
         system["protected_variables"] = ["budget", "creative"]
         documents["human-decision.yaml"]["human_judgment"] = (
@@ -559,7 +559,7 @@ def test_mature_operational_action_can_score_without_claiming_an_experiment(
     path = make_numeric_case("numeric-operation")
     documents = _documents(path)
     documents["snapshot-before.yaml"]["numeric_ground_truth"] = _ground_truth()
-    documents["system-recommendation.yaml"]["codex_ads"]["created_experiment"] = False
+    documents["system-recommendation.yaml"]["kimi_ads"]["created_experiment"] = False
     documents["evaluation.yaml"].update(
         {
             "experiment_completed": False,
@@ -667,7 +667,7 @@ def test_legacy_replay_can_add_numeric_labels_without_claiming_unknown_acceptanc
         "schema_version": "1.0",
         "case_id": "legacy-numeric",
         "human_judgment": human["human_judgment"],
-        "codex_ads": system["codex_ads"],
+        "kimi_ads": system["kimi_ads"],
     }
     for filename in REPLAY_FILES:
         (path / filename).unlink(missing_ok=True)

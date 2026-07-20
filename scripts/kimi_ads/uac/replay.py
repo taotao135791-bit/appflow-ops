@@ -692,7 +692,7 @@ def _load_replay(case_dir: Path) -> dict[str, dict[str, Any]]:
         _require_bool(human_decision, "accepted_system_recommendation")
         documents["decision-at-the-time.yaml"] = {
             **human_decision,
-            "codex_ads": system_recommendation.get("codex_ads"),
+            "kimi_ads": system_recommendation.get("kimi_ads"),
         }
     return documents
 
@@ -743,7 +743,7 @@ def evaluate_replay(
         }
     )
 
-    decision_data = recorded_decision.get("codex_ads")
+    decision_data = recorded_decision.get("kimi_ads")
     if not isinstance(decision_data, dict):
         raise ContractError("recorded system recommendation must be an object")
     human_judgment = _require_text(recorded_decision, "human_judgment")
@@ -755,10 +755,10 @@ def evaluate_replay(
     recorded_version = _require_text(decision_data, "version")
     recorded_feasibility = decision_data.get("feasibility")
     if recorded_feasibility not in FEASIBILITY_STATES:
-        raise ContractError("codex_ads.feasibility is invalid")
+        raise ContractError("kimi_ads.feasibility is invalid")
     recorded_confidence = decision_data.get("confidence")
     if recorded_confidence not in {"low", "medium", "high"}:
-        raise ContractError("codex_ads.confidence is invalid")
+        raise ContractError("kimi_ads.confidence is invalid")
     recorded_data_gaps = _string_list(decision_data, "data_gaps")
     recorded_recommended = _string_list(decision_data, "recommended_variables")
     protected = _string_list(decision_data, "protected_variables")

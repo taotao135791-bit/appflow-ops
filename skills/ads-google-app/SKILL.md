@@ -20,25 +20,32 @@ platform limits.
 
 Read resources from the first existing location:
 
-- Skill assets: `~/.codex/skills/ads-google-app/assets/`, `assets/`, or
+- Skill assets: `${KIMI_SKILL_DIR}/assets/`,
+  `~/.kimi-code/skills/ads-google-app/assets/`, `assets/`, or
   `../skills/ads-google-app/assets/`
-- Deterministic helper: `~/.codex/skills/ads/scripts/uac_experiment.py`,
+- Deterministic helper: `${KIMI_SKILL_DIR}/../ads/scripts/uac_experiment.py`,
+  `~/.kimi-code/skills/ads/scripts/uac_experiment.py`,
   `../../scripts/uac_experiment.py`, or `scripts/uac_experiment.py`
-- Versioned policy defaults: `~/.codex/skills/ads/scripts/codex_ads/uac/policies/`
-  or `../../scripts/codex_ads/uac/policies/`
-- Natural-language workflow: `~/.codex/skills/ads-google-app/references/agent-workflow.md`,
+- Versioned policy defaults: `${KIMI_SKILL_DIR}/../ads/scripts/kimi_ads/uac/policies/`,
+  `~/.kimi-code/skills/ads/scripts/kimi_ads/uac/policies/`,
+  or `../../scripts/kimi_ads/uac/policies/`
+- Natural-language workflow: `${KIMI_SKILL_DIR}/references/agent-workflow.md`,
+  `~/.kimi-code/skills/ads-google-app/references/agent-workflow.md`,
   `references/agent-workflow.md`, or
   `skills/ads-google-app/references/agent-workflow.md`
-- Quick Ops rules: `~/.codex/skills/ads-google-app/references/quick-ops.md`,
+- Quick Ops rules: `${KIMI_SKILL_DIR}/references/quick-ops.md`,
+  `~/.kimi-code/skills/ads-google-app/references/quick-ops.md`,
   `references/quick-ops.md`, or
   `skills/ads-google-app/references/quick-ops.md`
-- Global safety: `~/.codex/skills/ads/references/orchestrator.md`,
+- Global safety: `${KIMI_SKILL_DIR}/../ads/references/orchestrator.md`,
+  `~/.kimi-code/skills/ads/references/orchestrator.md`,
   `../ads/references/orchestrator.md`, or `../skills/ads/references/orchestrator.md`
 
-For any other `ads/references/<file>.md`, use
-`~/.codex/skills/ads/references/<file>.md`,
-`../ads/references/<file>.md`, `../skills/ads/references/<file>.md`, then
-`ads/references/<file>.md` in a source checkout.
+For any other `ads/references/<file>.md`, read the first existing path:
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
+`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 Useful assets:
 
@@ -104,8 +111,8 @@ finished, stop at the stated wait/data request instead of creating activity.
    conversion volume, conversion delay, guardrails, and concurrent changes.
 4. Do not stack a new variable while a key experiment is waiting for maturity
    or volume without an explicit reason.
-5. For private live dashboards, use Computer Use read-only under the main Ads
-   safety gate. Never use browser scraping or screenshot scripts.
+5. For private live dashboards, use Kimi WebBridge read-only under the main
+   Ads safety gate. Never use browser scraping or screenshot scripts.
 6. Build only the selected output: a Quick card, diagnosis, experiment draft,
    or formal report. Never turn a Quick operation into a ledger experiment
    without a separate explicit request.
@@ -346,7 +353,7 @@ python3 scripts/uac_experiment.py normalize UAC-SUMMARY.csv \
 Normalization only maps and converts fields. Its envelope records normalized
 values, missing fields, conversion errors, extras, and source mappings; it is
 not a drop-in `analyze` input, makes no advertising decision, never overwrites
-the source, and does not process XLSX directly. Codex may read a user-provided
+the source, and does not process XLSX directly. Kimi may read a user-provided
 XLSX and construct the structured contract, but must preserve these same
 decision gates.
 

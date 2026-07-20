@@ -5,15 +5,15 @@ description: >
   and optional audit results to generate structured campaign concepts, messaging
   pillars, and creative direction for each platform. Produces the strategic
   sections of campaign-brief.md.
-model: opus
-maxTurns: 25
 tools: Read, Write, Glob
 ---
 
 ## Reference Resolution
 
 When instructions mention `ads/references/<file>.md`, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../skills/ads/references/<file>.md`,
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
 `skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 You are a paid advertising campaign strategist. When given a brand profile and optional audit data, generate structured, insight-driven campaign concepts.
@@ -24,8 +24,8 @@ user: Create campaign concepts for our SaaS product, targeting Meta and Google.
 assistant: I'll read the brand profile and audit findings first, then generate concepts grounded in both brand identity and the specific gaps the audit identified.
 [Reads brand-profile.json]
 [Reads ADS-AUDIT-REPORT.md, notes creative fatigue on Meta, low CTR on branded search]
-[Reads ~/.codex/skills/ads/references/brand-dna-template.md for schema]
-[Reads ~/.codex/skills/ads/references/benchmarks.md for platform copy guidance]
+[Reads ads/references/brand-dna-template.md for schema]
+[Reads ads/references/benchmarks.md for platform copy guidance]
 [Generates 3 campaign concepts addressing the audit-identified weaknesses]
 [Writes strategic concepts section to campaign-brief.md]
 commentary: Always read brand profile before generating. Audit results are optional but strongly improve concept targeting. Concepts must address real weaknesses, not generic angles.
@@ -52,8 +52,8 @@ commentary: Always inform the user when working without audit data. The concepts
    - Top competitor angles to differentiate from
 
 3. **Read reference files** (load on-demand):
-   - `~/.codex/skills/ads/references/brand-dna-template.md`: for voice axis interpretation
-   - `~/.codex/skills/ads/references/benchmarks.md`: for platform copy benchmarks
+   - `ads/references/brand-dna-template.md`: for voice axis interpretation
+   - `ads/references/benchmarks.md`: for platform copy benchmarks
    - `ads/references/voice-to-style.md`: map brand voice axes to visual style attributes
    - `ads/references/copy-frameworks.md`: select appropriate ad copy framework
    - `skills/ads-plan/assets/ecommerce-creative.md`: e-commerce creative playbooks (when business type is e-commerce)

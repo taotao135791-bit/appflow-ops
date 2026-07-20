@@ -6,12 +6,12 @@ platform reference up front.
 
 ## Live Data Protocol
 
-Default to Computer Use-assisted read-only analysis when the user is logged in
-or asks you to inspect an ad dashboard. Before live inspection:
+Default to Kimi WebBridge-assisted read-only analysis when the user is logged
+in or asks you to inspect an ad dashboard. Before live inspection:
 
 1. Ask the user to open the correct account and date range.
 2. State the read-only boundary.
-3. Load `references/computer-use-live-audit.md`.
+3. Load `references/webbridge-live-audit.md`.
 4. Separate `Observed`, `Calculated`, and `Inference` in reports.
 
 Never create, edit, pause, enable, delete, apply recommendations, change
@@ -20,12 +20,13 @@ that exact action.
 
 For logged-in ad platforms, analytics dashboards, MMP dashboards, client report
 templates opened in a browser, or any page containing private account data,
-MUST use Computer Use for live UI inspection. MUST NOT use Browser Plugin,
-in-app browser automation, Playwright, screenshot scripts, page HTML extraction,
-or network scraping. If Computer Use is unavailable, ask for exports, pasted
-tables, or user-provided screenshots instead of switching to Browser Plugin.
-Browser/Playwright tools are allowed only for public landing pages, public
-brand sites, or local files that do not contain logged-in account data.
+MUST use Kimi WebBridge (the browser bridge that drives the user's real,
+logged-in Chrome/Edge session) for live UI inspection. MUST NOT use headless
+Playwright, screenshot scripts, page HTML extraction, or network scraping
+against logged-in dashboards. If WebBridge is not installed or not connected,
+ask for exports, pasted tables, or user-provided screenshots instead.
+Headless browser and script tools are allowed only for public landing pages,
+public brand sites, or local files that do not contain logged-in account data.
 
 If live UI access is unavailable, use exports, pasted metrics, user-provided
 screenshots, local files, or read-only MCP/API data.
@@ -34,9 +35,9 @@ screenshots, local files, or read-only MCP/API data.
 
 Before audit, reporting, budget, creative, or client-summary work, look for:
 
-- `CODEX_ADS_OPTIMIZER.md`
+- `KIMI_ADS_OPTIMIZER.md`
 - `optimizer-profile.md`
-- `.codex-ads-optimizer.md`
+- `.kimi-ads-optimizer.md`
 
 Use the profile for KPI priorities, kill/scale rules, account-reading order,
 risk tolerance, creative heuristics, and client tone. Profiles guide judgment

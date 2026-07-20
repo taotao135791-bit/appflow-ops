@@ -15,13 +15,13 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from codex_ads.uac.quick_ops import (  # noqa: E402
+from kimi_ads.uac.quick_ops import (  # noqa: E402
     decide_case,
     validate_quick_decision,
 )
-from codex_ads.uac.quick_reporting import render_quick_card  # noqa: E402
-from codex_ads.uac.routing import route_question  # noqa: E402
-from codex_ads.uac.terminology import (  # noqa: E402
+from kimi_ads.uac.quick_reporting import render_quick_card  # noqa: E402
+from kimi_ads.uac.routing import route_question  # noqa: E402
+from kimi_ads.uac.terminology import (  # noqa: E402
     canonical_campaign_level,
     resolve_campaign_level,
 )

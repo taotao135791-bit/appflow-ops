@@ -1,6 +1,6 @@
 # The 10-Principle Thinking Framework
 
-The shared cognitive discipline that runs underneath every codex-ads command.
+The shared cognitive discipline that runs underneath every kimi-ads command.
 Load this file at the start of any audit, plan, or creative-output task. It
 is not a checklist or a phase model — it is a mindset gate. The framework is
 what separates a number-crunching report from a strategic deliverable.

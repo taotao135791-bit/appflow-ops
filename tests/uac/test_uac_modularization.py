@@ -12,7 +12,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 import uac_experiment  # noqa: E402
-from codex_ads import uac  # noqa: E402
+from kimi_ads import uac  # noqa: E402
 
 
 def test_legacy_entry_is_a_small_compatibility_layer(repo_root):
@@ -20,7 +20,7 @@ def test_legacy_entry_is_a_small_compatibility_layer(repo_root):
     text = entry.read_text(encoding="utf-8")
 
     assert len(text.splitlines()) < 100
-    assert "from codex_ads.uac import" in text
+    assert "from kimi_ads.uac import" in text
     assert "def analyze_case" not in text
     assert "def validate_ledger" not in text
 

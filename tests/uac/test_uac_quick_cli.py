@@ -14,7 +14,7 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from codex_ads.uac.workspace import initialize_workspace  # noqa: E402
+from kimi_ads.uac.workspace import initialize_workspace  # noqa: E402
 
 
 def _run(repo_root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:

@@ -13,8 +13,10 @@ description: >-
 ## Reference Resolution
 
 For any `ads/references/<file>.md` path below, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../ads/references/<file>.md`,
-`../skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
+`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 Generates structured campaign concepts and platform-specific copy from your brand
 profile and optional audit data. Outputs `campaign-brief.md` for use by `/ads generate`.
@@ -27,7 +29,7 @@ has to do the work. Spec compliance without emotional pull is a fail.
 
 ## Quick Reference
 
-These `/ads ...` entries are Codex routing shorthand, not shell commands.
+These `/ads ...` entries are Kimi routing shorthand, not shell commands.
 
 | Shorthand | What it does |
 |---------|-------------|

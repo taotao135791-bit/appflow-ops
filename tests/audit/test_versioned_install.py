@@ -73,7 +73,7 @@ def _run_unix_installer(
     environment.update(
         {
             "HOME": str(destination / "home"),
-            "CODEX_ADS_REPO_URL": str(fixture_repository),
+            "KIMI_ADS_REPO_URL": str(fixture_repository),
         }
     )
     skill_dir = destination / "skills with spaces"
@@ -106,7 +106,7 @@ def _run_windows_installer(
     environment = os.environ.copy()
     environment.update(
         {
-            "CODEX_ADS_REPO_URL": str(fixture_repository),
+            "KIMI_ADS_REPO_URL": str(fixture_repository),
             "TEMP": str(temporary),
             "USERPROFILE": str(destination / "home"),
         }
@@ -315,7 +315,7 @@ def test_unix_and_windows_installers_share_the_release_ref_contract(
     assert "show-ref --verify --quiet" in shell
     assert '"refs/tags/${REPO_REF}"' in shell
     assert 'show-ref --verify --quiet "refs/tags/$Ref"' in powershell
-    assert 'cp "${TEMP_DIR}/codex-ads/VERSION" "${SKILL_DIR}/VERSION"' in shell
+    assert 'cp "${TEMP_DIR}/kimi-ads/VERSION" "${SKILL_DIR}/VERSION"' in shell
     assert 'Copy-Item (Join-Path $SourceDir "VERSION")' in powershell
     assert "--ref=vX.Y.Z" in release_docs
     assert "-Ref vX.Y.Z" in release_docs

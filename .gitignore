@@ -39,7 +39,8 @@ env/
 /ADS-PROJECT-CONTEXT.md
 /ADS-OPS-LOG.md
 /ADS-REPORT-FORMAT.md
-/CODEX_ADS_OPTIMIZER.md
+/KIMI_ADS_OPTIMIZER.md
+/.kimi-ads-optimizer.md
 
 # Private real-account replay data. Only the explicitly anonymized examples
 # under examples/replays/ are intended for version control.

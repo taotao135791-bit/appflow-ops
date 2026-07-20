@@ -1,30 +1,30 @@
-# Codex Ads Quick Start
+# Kimi Ads Quick Start
 
-Codex Ads is a Codex-first advertising decision workflow. **You do not need slash commands or YAML first.** Give Codex an export, pasted table, screenshot, or read-only dashboard, then use one natural-language prompt below.
+Kimi Ads is a Kimi-first advertising decision workflow. **You do not need slash commands or YAML first.** Give Kimi an export, pasted table, screenshot, or read-only dashboard, then use one natural-language prompt below.
 
 ## Install the stable channel first
 
-The `v1.9.2` tag must be published before this command becomes available. After publication, pin that version:
+The `v2.0.0` tag must be published before this command becomes available. After publication, pin that version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.sh | bash -s -- --ref=v1.9.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
 ```
 
 Windows:
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v1.9.2
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.0.0
 ```
 
 `main` is a rolling development snapshot and may be unstable; it is not the default stable channel. To roll back, reinstall an older tag that actually exists and has been verified. That does not undo ad-account actions or downgrade ledger schema `1.1`, so preserve a `1.0` backup before migration. See the [README](README.en.md#install) for complete install and rollback commands.
 
 ## First Use
 
-Start Codex and say:
+Start Kimi and say:
 
 ```text
-I want to use Codex Ads for ad optimization. Default to read-only account review. Do not change ad platform settings. If I ask for daily reports, weekly creative reports, or client updates, ask where the client template is first.
+I want to use Kimi Ads for ad optimization. Default to read-only account review. Do not change ad platform settings. If I ask for daily reports, weekly creative reports, or client updates, ask where the client template is first.
 ```
 
 If the ad dashboard is already open:
@@ -35,7 +35,7 @@ I am logged into the ad dashboard. Please review the current account in read-onl
 
 ## Keep these boundaries in mind
 
-The natural-language path includes Agent reasoning: Codex understands context, organizes evidence, and asks for missing information. Doctor, normalize, UAC rules, ledger validation, migration, and replay are local deterministic capabilities. They call neither ad nor model APIs and do not change the platform.
+The natural-language path includes Agent reasoning: Kimi understands context, organizes evidence, and asks for missing information. Doctor, normalize, UAC rules, ledger validation, migration, and replay are local deterministic capabilities. They call neither ad nor model APIs and do not change the platform.
 
 - They do not guarantee growth, lower CPA, or higher ROAS.
 - They do not replace product, paywall, SDK/tracking, MMP, or backend event work.
@@ -97,7 +97,7 @@ Google UAC daily Quick Ops (no full report or experiment by default):
 6. I attached mature multi-day data, the current tCPA/budget, and a business CPA ceiling. Return one numeric change and hold the other variable.
 ```
 
-These AC labels are team-local terms, not tCPA values. Codex checks actual account settings and the project glossary first; without confirmed semantics, value signals, or permission it keeps the current setup instead of forcing a switch.
+These AC labels are team-local terms, not tCPA values. Kimi checks actual account settings and the project glossary first; without confirmed semantics, value signals, or permission it keeps the current setup instead of forcing a switch.
 
 For a reproducible starting point, use the fully synthetic [`UAC-QUICK-NUMERIC.example.yaml`](skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml). It demonstrates holding AC2.5, changing only tCPA, keeping budget stable, and declaring a mature rollback threshold.
 
@@ -111,7 +111,7 @@ You do not need to memorize commands for a UAC project. Say these five things as
 5. Review the current experiment. (Attach the latest data at the same grain.)
 ```
 
-Codex keeps live material in a private, ignored workspace and handles field mapping, Doctor, analysis, and ledger validation internally. Step 3 displays a draft first and does not write the ledger until you confirm that draft. A local ledger write is not permission to edit Google Ads; a live account action requires a second, exact confirmation.
+Kimi keeps live material in a private, ignored workspace and handles field mapping, Doctor, analysis, and ledger validation internally. Step 3 displays a draft first and does not write the ledger until you confirm that draft. A local ledger write is not permission to edit Google Ads; a live account action requires a second, exact confirmation.
 
 Daily report:
 
@@ -153,7 +153,7 @@ Payments/leads suddenly dropped. Before recommending budget changes, triage data
 
 1. **Import:** Attach an export or paste data with dates, campaign/OS/geo grain, shallow-to-payment metrics, creative performance, recent changes, conversion delay, and reconciliation status.
 2. **Declare permissions:** State that only budget, tCPA, and creative are executable. Mark product, paywall, SDK, MMP, backend events, and store listing as protected.
-3. **Doctor:** Ask Codex to run the read-only Doctor before a decision so version, dependencies, input, ledger, schema, and unfinished experiments are checked.
+3. **Doctor:** Ask Kimi to run the read-only Doctor before a decision so version, dependencies, input, ledger, schema, and unfinished experiments are checked.
 4. **Analyze:** Run the UAC analysis and review measurement, learning eligibility, permissions, and optimization feasibility.
 5. **Choose the safe action:** Enter an experiment only when evidence and maturity pass admission. Otherwise collect data, request client support, wait, or make no account change.
 6. **Create and confirm:** Display one unapproved single-variable draft without writing the ledger. Append a local `proposed` entry only after the user confirms that draft. This never changes Google Ads; a human separately approves and executes the platform edit before the entry becomes `observing`, while a declined proposal becomes `cancelled`.
@@ -163,7 +163,7 @@ Payments/leads suddenly dropped. Before recommending budget changes, triage data
 
 ## Advanced: deterministic checks and schema 1.1
 
-Ordinary users can ask Codex to run these tools. The commands below are for a source checkout; after a one-line install, the helper is under `~/.codex/skills/ads/scripts/`, not the current project.
+Ordinary users can ask Kimi to run these tools. The commands below are for a source checkout; after a one-line install, the helper is under `~/.kimi-code/skills/ads/scripts/`, not the current project.
 
 ```bash
 # Create an ignored private project; then put the raw summary in its input/
@@ -200,15 +200,15 @@ Before live account review:
 2. Switch to the correct account.
 3. Set the date range, such as yesterday, last 7 days, last 30 days, this week, or this month.
 4. If you need a daily or weekly report, open the client template or provide its path/link/file keyword.
-5. Tell Codex: read-only review, do not change settings.
+5. Tell Kimi: read-only review, do not change settings.
 ```
 
-Codex Ads may read:
+Kimi Ads may read:
 
 - overview, campaign tables, creative tables, conversion goals, diagnostics, recommendations, geo/device/network/creative breakdowns
 - client template structure, fields, date format, and table layout
 
-Codex Ads will not:
+Kimi Ads will not:
 
 - change budgets, bids, goals, campaign status, recommendations, or saved settings
 - send reports
@@ -219,19 +219,19 @@ Codex Ads will not:
 Each optimizer can keep their own judgment rules in:
 
 ```text
-CODEX_ADS_OPTIMIZER.md
+KIMI_ADS_OPTIMIZER.md
 ```
 
-Ask Codex to create one:
+Ask Kimi to create one:
 
 ```text
-Create a CODEX_ADS_OPTIMIZER.md file for my optimization style. My style is: check conversion goals first, then budget pacing, then geo and creative. Client updates should be direct but not overly aggressive.
+Create a KIMI_ADS_OPTIMIZER.md file for my optimization style. My style is: check conversion goals first, then budget pacing, then geo and creative. Client updates should be direct but not overly aggressive.
 ```
 
 Or turn your existing experience into a profile:
 
 ```text
-Turn the following optimization experience into CODEX_ADS_OPTIMIZER.md. In future account reviews, use these rules before making recommendations.
+Turn the following optimization experience into KIMI_ADS_OPTIMIZER.md. In future account reviews, use these rules before making recommendations.
 ```
 
 Useful sections:
@@ -247,7 +247,7 @@ Useful sections:
 ## Optimizer Profile Template
 
 ```markdown
-# Codex Ads Optimizer Profile
+# Kimi Ads Optimizer Profile
 
 ## My Optimization Style
 - 
@@ -270,6 +270,6 @@ Useful sections:
 ## Client Reporting Tone
 - 
 
-## Things Codex Should Not Do
+## Things Kimi Should Not Do
 - 
 ```

@@ -1,6 +1,38 @@
 # Changelog
 
-All notable changes to Codex Ads are documented here.
+All notable changes to Kimi Ads are documented here.
+
+## 2.0.0 — 2026-07-20
+
+### Migration to Kimi Code CLI
+
+- Migrated the skill bundle from OpenAI Codex CLI to Kimi Code CLI; the product
+  is now Kimi Ads and the new repository home is
+  `github.com/taotao135791-bit/kimi-ads`.
+- Changed the default install target to `kimi`: skills now install to
+  `~/.kimi-code/skills` (honoring `$KIMI_CODE_HOME`), and the agent persona
+  briefs ship inside the main skill at `~/.kimi-code/skills/ads/agents`,
+  dispatched to Kimi's built-in `coder` subagent.
+- Replaced Computer Use with Kimi WebBridge (Chrome/Edge extension plus local
+  daemon driving the user's real logged-in browser) for logged-in ad-dashboard
+  inspection; public landing-page fetches still use `scripts/fetch_page.py`
+  and `scripts/capture_screenshot.py`.
+- Renamed the Python package `codex_ads` to `kimi_ads`, the repository URL
+  environment variable to `KIMI_ADS_REPO_URL`, and the optimizer profile files
+  to `KIMI_ADS_OPTIMIZER.md` / `.kimi-ads-optimizer.md`.
+- Replaced `.codex-plugin/plugin.json` with the root `kimi.plugin.json`
+  (`"skills": "./skills/"`), installable via
+  `/plugins install https://github.com/taotao135791-bit/kimi-ads`.
+- Renamed the project instruction file `CODEX.md` to `AGENTS.md`, which Kimi
+  reads as the project instruction file.
+
+### Compatibility and release status
+
+- Routing shorthand (`/ads audit`, `/ads uac`, ...) is unchanged and can also
+  be reached through the `/skill:ads` invocation; all skill, ledger, replay,
+  and workspace contracts from 1.9.x remain readable.
+- This entry prepares `v2.0.0`; it does not claim that a remote tag or GitHub
+  Release exists.
 
 ## 1.9.2 — 2026-07-14
 

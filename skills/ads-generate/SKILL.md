@@ -13,15 +13,17 @@ description: >-
 ## Reference Resolution
 
 For any `ads/references/<file>.md` path below, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../ads/references/<file>.md`,
-`../skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
+`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 Generates platform-sized ad creative images from your campaign brief and brand
 profile. Uses image provider as the image generation provider.
 
 ## Quick Reference
 
-These `/ads ...` entries are Codex routing shorthand, not shell commands.
+These `/ads ...` entries are Kimi routing shorthand, not shell commands.
 
 | Shorthand | What it does |
 |---------|-------------|
@@ -71,7 +73,7 @@ Then skip to Step 5.
 
 ### Step 3: Read Provider Config
 
-Load `~/.codex/skills/ads/references/image-providers.md` to confirm:
+Load `ads/references/image-providers.md` to confirm:
 - Active provider pricing (show user the cost estimate)
 - Rate limits for current tier
 - Batch API availability
@@ -79,12 +81,12 @@ Load `~/.codex/skills/ads/references/image-providers.md` to confirm:
 ### Step 4: Read Platform Specs
 
 For each platform in the campaign brief, load the relevant spec reference:
-- `~/.codex/skills/ads/references/meta-creative-specs.md`
-- `~/.codex/skills/ads/references/google-creative-specs.md`
-- `~/.codex/skills/ads/references/tiktok-creative-specs.md`
-- `~/.codex/skills/ads/references/linkedin-creative-specs.md`
-- `~/.codex/skills/ads/references/youtube-creative-specs.md`
-- `~/.codex/skills/ads/references/microsoft-creative-specs.md`
+- `ads/references/meta-creative-specs.md`
+- `ads/references/google-creative-specs.md`
+- `ads/references/tiktok-creative-specs.md`
+- `ads/references/linkedin-creative-specs.md`
+- `ads/references/youtube-creative-specs.md`
+- `ads/references/microsoft-creative-specs.md`
 
 ### Step 5: Prepare image provider Configuration
 
@@ -179,6 +181,6 @@ Use `python scripts/generate_image.py` directly with the specified prompt and as
 
 ## Reference Files
 
-- `~/.codex/skills/ads/references/image-providers.md`: provider config, pricing, limits
-- `~/.codex/skills/ads/references/[platform]-creative-specs.md`: per-platform specs
-- `~/.codex/skills/ads/references/brand-dna-template.md`: brand injection schema
+- `ads/references/image-providers.md`: provider config, pricing, limits
+- `ads/references/[platform]-creative-specs.md`: per-platform specs
+- `ads/references/brand-dna-template.md`: brand injection schema

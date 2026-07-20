@@ -347,7 +347,7 @@ def _cli() -> int:
                 envelope["next_action"] = (
                     "Run doctor --workspace, then analyze --workspace."
                     if contract_error is None
-                    else "Codex must complete the deterministic UAC contract from this "
+                    else "Kimi must complete the deterministic UAC contract from this "
                     "normalization envelope and save normalized/UAC-INPUT.yaml; do not "
                     "run analysis on the draft."
                 )
@@ -366,7 +366,7 @@ def _cli() -> int:
                 else:
                     print(f"not analysis-ready: {contract_error}")
                     print(
-                        "next: Codex must complete normalized/UAC-INPUT.yaml from the "
+                        "next: Kimi must complete normalized/UAC-INPUT.yaml from the "
                         "normalization envelope; do not analyze the draft"
                     )
             else:

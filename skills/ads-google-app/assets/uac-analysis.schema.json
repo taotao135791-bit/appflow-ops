@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/taotao135791-bit/codex-ads/schemas/uac-analysis.schema.json",
-  "title": "Codex Ads UAC Analysis",
+  "$id": "https://github.com/taotao135791-bit/kimi-ads/schemas/uac-analysis.schema.json",
+  "title": "Kimi Ads UAC Analysis",
   "type": "object",
   "required": [
     "schema_version",

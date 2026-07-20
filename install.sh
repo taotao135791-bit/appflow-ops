@@ -1,34 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Codex Ads Installer
+# Kimi Ads Installer
 # Wraps everything in main() to prevent partial execution on network failure.
 #
-# Default target is Codex CLI. Cross-host targets are EXPERIMENTAL — they
+# Default target is Kimi Code CLI. Cross-host targets are EXPERIMENTAL — they
 # install the same skill artifacts under each host's expected directory, but
 # the host's own runtime conventions may differ. Pin path overrides via
 # --skill-dir / --agent-dir if the auto-detected paths are wrong for your
 # install.
 #
 # Usage:
-#   bash install.sh                              # default: --target=codex
+#   bash install.sh                              # default: --target=kimi
+#   bash install.sh --target=kimi
 #   bash install.sh --target=codex
 #   bash install.sh --target=cursor
 #   bash install.sh --target=windsurf
 #   bash install.sh --target=gemini
 #   bash install.sh --target=goose
 #   bash install.sh --skill-dir=/custom/path     # override the target's default path
-#   bash install.sh --ref=v1.9.2                 # install an exact release tag
+#   bash install.sh --ref=v2.0.0                 # install an exact release tag
 #
 # All target keys are validated against a strict whitelist (no shell injection
 # possible via --target=...). Custom --skill-dir paths are validated against
 # `;&|$()<>`, backslashes, leading dashes, `..` path segments, and UNC-style
 # paths. Directory names that merely contain two dots are allowed.
 
-# CODEX_ADS_REPO_URL is intentionally undocumented end-user plumbing used by
+# KIMI_ADS_REPO_URL is intentionally undocumented end-user plumbing used by
 # packaging smoke tests and downstream mirrors. Normal installs keep using the
 # canonical repository.
-REPO_URL="${CODEX_ADS_REPO_URL:-https://github.com/taotao135791-bit/codex-ads.git}"
+REPO_URL="${KIMI_ADS_REPO_URL:-https://github.com/taotao135791-bit/kimi-ads.git}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Target whitelist + path mapping
@@ -37,6 +38,7 @@ REPO_URL="${CODEX_ADS_REPO_URL:-https://github.com/taotao135791-bit/codex-ads.gi
 # Keep this table the SINGLE source of truth. When a new host CLI is added,
 # update only this case statement plus the help text.
 #
+# kimi      — Kimi Code CLI (agents install into <skill-base>/ads/agents)
 # codex     — OpenAI Codex CLI
 # cursor    — Cursor IDE (EXPERIMENTAL, extension model differs)
 # windsurf  — Windsurf IDE (EXPERIMENTAL)
@@ -46,6 +48,12 @@ REPO_URL="${CODEX_ADS_REPO_URL:-https://github.com/taotao135791-bit/codex-ads.gi
 resolve_target_paths() {
     local target="$1"
     case "$target" in
+        kimi)
+            SKILL_BASE="${KIMI_CODE_HOME:-${HOME}/.kimi-code}/skills"
+            AGENT_DIR=""
+            ALLOW_PIP=1
+            HOST_LABEL="Kimi Code CLI"
+            ;;
         codex)
             SKILL_BASE="${HOME}/.codex/skills"
             AGENT_DIR="${HOME}/.codex/agents"
@@ -53,8 +61,8 @@ resolve_target_paths() {
             HOST_LABEL="OpenAI Codex CLI"
             ;;
         cursor)
-            SKILL_BASE="${HOME}/.cursor/extensions/codex-ads/skills"
-            AGENT_DIR="${HOME}/.cursor/extensions/codex-ads/agents"
+            SKILL_BASE="${HOME}/.cursor/extensions/kimi-ads/skills"
+            AGENT_DIR="${HOME}/.cursor/extensions/kimi-ads/agents"
             ALLOW_PIP=0
             HOST_LABEL="Cursor IDE"
             ;;
@@ -65,8 +73,8 @@ resolve_target_paths() {
             HOST_LABEL="Windsurf IDE"
             ;;
         gemini)
-            SKILL_BASE="${HOME}/.gemini/extensions/codex-ads/skills"
-            AGENT_DIR="${HOME}/.gemini/extensions/codex-ads/agents"
+            SKILL_BASE="${HOME}/.gemini/extensions/kimi-ads/skills"
+            AGENT_DIR="${HOME}/.gemini/extensions/kimi-ads/agents"
             ALLOW_PIP=0
             HOST_LABEL="Gemini CLI"
             ;;
@@ -110,12 +118,13 @@ validate_repo_ref() {
 
 print_help() {
     cat <<EOF
-Codex Ads Installer
+Kimi Ads Installer
 
 Usage:
   bash install.sh [--target=<host>] [--skill-dir=<path>] [--agent-dir=<path>] [--ref=vX.Y.Z]
 
-Targets (default: codex):
+Targets (default: kimi):
+  kimi       Kimi Code CLI (default)
   codex      OpenAI Codex CLI
   cursor     Cursor IDE (experimental)
   windsurf   Windsurf IDE (experimental)
@@ -127,22 +136,22 @@ Overrides:
   --agent-dir=<path>   Override the target's default agent install root
   --ref=vX.Y.Z         Install one exact final release tag
 
-For Codex, Python report/screenshot dependencies are installed into a local
-skill venv at <skill-dir>/ads/.venv. The installer never modifies system
+For Kimi Code CLI, Python report/screenshot dependencies are installed into a
+local skill venv at <skill-dir>/ads/.venv. The installer never modifies system
 Python packages.
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/main/install.sh | bash
   bash install.sh
-  bash install.sh --ref=v1.9.2
-  bash install.sh --target=codex --skill-dir="\$HOME/custom/skills"
+  bash install.sh --ref=v2.0.0
+  bash install.sh --target=kimi --skill-dir="\$HOME/custom/skills"
 
 EOF
 }
 
 main() {
     # Defaults
-    local TARGET="codex"
+    local TARGET="kimi"
     local SKILL_DIR_OVERRIDE=""
     local AGENT_DIR_OVERRIDE=""
     local REPO_REF=""
@@ -199,14 +208,14 @@ main() {
     done
 
     if [ "${REF_WAS_SET}" -eq 1 ] && ! validate_repo_ref "${REPO_REF}"; then
-        echo "✗ Invalid --ref: expected an exact tag such as v1.9.2" >&2
+        echo "✗ Invalid --ref: expected an exact tag such as v2.0.0" >&2
         exit 1
     fi
 
     # Resolve target paths (rejects unknown targets via whitelist)
     if ! resolve_target_paths "$TARGET"; then
         echo "✗ Unknown target: $TARGET" >&2
-        echo "  Valid targets: codex, cursor, windsurf, gemini, goose" >&2
+        echo "  Valid targets: kimi, codex, cursor, windsurf, gemini, goose" >&2
         echo "  Run: bash install.sh --help" >&2
         exit 1
     fi
@@ -230,7 +239,7 @@ main() {
     local SKILL_DIR="${SKILL_BASE}/ads"
 
     echo "════════════════════════════════════════"
-    echo "║   Codex Ads - Installer             ║"
+    echo "║   Kimi Ads - Installer              ║"
     echo "║   Target: ${HOST_LABEL}"
     echo "════════════════════════════════════════"
     echo ""
@@ -239,17 +248,20 @@ main() {
     command -v git >/dev/null 2>&1 || { echo "✗ Git is required but not installed."; exit 1; }
     echo "✓ Git detected"
 
-    # Create directories
+    # Create directories. Kimi Code CLI has no separate agents directory
+    # (AGENT_DIR is empty) — its persona briefs live inside the main skill.
     mkdir -p "${SKILL_DIR}/references"
-    mkdir -p "${AGENT_DIR}"
+    if [ -n "${AGENT_DIR}" ]; then
+        mkdir -p "${AGENT_DIR}"
+    fi
 
     # Clone or update
     TEMP_DIR=$(mktemp -d)
     trap 'rm -rf "${TEMP_DIR}"' EXIT
 
-    local SOURCE_DIR="${TEMP_DIR}/codex-ads"
+    local SOURCE_DIR="${TEMP_DIR}/kimi-ads"
     if [ "${REF_WAS_SET}" -eq 1 ]; then
-        echo "↓ Downloading Codex Ads ${REPO_REF} from ${REPO_URL}..."
+        echo "↓ Downloading Kimi Ads ${REPO_REF} from ${REPO_URL}..."
         mkdir -p "${SOURCE_DIR}"
         git -C "${SOURCE_DIR}" init --quiet
         if ! git -C "${SOURCE_DIR}" fetch --depth 1 --no-tags -- \
@@ -276,9 +288,9 @@ main() {
             exit 1
         fi
     else
-        echo "↓ Downloading Codex Ads from ${REPO_URL}..."
+        echo "↓ Downloading Kimi Ads from ${REPO_URL}..."
         if ! git clone --depth 1 -- "${REPO_URL}" "${SOURCE_DIR}"; then
-            echo "✗ Failed to clone Codex Ads from ${REPO_URL}" >&2
+            echo "✗ Failed to clone Kimi Ads from ${REPO_URL}" >&2
             echo "  Check that the repository exists and that you have access." >&2
             exit 1
         fi
@@ -286,13 +298,13 @@ main() {
 
     # Copy main skill + references from the plugin-compatible skill tree.
     echo "→ Installing skill files..."
-    cp "${TEMP_DIR}/codex-ads/skills/ads/SKILL.md" "${SKILL_DIR}/SKILL.md"
-    cp "${TEMP_DIR}/codex-ads/skills/ads/references/"*.md "${SKILL_DIR}/references/"
-    cp "${TEMP_DIR}/codex-ads/VERSION" "${SKILL_DIR}/VERSION"
+    cp "${TEMP_DIR}/kimi-ads/skills/ads/SKILL.md" "${SKILL_DIR}/SKILL.md"
+    cp "${TEMP_DIR}/kimi-ads/skills/ads/references/"*.md "${SKILL_DIR}/references/"
+    cp "${TEMP_DIR}/kimi-ads/VERSION" "${SKILL_DIR}/VERSION"
 
     # Copy sub-skills
     echo "→ Installing sub-skills..."
-    for skill_dir in "${TEMP_DIR}/codex-ads/skills"/*/; do
+    for skill_dir in "${TEMP_DIR}/kimi-ads/skills"/*/; do
         skill_name=$(basename "${skill_dir}")
         if [ "${skill_name}" = "ads" ]; then
             continue
@@ -331,20 +343,27 @@ main() {
         fi
     done
 
-    # Copy agents
+    # Copy agents. Hosts with a separate agents directory (codex etc.) receive
+    # the persona briefs there; for Kimi Code CLI they are installed into the
+    # main skill at <skill-base>/ads/agents instead.
     echo "→ Installing subagents..."
-    cp "${TEMP_DIR}/codex-ads/agents/"*.md "${AGENT_DIR}/" 2>/dev/null || true
+    if [ -n "${AGENT_DIR}" ]; then
+        cp "${TEMP_DIR}/kimi-ads/agents/"*.md "${AGENT_DIR}/" 2>/dev/null || true
+    else
+        mkdir -p "${SKILL_DIR}/agents"
+        cp "${TEMP_DIR}/kimi-ads/agents/"*.md "${SKILL_DIR}/agents/" 2>/dev/null || true
+    fi
 
     # Copy scripts (optional Python tools)
     SCRIPTS_DIR="${SKILL_DIR}/scripts"
-    if [ -d "${TEMP_DIR}/codex-ads/scripts" ]; then
+    if [ -d "${TEMP_DIR}/kimi-ads/scripts" ]; then
         echo "→ Installing Python scripts..."
         mkdir -p "${SCRIPTS_DIR}"
-        cp "${TEMP_DIR}/codex-ads/scripts/"*.py "${SCRIPTS_DIR}/"
-        if [ -d "${TEMP_DIR}/codex-ads/scripts/codex_ads" ]; then
-            cp -R "${TEMP_DIR}/codex-ads/scripts/codex_ads" "${SCRIPTS_DIR}/"
+        cp "${TEMP_DIR}/kimi-ads/scripts/"*.py "${SCRIPTS_DIR}/"
+        if [ -d "${TEMP_DIR}/kimi-ads/scripts/kimi_ads" ]; then
+            cp -R "${TEMP_DIR}/kimi-ads/scripts/kimi_ads" "${SCRIPTS_DIR}/"
         fi
-        cp "${TEMP_DIR}/codex-ads/requirements.txt" "${SKILL_DIR}/requirements.txt"
+        cp "${TEMP_DIR}/kimi-ads/requirements.txt" "${SKILL_DIR}/requirements.txt"
     fi
 
     # Install Python dependencies only for hosts that explicitly support
@@ -382,11 +401,15 @@ main() {
     echo "  Set GOOGLE_API_KEY, OPENAI_API_KEY, STABILITY_API_KEY, or REPLICATE_API_TOKEN as needed."
 
     echo ""
-    echo "✓ Codex Ads installed successfully for ${HOST_LABEL}!"
+    echo "✓ Kimi Ads installed successfully for ${HOST_LABEL}!"
     echo ""
     echo "  Installed to:"
     echo "    Skills: ${SKILL_BASE}"
-    echo "    Agents: ${AGENT_DIR}"
+    if [ -n "${AGENT_DIR}" ]; then
+        echo "    Agents: ${AGENT_DIR}"
+    else
+        echo "    Agents: ${SKILL_DIR}/agents (persona briefs)"
+    fi
     echo ""
     echo "  Bundled:"
     echo "    • 1 main skill (ads orchestrator)"
@@ -396,10 +419,10 @@ main() {
     echo "    • 15 templates (12 industry + 3 ops memory)"
     echo ""
     echo "Usage:"
-    echo "  1. Start your host CLI"
+    echo "  1. Start Kimi Code CLI"
     echo "  2. Ask naturally, e.g.:"
     echo "       只读审查这个广告账户，先看 KPI、预算消耗、转化目标和今天要处理的事项。"
-    echo "       或使用 shorthand: /ads audit, /ads plan saas, /ads google"
+    echo "       或使用 /skill:ads，或路由 shorthand: /ads audit, /ads plan saas, /ads google"
     echo ""
     echo "To uninstall: bash uninstall.sh --target=${TARGET}"
 }

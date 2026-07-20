@@ -147,7 +147,7 @@ def run_doctor(
         _check(
             "project-version",
             "PASS" if version not in {"unknown", "invalid"} else "FAIL",
-            f"codex-ads version: {version}",
+            f"kimi-ads version: {version}",
         )
     )
 
@@ -509,7 +509,7 @@ def doctor_exit_code(report: dict[str, Any]) -> int:
 
 def render_doctor(report: dict[str, Any]) -> str:
     lines = [
-        f"UAC Doctor: {report['status']} (codex-ads {report['version']})",
+        f"UAC Doctor: {report['status']} (kimi-ads {report['version']})",
         f"PASS {report['summary']['pass']} / WARN {report['summary']['warn']} / FAIL {report['summary']['fail']}",
     ]
     lines.extend(

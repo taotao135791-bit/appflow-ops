@@ -22,17 +22,19 @@ the non-App campaign types after the UAC analysis is complete.
 ## Reference Resolution
 
 For any `ads/references/<file>.md` path below, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../ads/references/<file>.md`,
-`../skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
+`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 ## Process
 
 1. Detect campaign type and hand App campaigns to `ads-google-app`.
-2. Collect Google Ads account data. Default to Computer Use read-only
+2. Collect Google Ads account data. Default to Kimi WebBridge read-only
    inspection of the live Google Ads UI when the user is logged in or asks you
    to look directly; otherwise use exports, screenshots, MCP/API data, Change
    History, and Search Terms Report.
-3. If using Computer Use, read `ads/references/computer-use-live-audit.md`
+3. If using WebBridge, read `ads/references/webbridge-live-audit.md`
    first. Inspect overview, campaign table, recommendations/diagnostics,
    conversion goals/actions, and relevant segments before drawing conclusions.
 4. **Validate**: confirm data covers ≥30 days when possible and includes either
@@ -168,18 +170,18 @@ deduplication patterns, and filter scope best practices. Key rules:
 For automated data collection, connect the [Google Ads MCP server](https://github.com/googleads/google-ads-mcp):
 
 - **Tools available**: `search` (GAQL queries), `list_accessible_customers`
-- **Setup**: Configure in `.mcp.json` or Codex CLI MCP settings
+- **Setup**: Configure in `.mcp.json` or Kimi Code CLI MCP settings
 - **Customer ID**: Use a user-provided ID or a local project config if present;
   if no account mapping exists, ask the user instead of assuming a fixed
-  `CODEX.md` structure.
+  `AGENTS.md` structure.
 - **Fallback**: If MCP is not configured, fall back to manual data export (the default workflow)
 
 When MCP is available, use it to pull Search Terms Reports, keyword data, conversion actions,
 and campaign structure automatically instead of requiring manual exports.
 
-## Computer Use Live UI Integration (Default When Available)
+## WebBridge Live UI Integration (Default When Available)
 
-When Computer Use is available and the user is logged into Google Ads, prefer
+When Kimi WebBridge is available and the user is logged into Google Ads, prefer
 live read-only UI inspection over asking for manual exports. Use it to inspect:
 
 - Overview cards: date range, timezone, spend, clicks, conversions, value, major changes

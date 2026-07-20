@@ -11,7 +11,7 @@ def _read(repo_root, relative_path: str) -> str:
 
 
 def test_runtime_version_strings_stay_in_sync(repo_root):
-    manifest = json.loads(_read(repo_root, ".codex-plugin/plugin.json"))
+    manifest = json.loads(_read(repo_root, "kimi.plugin.json"))
     version = _read(repo_root, "VERSION").strip()
 
     report = _read(repo_root, "scripts/generate_report.py")
@@ -19,9 +19,9 @@ def test_runtime_version_strings_stay_in_sync(repo_root):
 
     assert manifest["version"] == version
     assert f'__version__ = "{version}"' in report
-    assert f"CodexAds/{version}" in fetch_page
-    assert "github.com/taotao135791-bit/codex-ads" in fetch_page
-    assert "github.com/taotao135791-bit/codex-ads" in report
+    assert f"KimiAds/{version}" in fetch_page
+    assert "github.com/taotao135791-bit/kimi-ads" in fetch_page
+    assert "github.com/taotao135791-bit/kimi-ads" in report
 
 
 def test_installer_uses_local_venv_without_breaking_system_packages(repo_root):
@@ -60,7 +60,9 @@ def test_reference_paths_have_installed_fallbacks(repo_root):
             continue
         required = [
             "## Reference Resolution",
-            "~/.codex/skills/ads/references/<file>.md",
+            "${KIMI_SKILL_DIR}/../ads/references/<file>.md",
+            "~/.kimi-code/skills/ads/references/<file>.md",
+            "~/.agents/skills/ads/references/<file>.md",
             "ads/references/<file>.md",
         ]
         missing = [phrase for phrase in required if phrase not in text]
@@ -78,23 +80,23 @@ def test_gitignore_blocks_generated_python_cache(repo_root):
     assert re.search(r"^\*\.py\[cod\]$", gitignore, re.MULTILINE)
 
 
-def test_private_dashboard_tool_gate_requires_computer_use(repo_root):
+def test_private_dashboard_tool_gate_requires_webbridge(repo_root):
     files = [
         "ads/SKILL.md",
         "skills/ads/SKILL.md",
-        "ads/references/computer-use-live-audit.md",
-        "skills/ads/references/computer-use-live-audit.md",
+        "ads/references/webbridge-live-audit.md",
+        "skills/ads/references/webbridge-live-audit.md",
         "ads/references/orchestrator.md",
         "skills/ads/references/orchestrator.md",
     ]
     required = [
-        "MUST use Computer Use",
-        "MUST NOT use Browser Plugin",
+        "MUST use Kimi WebBridge",
+        "MUST NOT use headless",
         "Playwright",
         "screenshot scripts",
         "page HTML extraction",
         "network scraping",
-        "instead of switching to Browser Plugin",
+        "against logged-in dashboards",
         "public landing pages",
         "do not contain logged-in account data",
     ]

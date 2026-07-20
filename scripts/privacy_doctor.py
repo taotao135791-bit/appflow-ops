@@ -262,7 +262,7 @@ _PRIVATE_PROJECT_FILENAMES = {
     "ads-ops-log.md",
     "ads-project-context.md",
     "ads-report-format.md",
-    "codex_ads_optimizer.md",
+    "kimi_ads_optimizer.md",
     "normalization.json",
     "project-context.json",
     "project-context.yaml",

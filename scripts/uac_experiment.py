@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Compatibility entry point for the deterministic UAC experiment helper.
 
-The implementation lives under codex_ads.uac. Existing imports and CLI
+The implementation lives under kimi_ads.uac. Existing imports and CLI
 invocations continue to use this module.
 """
 
 from __future__ import annotations
 
-from codex_ads.uac import (
+from kimi_ads.uac import (
     ANALYSIS_SCHEMA_VERSION,
     CURRENT_LEDGER_SCHEMA_VERSION,
     EvidenceQuality,
@@ -48,7 +48,7 @@ from codex_ads.uac import (
     validate_ledger,
     validate_workspace_name,
 )
-from codex_ads.uac.cli import _cli, main
+from kimi_ads.uac.cli import _cli, main
 
 __all__ = [
     "ContractError",

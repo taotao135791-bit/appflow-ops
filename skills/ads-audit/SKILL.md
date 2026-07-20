@@ -16,8 +16,10 @@ description: >-
 ## Reference Resolution
 
 For any `ads/references/<file>.md` path below, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../ads/references/<file>.md`,
-`../skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
+`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 This audit operates under the **10-Principle Thinking Framework** (see
 `ads/references/thinking-framework.md`). OBSERVE (External + Internal)
@@ -27,22 +29,28 @@ audit feels mechanical, you are skipping a principle.
 
 ## Process
 
-1. **Collect account data**: prefer Computer Use read-only inspection of live
-   ad dashboards when the user is logged in or asks you to look directly. If
-   Computer Use is unavailable, request exports, screenshots, pasted metrics,
+1. **Collect account data**: prefer Kimi WebBridge read-only inspection of
+   live ad dashboards when the user is logged in or asks you to look directly.
+   If WebBridge is unavailable, request exports, screenshots, pasted metrics,
    or API/MCP access.
 2. **Validate**: confirm at least one platform's data is available before proceeding
 3. **Detect business type**: analyze account signals per ads orchestrator
 4. **Identify active platforms**: determine which platforms are in use
-5. **Delegate to subagents** (if available, otherwise run inline sequentially):
-   - `ads-google-app`: UAC measurement, learning eligibility, optimization
-     feasibility, permission boundary, and one experiment loop
-   - `audit-google`: Conversion tracking, wasted spend, structure, keywords, ads, settings (80 checks; G01-G61 + 19 hyphenated v1.5+ IDs incl. AI Max)
-   - `audit-meta`: Pixel/CAPI health, creative fatigue, structure, audience (50 checks; M01-M40 + 10 hyphenated v1.5+ IDs incl. Andromeda)
-   - `audit-creative`: LinkedIn, TikTok, Microsoft creative checks + cross-platform synthesis
-   - `audit-tracking`: LinkedIn, TikTok, Microsoft tracking + cross-platform tracking health
-   - `audit-budget`: LinkedIn, TikTok, Microsoft budget/bidding + cross-platform allocation
-   - `audit-compliance`: All-platform compliance, settings, performance benchmarks
+5. **Delegate to subagents** (if delegation is available, otherwise run inline
+   sequentially). Kimi Code CLI has no custom subagent registry: dispatch the
+   built-in `coder` subagent for each specialist. The persona briefs ship
+   inside the installed ads skill — read the persona file first (resolve
+   `agents/<name>.md` as `${KIMI_SKILL_DIR}/agents/<name>.md` when running as
+   the ads skill, else `~/.kimi-code/skills/ads/agents/<name>.md`, or the repo
+   `agents/<name>.md`) and pass its full content as the subagent's brief:
+   - `ads-google-app` sub-skill: UAC measurement, learning eligibility,
+     optimization feasibility, permission boundary, and one experiment loop
+   - `agents/audit-google.md`: Conversion tracking, wasted spend, structure, keywords, ads, settings (80 checks; G01-G61 + 19 hyphenated v1.5+ IDs incl. AI Max)
+   - `agents/audit-meta.md`: Pixel/CAPI health, creative fatigue, structure, audience (50 checks; M01-M40 + 10 hyphenated v1.5+ IDs incl. Andromeda)
+   - `agents/audit-creative.md`: LinkedIn, TikTok, Microsoft creative checks + cross-platform synthesis
+   - `agents/audit-tracking.md`: LinkedIn, TikTok, Microsoft tracking + cross-platform tracking health
+   - `agents/audit-budget.md`: LinkedIn, TikTok, Microsoft budget/bidding + cross-platform allocation
+   - `agents/audit-compliance.md`: All-platform compliance, settings, performance benchmarks
 6. **Validate**: verify each subagent returned valid scores with required fields before aggregating
 7. **Score**: calculate per-platform and aggregate Ads Health Score (0-100)
 8. **Report**: generate prioritized action plan with Quick Wins
@@ -60,8 +68,8 @@ Ask the user for available data. Accept any combination:
 - TikTok Ads: Ads Manager export, Pixel/Events API status
 - Microsoft Ads: account export, UET tag status, import validation results
 
-If live dashboard access is available through Computer Use, inspect it first
-using `ads/references/computer-use-live-audit.md`. If no live access or exports
+If live dashboard access is available through Kimi WebBridge, inspect it first
+using `ads/references/webbridge-live-audit.md`. If no live access or exports
 are available, audit from screenshots or manual data entry.
 
 ## Scoring

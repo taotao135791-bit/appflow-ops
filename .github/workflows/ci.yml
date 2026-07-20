@@ -75,7 +75,7 @@ jobs:
         run: |
           ruff check .
           ruff format --check .
-          python -m mypy scripts/codex_ads/uac
+          python -m mypy scripts/kimi_ads/uac
 
       - name: Run fixture, schema, CLI compatibility, workspace, and privacy contracts
         run: |
@@ -127,7 +127,7 @@ jobs:
 
       - name: Run deterministic numeric Quick Decision smoke
         run: |
-          python -c "import sys; sys.path.insert(0, 'scripts'); from codex_ads.uac.policy_loader import load_policy_set; policies=load_policy_set(); assert policies['uac_numeric'].policy_version == 'uac-numeric-policy-v1'; assert policies['uac_signal'].policy_version == 'uac-signal-policy-v1'; assert not any(policy.degraded for policy in policies.values())"
+          python -c "import sys; sys.path.insert(0, 'scripts'); from kimi_ads.uac.policy_loader import load_policy_set; policies=load_policy_set(); assert policies['uac_numeric'].policy_version == 'uac-numeric-policy-v1'; assert policies['uac_signal'].policy_version == 'uac-signal-policy-v1'; assert not any(policy.degraded for policy in policies.values())"
           python scripts/uac_experiment.py decide \
             skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml \
             --json-output "${RUNNER_TEMP}/uac-quick-numeric-a.json"
@@ -196,7 +196,7 @@ jobs:
       - name: Measure the real UAC package and enforce the floor
         run: >-
           python -m pytest -q
-          --cov=codex_ads.uac
+          --cov=kimi_ads.uac
           --cov-report=term-missing
           --cov-report=xml:coverage.xml
           --cov-fail-under=80
@@ -232,48 +232,48 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         env:
-          CODEX_ADS_REPO_URL: ${{ github.workspace }}
+          KIMI_ADS_REPO_URL: ${{ github.workspace }}
         run: |
           bash -n install.sh
           bash install.sh \
             --target=cursor \
-            --skill-dir="${RUNNER_TEMP}/codex-ads-skills" \
-            --agent-dir="${RUNNER_TEMP}/codex-ads-agents"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/UAC-INPUT.example.yaml"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/UAC-QUICK-OPS.example.yaml"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/ads-experiments.schema.json"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/uac-quick-decision.schema.json"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/SKILL.md"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/references/agent-workflow.md"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/references/quick-ops.md"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/uac_experiment.py"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/codex_ads/uac/engine.py"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/codex_ads/uac/quick_ops.py"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/codex_ads/uac/signals.py"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/codex_ads/uac/numeric_decision.py"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/codex_ads/uac/policy_loader.py"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/codex_ads/uac/policies/uac-heuristic-policy.schema.json"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/codex_ads/uac/policies/uac-numeric-policy-v1.yaml"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/codex_ads/uac/policies/uac-signal-policy-v1.yaml"
-          test -f "${RUNNER_TEMP}/codex-ads-skills/ads/VERSION"
+            --skill-dir="${RUNNER_TEMP}/kimi-ads-skills" \
+            --agent-dir="${RUNNER_TEMP}/kimi-ads-agents"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-INPUT.example.yaml"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-OPS.example.yaml"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/ads-experiments.schema.json"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/uac-quick-decision.schema.json"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/SKILL.md"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/references/agent-workflow.md"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/references/quick-ops.md"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/engine.py"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/quick_ops.py"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/signals.py"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/numeric_decision.py"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/policy_loader.py"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/policies/uac-heuristic-policy.schema.json"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/policies/uac-numeric-policy-v1.yaml"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/kimi_ads/uac/policies/uac-signal-policy-v1.yaml"
+          test -f "${RUNNER_TEMP}/kimi-ads-skills/ads/VERSION"
           mkdir -p "${RUNNER_TEMP}/installed-uac-project"
-          cp "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/UAC-INPUT.example.yaml" \
+          cp "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-INPUT.example.yaml" \
             "${RUNNER_TEMP}/installed-uac-project/UAC-INPUT.yaml"
-          cp "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/ADS-EXPERIMENTS.minimal.yaml" \
+          cp "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/ADS-EXPERIMENTS.minimal.yaml" \
             "${RUNNER_TEMP}/installed-uac-project/ADS-EXPERIMENTS.yaml"
-          python "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/uac_experiment.py" --help
-          python "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/uac_experiment.py" doctor \
+          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" --help
+          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" doctor \
             "${RUNNER_TEMP}/installed-uac-project" --json
-          python "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/uac_experiment.py" decide \
-            "${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/UAC-QUICK-OPS.example.yaml" \
+          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" decide \
+            "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-OPS.example.yaml" \
             --json
-          numeric_input="${RUNNER_TEMP}/codex-ads-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml"
+          numeric_input="${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml"
           numeric_a="${RUNNER_TEMP}/installed-uac-numeric-a.json"
           numeric_b="${RUNNER_TEMP}/installed-uac-numeric-b.json"
-          python "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/uac_experiment.py" decide \
+          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" decide \
             "${numeric_input}" --json-output "${numeric_a}"
-          python "${RUNNER_TEMP}/codex-ads-skills/ads/scripts/uac_experiment.py" decide \
+          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" decide \
             "${numeric_input}" --json-output "${numeric_b}"
           cmp "${numeric_a}" "${numeric_b}"
           python -c "import json; from pathlib import Path; result=json.loads(Path('${numeric_a}').read_text(encoding='utf-8')); assert result['derived_signals']['has_numeric_evidence'] is True; assert result['constraint_analysis']['primary_constraint'] == 'TARGET_LIKELY_TOO_TIGHT'; assert result['target_recommendation']['recommended_action'] == 'INCREASE'; assert result['target_recommendation']['recommended_value'] == 5.5; assert result['target_recommendation']['numeric_safety']['policy_version'] == 'uac-numeric-policy-v1'; assert result['policy']['signal']['policy_version'] == 'uac-signal-policy-v1'; assert result['budget_recommendation']['recommended_action'] == 'NO_CHANGE'; assert result['account_write'] is False; assert result['ledger_write'] is False"
@@ -282,10 +282,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         env:
-          CODEX_ADS_REPO_URL: ${{ github.workspace }}
+          KIMI_ADS_REPO_URL: ${{ github.workspace }}
         run: |
-          $skillDir = Join-Path $env:RUNNER_TEMP "codex-ads-skills"
-          $agentDir = Join-Path $env:RUNNER_TEMP "codex-ads-agents"
+          $skillDir = Join-Path $env:RUNNER_TEMP "kimi-ads-skills"
+          $agentDir = Join-Path $env:RUNNER_TEMP "kimi-ads-agents"
           ./install.ps1 -Target cursor -SkillDir $skillDir -AgentDir $agentDir
           $required = @(
             (Join-Path $skillDir "ads-google-app/assets/UAC-INPUT.example.yaml"),
@@ -297,14 +297,14 @@ jobs:
             (Join-Path $skillDir "ads-google-app/references/agent-workflow.md"),
             (Join-Path $skillDir "ads-google-app/references/quick-ops.md"),
             (Join-Path $skillDir "ads/scripts/uac_experiment.py"),
-            (Join-Path $skillDir "ads/scripts/codex_ads/uac/engine.py"),
-            (Join-Path $skillDir "ads/scripts/codex_ads/uac/quick_ops.py"),
-            (Join-Path $skillDir "ads/scripts/codex_ads/uac/signals.py"),
-            (Join-Path $skillDir "ads/scripts/codex_ads/uac/numeric_decision.py"),
-            (Join-Path $skillDir "ads/scripts/codex_ads/uac/policy_loader.py"),
-            (Join-Path $skillDir "ads/scripts/codex_ads/uac/policies/uac-heuristic-policy.schema.json"),
-            (Join-Path $skillDir "ads/scripts/codex_ads/uac/policies/uac-numeric-policy-v1.yaml"),
-            (Join-Path $skillDir "ads/scripts/codex_ads/uac/policies/uac-signal-policy-v1.yaml"),
+            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/engine.py"),
+            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/quick_ops.py"),
+            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/signals.py"),
+            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/numeric_decision.py"),
+            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/policy_loader.py"),
+            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/policies/uac-heuristic-policy.schema.json"),
+            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/policies/uac-numeric-policy-v1.yaml"),
+            (Join-Path $skillDir "ads/scripts/kimi_ads/uac/policies/uac-signal-policy-v1.yaml"),
             (Join-Path $skillDir "ads/VERSION")
           )
           foreach ($path in $required) {

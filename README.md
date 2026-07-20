@@ -1,63 +1,63 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Codex Ads 标志" width="100%">
+  <img src="assets/logo.svg" alt="Kimi Ads 标志" width="100%">
 </p>
 
 ```text
- ██████╗ ██████╗ ██████╗ ███████╗██╗  ██╗     █████╗ ██████╗ ███████╗
-██╔════╝██╔═══██╗██╔══██╗██╔════╝╚██╗██╔╝    ██╔══██╗██╔══██╗██╔════╝
-██║     ██║   ██║██║  ██║█████╗   ╚███╔╝     ███████║██║  ██║███████╗
-██║     ██║   ██║██║  ██║██╔══╝   ██╔██╗     ██╔══██║██║  ██║╚════██║
-╚██████╗╚██████╔╝██████╔╝███████╗██╔╝ ██╗    ██║  ██║██████╔╝███████║
- ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝    ╚═╝  ╚═╝╚═════╝ ╚══════╝
+██╗  ██╗██╗███╗   ███╗██╗     █████╗ ██████╗ ███████╗
+██║ ██╔╝██║████╗ ████║██║    ██╔══██╗██╔══██╗██╔════╝
+█████╔╝ ██║██╔████╔██║██║    ███████║██║  ██║███████╗
+██╔═██╗ ██║██║╚██╔╝██║██║    ██╔══██║██║  ██║╚════██║
+██║  ██╗██║██║ ╚═╝ ██║██║    ██║  ██║██████╔╝███████║
+╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚═╝    ╚═╝  ╚═╝╚═════╝ ╚══════╝
 ```
 
-# Codex Ads — Codex-first 广告决策工作流
+# Kimi Ads — Kimi-first 广告决策工作流
 
-Codex Ads 是一套围绕 Codex 组织的广告决策工作流。优化师用自然语言提供目标、权限和证据，Codex 负责路由到专业 skill、识别阻塞、整理决策与报告；需要安全可复现时，再交给本地确定性工具校验。
+Kimi Ads 是一套围绕 Kimi 组织的广告决策工作流。优化师用自然语言提供目标、权限和证据，Kimi 负责路由到专业 skill、识别阻塞、整理决策与报告；需要安全可复现时，再交给本地确定性工具校验。
 
 [English README](README.en.md) · [快速启动](QUICKSTART.zh-CN.md)
 
 ## 非程序员最短路径
 
-`v1.9.2` tag 发布后，推荐先安装这个固定版本：
+`v2.0.0` tag 发布后，推荐先安装这个固定版本：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.sh | bash -s -- --ref=v1.9.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
 ```
 
-然后打开 Codex，附上导出表、粘贴表格或说明已打开的后台，直接说：
+然后打开 Kimi，附上导出表、粘贴表格或说明已打开的后台，直接说：
 
 ```text
 这是 Google App campaign，业务 KPI 是支付。我只能改预算、tCPA 和素材。
 请默认只读，先检查数据可靠性和转化延迟，再判断现在应该做一个实验、等待，还是不修改账户。
 ```
 
-不会写 YAML 不是使用门槛。Codex 可以先从用户提供的表格、CSV/XLSX、截图或只读页面中整理事实，只追问会改变下一步决策的缺口。YAML/JSON 是给需要本地复现、审计和自动化的用户，不是对普通优化师的前置要求。
+不会写 YAML 不是使用门槛。Kimi 可以先从用户提供的表格、CSV/XLSX、截图或只读页面中整理事实，只追问会改变下一步决策的缺口。YAML/JSON 是给需要本地复现、审计和自动化的用户，不是对普通优化师的前置要求。
 
 ## 设计立场
 
-Codex Ads 不是一个新的广告看板，也不是让投手再去维护一套 API Key、表单和固定报表系统。
+Kimi Ads 不是一个新的广告看板，也不是让投手再去维护一套 API Key、表单和固定报表系统。
 
 很多广告工具把自动化做成了新的手动流程：新看板、新字段、新权限、新 API Key，最后用户仍然要自己搬数据、判断异常、整理日报和写客户解释。
 
-Codex Ads 选择另一条路：不重新发明入口，而是围绕 Codex 组织广告投放工作。我们假设真实工作已经发生在 Codex、广告后台、表格、日报和客户沟通之间，所以让 Codex 通过 skill、Computer Use、脚本、模板和项目记忆，把这些重复工作接起来。
+Kimi Ads 选择另一条路：不重新发明入口，而是围绕 Kimi 组织广告投放工作。我们假设真实工作已经发生在 Kimi、广告后台、表格、日报和客户沟通之间，所以让 Kimi 通过 skill、Kimi WebBridge（Chrome/Edge 扩展 + 本地 daemon，驱动用户已登录的真实浏览器，见 https://www.kimi.com/zh-cn/features/webbridge）、脚本、模板和项目记忆，把这些重复工作接起来。
 
 它的目标不是把广告投放变成更多按钮，而是把成熟投手的判断顺序、只读安全边界、日报格式、KPI 背景、复盘记录和客户沟通方式沉淀成可复用的工作流。
 
 简单说：
 
-- 看板展示数据，Codex Ads 跑工作流。
-- 手动流程依赖个人记忆，Codex Ads 把项目背景和操作复盘沉淀到本地文档。
-- 泛用 AI 容易漏步骤，Codex Ads 用子 skill 和 reference 给 Codex 加广告投放护栏。
+- 看板展示数据，Kimi Ads 跑工作流。
+- 手动流程依赖个人记忆，Kimi Ads 把项目背景和操作复盘沉淀到本地文档。
+- 泛用 AI 容易漏步骤，Kimi Ads 用子 skill 和 reference 给 Kimi 加广告投放护栏。
 - 默认只读，不替用户乱改账户；需要写入、发送、修改时必须确认。
 
-这套 skill 的设计原则是：一个 Codex 入口，多个专业子工作流；少填表，多做事；少造系统，多沉淀判断。
+这套 skill 的设计原则是：一个 Kimi 入口，多个专业子工作流；少填表，多做事；少造系统，多沉淀判断。
 
 ## Agent 推理与确定性能力
 
 | 层级 | 负责什么 | 不负责什么 |
 | --- | --- | --- |
-| Codex / Agent 推理 | 理解自然语言、读取用户明确提供的证据、路由 skill、追问缺口、区分观察/计算/推断、生成内部和客户表达 | 不能把不完整证据变成因果，也不能自动获得用户没有的权限 |
+| Kimi / Agent 推理 | 理解自然语言、读取用户明确提供的证据、路由 skill、追问缺口、区分观察/计算/推断、生成内部和客户表达 | 不能把不完整证据变成因果，也不能自动获得用户没有的权限 |
 | 本地确定性工具 | 对已结构化事实做合同校验、UAC 状态门禁、单变量实验准入、台账迁移、Doctor、normalize 和匿名 replay | 不登录广告后台、不调用广告 API、不推测隐藏因果、不代替人工审批 |
 
 确定性意味着：在同一版本、相同结构化输入和相同台账下，规则结果可复现。它不意味着 Agent 的自由文本解释永远相同，也不意味着结果必然对未来广告效果有效。
@@ -109,7 +109,7 @@ Codex Ads 选择另一条路：不重新发明入口，而是围绕 Codex 组织
 - **减少重复杂活**：支持每日巡检、异常排查、甲方回复、素材需求单、报表清洗、变更记录和周/月会汇总。
 - **沉淀项目记忆**：可为重复性项目维护项目长期背景、KPI、甲方要求、日报/周报格式和每日操作复盘。
 - **适合代投场景**：可以把“给甲方看的解释”和“内部实际操作清单”分开写，方便沟通预算、目标和风险。
-- **默认搭配 Computer Use 看数**：如果你已经登录广告后台，它会优先只读查看真实页面和表格；不会默认改预算、暂停广告或应用建议。
+- **默认搭配 Kimi WebBridge 看数**：如果你已经登录广告后台，它会优先只读查看真实页面和表格；不会默认改预算、暂停广告或应用建议。
 - **引导式访问**：它会先告诉用户怎么打开后台、切到哪个页面、选择什么日期范围，再开始只读分析。
 - **UAC 专属实验闭环**：识别 Google App campaigns 的测量、学习、预算、目标和权限阻塞，只把证据充分的一个建议转成可回滚实验。
 - **知道什么时候不该动**：数据不成熟、支付回传异常、实验被多变量污染或账户没有明显异常时，会明确输出等待、补数据或不修改。
@@ -123,7 +123,7 @@ Codex Ads 选择另一条路：不重新发明入口，而是围绕 Codex 组织
 在产品和 KPI 都不能改时，我还能动哪些投放杠杆？
 ```
 
-## UAC Campaign Level Quick Ops（v1.9.2）
+## UAC Campaign Level Quick Ops（v2.0.0）
 
 不懂代码的优化师可以直接说“`/ads decide`”或自然语言提问。默认只返回一张短操作卡片：保持、新建、并行、切换、等待或回退；不会自动生成完整报告，也不会把日常调整写成实验。
 
@@ -185,7 +185,7 @@ python3 scripts/uac_experiment.py decide \
 
 完全合成的数值输入见 [`UAC-QUICK-NUMERIC.example.yaml`](skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml)，数值与权限合同见[数值决策说明](docs/quick-ops-numeric-decisions.md)，完整 Quick 规则见 [`quick-ops.md`](skills/ads-google-app/references/quick-ops.md)。任何真实账户写操作仍需逐项人工确认。
 
-## UAC Experiment Loop（v1.9.2）
+## UAC Experiment Loop（v2.0.0）
 
 Google App campaigns / UAC 现在有独立入口 `ads-google-app`。它先回答“当前是否具备优化条件”，再决定是否提出实验，而不是看到波动就给一串改预算、改出价、换素材的建议。
 
@@ -211,7 +211,7 @@ Google App campaigns / UAC 现在有独立入口 `ads-google-app`。它先回答
 
 1. 导入或附上账户数据：日期范围、campaign/OS/国家粒度、花费、安装、注册、支付、素材表现、最近改动、转化延迟和 Google Ads/MMP/后端对账。
 2. 用自然语言声明权限：业务 KPI 是支付，只能改预算、tCPA 和素材，产品、支付墙、SDK、MMP、后端回传和商店页都不可触碰。
-3. 让 Codex 先运行只读 Doctor，检查版本、依赖、输入、台账、schema 和未完成实验；只有会改变下一步决策的缺口才需要追问。
+3. 让 Kimi 先运行只读 Doctor，检查版本、依赖、输入、台账、schema 和未完成实验；只有会改变下一步决策的缺口才需要追问。
 4. 运行 UAC 分析，查看测量可靠性、学习资格、权限分类和优化可行性。
 5. 根据门禁决定行动：补数据、请求客户支持、继续等待、不修改账户，或准入一个实验。证据不足时在真实操作前停止。
 6. 若准入，先展示一个未批准的单变量草案，不写台账；例如只测一个“预筛选付费意愿”素材概念，预算和 tCPA 不变。用户确认草案后才追加本地 `proposed` 记录；另行确认并由人执行 Google Ads 改动后，才记为 `observing`。未批准则记为 `cancelled`。
@@ -221,7 +221,7 @@ Google App campaigns / UAC 现在有独立入口 `ads-google-app`。它先回答
 
 ### 私有 workspace（推荐）
 
-真实账户项目默认放进被 Git 忽略的 `workspaces/`，不要把客户导出文件散落在仓库根目录。普通优化师只需让 Codex“初始化 UAC 项目”；下面是 Codex 在源码 checkout 中实际组合的命令：
+真实账户项目默认放进被 Git 忽略的 `workspaces/`，不要把客户导出文件散落在仓库根目录。普通优化师只需让 Kimi“初始化 UAC 项目”；下面是 Kimi 在源码 checkout 中实际组合的命令：
 
 ```bash
 python3 scripts/uac_experiment.py init-workspace my-uac-project
@@ -231,9 +231,9 @@ python3 scripts/uac_experiment.py doctor --workspace "workspaces/my-uac-project"
 python3 scripts/uac_experiment.py analyze --workspace "workspaces/my-uac-project"
 ```
 
-`normalize --workspace` 总会保留 `normalized/UAC-INPUT.draft.yaml` 和 `normalized/NORMALIZATION.json`。只有严格输入合同已经通过时，它才生成可分析的 `normalized/UAC-INPUT.yaml`；否则必须停止，让 Codex 根据 envelope 和用户证据补齐，不能分析 draft。`analyze --workspace` 默认写分析和报告，明确保持台账不变。
+`normalize --workspace` 总会保留 `normalized/UAC-INPUT.draft.yaml` 和 `normalized/NORMALIZATION.json`。只有严格输入合同已经通过时，它才生成可分析的 `normalized/UAC-INPUT.yaml`；否则必须停止，让 Kimi 根据 envelope 和用户证据补齐，不能分析 draft。`analyze --workspace` 默认写分析和报告，明确保持台账不变。
 
-下面是旧根目录路径和高级自动化的兼容接口，仍然可用。相对路径只适用于源码 checkout；一行安装用户可以直接让 Codex 运行已安装的 helper，或使用下文列出的 `~/.codex/skills/` 路径：
+下面是旧根目录路径和高级自动化的兼容接口，仍然可用。相对路径只适用于源码 checkout；一行安装用户可以直接让 Kimi 运行已安装的 helper，或使用下文列出的 `~/.kimi-code/skills/` 路径：
 
 ```bash
 cp skills/ads-google-app/assets/UAC-INPUT.example.yaml UAC-INPUT.yaml
@@ -271,13 +271,13 @@ python3 scripts/uac_experiment.py cancel-proposal ADS-EXPERIMENTS.yaml UAC-2026-
 不会写入广告账户。开始下一轮前必须把 `experiment_policy.id` 改成台账中从未使用过的
 新 ID；已取消或已完成的 ID 也不会复用。
 
-## v1.9.2 确定性工具与迁移
+## v2.0.0 确定性工具与迁移
 
-这些是高级、可复现接口。普通优化师可以直接让 Codex 代为运行，不需要先学会命令或 schema。下表命令针对源码 checkout；一行安装后，脚本在 `~/.codex/skills/ads/scripts/uac_experiment.py`，Python 在 `~/.codex/skills/ads/.venv/bin/python`，UAC 素材在 `~/.codex/skills/ads-google-app/assets/`。版本核验可以让 Codex 运行 Doctor，或直接运行：
+这些是高级、可复现接口。普通优化师可以直接让 Kimi 代为运行，不需要先学会命令或 schema。下表命令针对源码 checkout；一行安装后，脚本在 `~/.kimi-code/skills/ads/scripts/uac_experiment.py`，Python 在 `~/.kimi-code/skills/ads/.venv/bin/python`，UAC 素材在 `~/.kimi-code/skills/ads-google-app/assets/`。版本核验可以让 Kimi 运行 Doctor，或直接运行：
 
 ```bash
-"$HOME/.codex/skills/ads/.venv/bin/python" \
-  "$HOME/.codex/skills/ads/scripts/uac_experiment.py" doctor . --json
+"$HOME/.kimi-code/skills/ads/.venv/bin/python" \
+  "$HOME/.kimi-code/skills/ads/scripts/uac_experiment.py" doctor . --json
 ```
 
 | 能力 | 命令 | 作用与边界 |
@@ -289,7 +289,7 @@ python3 scripts/uac_experiment.py cancel-proposal ADS-EXPERIMENTS.yaml UAC-2026-
 | Router 同步检查 | `python3 scripts/sync_skill_layout.py --check` | 源码维护命令：检查规范入口 `skills/ads/` 与兼容镜像 `ads/` 是否一致；`--write` 只会从前者单向同步到后者 |
 | Knowledge Doctor | `python3 scripts/knowledge_doctor.py` | 源码维护命令：检查平台知识的来源和新鲜度元数据；默认警告是 advisory，不检查外部链接，“新鲜”不等于规则对某个账户正确 |
 
-Ledger schema `1.0` 仍可读；v1.9.2 新模板使用 `1.1`，分析输出 schema 仍为 `1.0`。分析、Quick Decision、追加、复盘和取消都不会暗中升级台账。显式迁移步骤：
+Ledger schema `1.0` 仍可读；v2.0.0 新模板使用 `1.1`，分析输出 schema 仍为 `1.0`。分析、Quick Decision、追加、复盘和取消都不会暗中升级台账。显式迁移步骤：
 
 ```bash
 # 1. 只预览 JSON，不写文件
@@ -307,37 +307,37 @@ python3 scripts/uac_experiment.py migrate-ledger ADS-EXPERIMENTS.yaml --write
 
 ## 安装
 
-推荐固定版本。`v1.9.2` tag 发布后，Unix/macOS 使用：
+推荐固定版本。`v2.0.0` tag 发布后，Unix/macOS 使用：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.sh | bash -s -- --ref=v1.9.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
 ```
 
 如果已经 clone 仓库，可以在仓库目录运行：
 
 ```bash
-bash install.sh --ref=v1.9.2
+bash install.sh --ref=v2.0.0
 ```
 
 自定义安装目录：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.sh | bash -s -- \
-  --ref=v1.9.2 --target=codex \
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- \
+  --ref=v2.0.0 --target=kimi \
   --skill-dir="$HOME/custom/skills" --agent-dir="$HOME/custom/agents"
 ```
 
 Windows PowerShell（tag 发布后）：
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v1.9.2
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.0.0
 ```
 
 `--ref` / `-Ref` 只接受 `vX.Y.Z` 形式的最终 tag，不接受 branch、commit、`main` 或 prerelease。`main` 是滚动开发快照，可能不稳定；只有想试用最新开发状态时才使用：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/main/install.sh | bash
 ```
 
 ### 回滚到已知可用版本
@@ -348,7 +348,7 @@ known-good 的旧 release tag，因此现在没有可直接复制执行的回滚
 
 ```bash
 KNOWN_GOOD=vX.Y.Z  # 先替换；不要原样运行
-curl -fsSL "https://raw.githubusercontent.com/taotao135791-bit/codex-ads/${KNOWN_GOOD}/install.sh" | \
+curl -fsSL "https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/${KNOWN_GOOD}/install.sh" | \
   bash -s -- --ref="${KNOWN_GOOD}"
 ```
 
@@ -356,23 +356,30 @@ Windows：
 
 ```powershell
 $KnownGood = "vX.Y.Z" # 先替换；不要原样运行
-irm "https://raw.githubusercontent.com/taotao135791-bit/codex-ads/$KnownGood/install.ps1" -OutFile install.ps1
+irm "https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/$KnownGood/install.ps1" -OutFile install.ps1
 .\install.ps1 -Ref $KnownGood
 ```
 
 重新安装旧 tag 只替换安装器覆盖的文件，不保证清理新版本额外增加的残留文件，不会回滚 Google Ads 中的操作，也不会把 ledger `1.1` 自动降级。迁移前保留原始 `1.0` 台账；使用旧版本时，优先指向那份备份，不要假设旧版本能读 `1.1`。
 
-默认路径：
+默认路径（`--target=kimi`，遵循 `$KIMI_CODE_HOME`；Kimi 也会扫描 `~/.agents/skills/`）：
 
 | 类型 | 路径 |
 | --- | --- |
-| Skills | `~/.codex/skills` |
-| Agents | `~/.codex/agents` |
-| 主技能 | `~/.codex/skills/ads` |
+| Skills | `~/.kimi-code/skills` |
+| Agents | `~/.kimi-code/skills/ads/agents`（persona briefs，由 Kimi 内置 coder 子代理调度） |
+| 主技能 | `~/.kimi-code/skills/ads` |
+| Python venv | `~/.kimi-code/skills/ads/.venv` |
+
+也可以在 Kimi Code CLI 里直接作为插件安装整个仓库：
+
+```text
+/plugins install https://github.com/taotao135791-bit/kimi-ads
+```
 
 ## 快速开始
 
-优化师不需要背命令。启动 Codex 后，直接复制一句自然语言给它：
+优化师不需要背命令。启动 Kimi 后，直接复制一句自然语言给它：
 
 ```text
 只读看一下这个广告账户，帮我判断预算消耗、转化质量、目标设置和下一步优化动作。不要修改任何设置。
@@ -380,23 +387,23 @@ irm "https://raw.githubusercontent.com/taotao135791-bit/codex-ads/$KnownGood/ins
 
 更多复制即用的话术见 [快速启动](QUICKSTART.zh-CN.md)。
 
-深度分析前，Codex Ads 会先问几个基础问题：你投什么产品、月预算多少、核心目标是什么、现在跑哪些平台。信息越具体，它给出的判断越像真实投手，而不是泛泛建议。
+深度分析前，Kimi Ads 会先问几个基础问题：你投什么产品、月预算多少、核心目标是什么、现在跑哪些平台。信息越具体，它给出的判断越像真实投手，而不是泛泛建议。
 
-新手刚接项目时，也可以先让 Codex Ads 用五问建立上下文：项目类型、甲方最终 KPI、哪些东西不能改、当前最头疼的现象、现在能提供什么数据。
+新手刚接项目时，也可以先让 Kimi Ads 用五问建立上下文：项目类型、甲方最终 KPI、哪些东西不能改、当前最头疼的现象、现在能提供什么数据。
 
-如果你已经登录广告平台，可以直接说“只读看一下我的 Google Ads / Meta Ads 账户”。Codex Ads 会默认搭配 Computer Use 看真实后台数据；只有看不到后台或没有授权时，才让你导出报表或截图。
+如果你已经登录广告平台，可以直接说“只读看一下我的 Google Ads / Meta Ads 账户”。Kimi Ads 会默认搭配 Kimi WebBridge 看真实后台数据；只有看不到后台或没有授权时，才让你导出报表或截图。
 
 ## 引导式访问
 
-为了安全看数，建议按这个流程给 Codex Ads 访问：
+为了安全看数，建议按这个流程给 Kimi Ads 访问：
 
 ```text
 1. 你自己打开广告后台并登录。
 2. 切到要分析的账号，不要打开付款方式、个人资料、密钥、权限管理等敏感页面。
 3. 设置好日期范围，例如过去 7 天、过去 30 天或本月。
-4. 如果要按甲方模板出日报/周报，打开模板，或告诉 Codex 模板的文件路径、云文档链接、文件名关键词。
-5. 对 Codex 说：只读看一下这个广告账户，不要修改任何设置。
-6. Codex Ads 只读取页面数据、表格、诊断、转化设置和模板结构，并给出观察、计算和建议。
+4. 如果要按甲方模板出日报/周报，打开模板，或告诉 Kimi 模板的文件路径、云文档链接、文件名关键词。
+5. 对 Kimi 说：只读看一下这个广告账户，不要修改任何设置。
+6. Kimi Ads 只读取页面数据、表格、诊断、转化设置和模板结构，并给出观察、计算和建议。
 ```
 
 默认安全边界：
@@ -406,19 +413,19 @@ irm "https://raw.githubusercontent.com/taotao135791-bit/codex-ads/$KnownGood/ins
 - 不记录客户账号名、账号 ID、campaign 名、邮箱、付款信息或任何可识别客户身份的内容到仓库文件。
 - 找甲方模板时，只读取模板结构和字段要求；不会私自修改、分享或发送模板。
 - 报告里默认使用泛化表达；如需保留客户名或具体账号信息，必须由用户明确要求。
-- 如果某个按钮可能产生修改，Codex Ads 必须先停下来问你确认。
+- 如果某个按钮可能产生修改，Kimi Ads 必须先停下来问你确认。
 
 ## 优化师定制
 
-每个优化师都可以把自己的经验写进项目目录里的 `CODEX_ADS_OPTIMIZER.md`。Codex Ads 分析账户前会优先读取这个文件，把你的判断习惯、加预算规则、停投规则、素材偏好和甲方汇报口径纳入建议。
+每个优化师都可以把自己的经验写进项目目录里的 `KIMI_ADS_OPTIMIZER.md`。Kimi Ads 分析账户前会优先读取这个文件，把你的判断习惯、加预算规则、停投规则、素材偏好和甲方汇报口径纳入建议。
 
-你可以直接对 Codex 说：
+你可以直接对 Kimi 说：
 
 ```text
-帮我创建一个 CODEX_ADS_OPTIMIZER.md，记录我的投放判断习惯。我的风格是：先看转化目标，再看预算消耗，再看国家和素材；给甲方汇报要直接，但不要太激进。
+帮我创建一个 KIMI_ADS_OPTIMIZER.md，记录我的投放判断习惯。我的风格是：先看转化目标，再看预算消耗，再看国家和素材；给甲方汇报要直接，但不要太激进。
 ```
 
-也可以开启“投手风格学习模式”，让 Codex Ads 根据你的纠正和使用经验提出可沉淀的规则。建议先使用 `suggest_only`：Codex 只提出建议，经过你确认后才写入文件。
+也可以开启“投手风格学习模式”，让 Kimi Ads 根据你的纠正和使用经验提出可沉淀的规则。建议先使用 `suggest_only`：Kimi 只提出建议，经过你确认后才写入文件。
 
 ```markdown
 ## 手动填写的投手风格
@@ -449,7 +456,7 @@ style_learning_mode: suggest_only
 
 ## 项目记忆文档
 
-对于重复性代投项目，可以让 Codex Ads 在项目目录里维护三个本地工作文档：
+对于重复性代投项目，可以让 Kimi Ads 在项目目录里维护三个本地工作文档：
 
 | 文件 | 用途 |
 | --- | --- |
@@ -465,8 +472,8 @@ style_learning_mode: suggest_only
 
 ## 路由 shorthand
 
-Codex Ads 主要通过自然语言触发；下面这些 `/ads ...` 是给 Codex 看的路由 shorthand，
-不是安装到系统里的 shell 命令。你也可以直接说“只读审查 Google Ads 账户”、
+Kimi Ads 主要通过自然语言触发；下面这些 `/ads ...` 是给 Kimi 看的路由 shorthand，
+不是安装到系统里的 shell 命令。也可以用 `/skill:ads` 显式调用主技能。你可以直接说“只读审查 Google Ads 账户”、
 “按甲方模板生成日报”。
 
 | shorthand | 用途 |
@@ -616,24 +623,24 @@ Google Ads 账户体检：
 
 ```text
 ads/                 legacy/raw 入口和参考资料
-skills/ads/          Codex 插件规范入口，内容与 ads/ 同步
+skills/ads/          Kimi 插件规范入口，内容与 ads/ 同步
 skills/ads-*/        平台与工作流子技能
-agents/              审计和创意 agents
+agents/              审计和创意 persona briefs（安装进主技能 ads/agents/，由 Kimi 内置 coder 子代理调度）
 scripts/             本地 Python 工具
 tests/               Pytest 测试
 evals/               创意评估样例
 .github/workflows/   跨平台 CI
-.codex-plugin/       Codex 插件元数据
+kimi.plugin.json     Kimi 插件清单
 ```
 
 ## 本地工具
 
-部分工作流会调用 `scripts/` 下的 Python 工具。安装脚本会为 Codex 目标创建
-`~/.codex/skills/ads/.venv`，避免改动系统 Python。手动安装可用：
+部分工作流会调用 `scripts/` 下的 Python 工具。安装脚本会为 Kimi 目标创建
+`~/.kimi-code/skills/ads/.venv`，避免改动系统 Python。手动安装可用：
 
 ```bash
-python3 -m venv ~/.codex/skills/ads/.venv
-~/.codex/skills/ads/.venv/bin/python -m pip install -r ~/.codex/skills/ads/requirements.txt
+python3 -m venv ~/.kimi-code/skills/ads/.venv
+~/.kimi-code/skills/ads/.venv/bin/python -m pip install -r ~/.kimi-code/skills/ads/requirements.txt
 ```
 
 图像生成通过 `ADS_IMAGE_PROVIDER` 和对应密钥配置，例如 `GOOGLE_API_KEY` 或 `OPENAI_API_KEY`。

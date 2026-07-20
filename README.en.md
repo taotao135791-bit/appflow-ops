@@ -1,22 +1,22 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Codex Ads logo" width="100%">
+  <img src="assets/logo.svg" alt="Kimi Ads logo" width="100%">
 </p>
 
-# Codex Ads — A Codex-first advertising decision workflow
+# Kimi Ads — A Kimi-first advertising decision workflow
 
-Codex Ads organizes paid-media decisions around Codex. Operators describe goals, permissions, and evidence in natural language; Codex routes the task to focused skills, identifies blockers, and prepares decisions and reports. When a reproducible safety contract matters, local deterministic tools validate the structured facts and experiment ledger.
+Kimi Ads organizes paid-media decisions around Kimi. Operators describe goals, permissions, and evidence in natural language; Kimi routes the task to focused skills, identifies blockers, and prepares decisions and reports. When a reproducible safety contract matters, local deterministic tools validate the structured facts and experiment ledger.
 
 [中文说明](README.md) · [Quick Start](QUICKSTART.en.md)
 
 ## Shortest path for non-programmers
 
-After the `v1.9.2` tag is published, install that fixed version:
+After the `v2.0.0` tag is published, install that fixed version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.sh | bash -s -- --ref=v1.9.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
 ```
 
-Then open Codex, attach an export, paste a table, or say that the dashboard is already open, and ask naturally:
+Then open Kimi, attach an export, paste a table, or say that the dashboard is already open, and ask naturally:
 
 ```text
 This is a Google App campaign with payment as the business KPI. I can change
@@ -25,13 +25,13 @@ conversion delay, then tell me whether to run one experiment, wait, or leave
 the account unchanged.
 ```
 
-YAML is not a prerequisite. Codex can first organize facts from user-provided tables, CSV/XLSX files, screenshots, or read-only pages and ask only for gaps that change the next decision. YAML/JSON is the advanced interface for local replay, auditability, and automation.
+YAML is not a prerequisite. Kimi can first organize facts from user-provided tables, CSV/XLSX files, screenshots, or read-only pages and ask only for gaps that change the next decision. YAML/JSON is the advanced interface for local replay, auditability, and automation.
 
 ## Agent reasoning and deterministic behavior
 
 | Layer | What it does | What it does not do |
 | --- | --- | --- |
-| Codex / Agent reasoning | Understands natural language, reads evidence the user explicitly provides, routes skills, asks for missing context, separates observations/calculations/inferences, and drafts internal or client-facing explanations | It cannot turn incomplete evidence into causality or acquire permissions the user does not have |
+| Kimi / Agent reasoning | Understands natural language, reads evidence the user explicitly provides, routes skills, asks for missing context, separates observations/calculations/inferences, and drafts internal or client-facing explanations | It cannot turn incomplete evidence into causality or acquire permissions the user does not have |
 | Local deterministic tools | Validate structured contracts, apply UAC state gates, admit at most one single-variable experiment, migrate ledgers, run Doctor, normalize fields, and replay anonymized cases | They do not log in, call ad APIs, infer hidden causes, or replace human approval |
 
 Deterministic means that the same version, structured input, and ledger produce the same rule result. It does not mean free-form Agent explanations are identical or that the result predicts future advertising performance.
@@ -60,9 +60,9 @@ Deterministic means that the same version, structured input, and ledger produce 
 
 This table describes reproducibility, not platform quality or performance ranking. Skills outside the structured UAC core should not be presented as equivalent rule engines.
 
-## What Codex Ads cannot guarantee
+## What Kimi Ads cannot guarantee
 
-- Codex Ads does not guarantee growth, lower CPA, or higher ROAS, and one review is not causal proof.
+- Kimi Ads does not guarantee growth, lower CPA, or higher ROAS, and one review is not causal proof.
 - An admitted experiment is not guaranteed to succeed; admission means only that the evidence and safety conditions are sufficient to test it.
 - It does not replace product positioning, in-app funnels, paywalls, SDK/tracking, MMP, backend event delivery, or store-listing work.
 - It does not auto-login, bypass permissions, or automatically change an ad account. Every real write requires confirmation of that exact action.
@@ -81,12 +81,12 @@ This table describes reproducibility, not platform quality or performance rankin
 - Handles repetitive agency operations: daily patrols, anomaly triage, client replies, creative request briefs, report cleanup, changelogs, and weekly/monthly summaries.
 - Generates strategic plans by business type, including SaaS, e-commerce, local service, B2B, finance, healthcare, mobile apps, and agencies.
 - Produces campaign briefs, copy directions, creative prompts, PPC calculations, A/B test plans, and PDF audit reports.
-- Defaults to Computer Use-assisted read-only dashboard inspection when the user is logged into an ad platform; it does not edit budgets, pause campaigns, or apply recommendations unless explicitly confirmed.
+- Defaults to read-only dashboard inspection via Kimi WebBridge (a Chrome/Edge extension plus local daemon that drives your real logged-in browser; see https://www.kimi.com/zh-cn/features/webbridge) when the user is logged into an ad platform; it does not edit budgets, pause campaigns, or apply recommendations unless explicitly confirmed.
 - Guides users through safe read-only access before inspecting live dashboards, and keeps reusable docs free of client-specific account details.
 - Provides a dedicated Google App campaigns/UAC feasibility and experiment loop that proposes at most one reversible, single-variable test.
 - Explicitly recommends waiting, collecting data, or making no change when measurement, maturity, permissions, or evidence block a valid action.
 
-## UAC Campaign Level Quick Ops (v1.9.2)
+## UAC Campaign Level Quick Ops (v2.0.0)
 
 Operators who do not code can ask naturally or use `/ads decide`. The default is one compact operation card—keep, create, parallel, move, wait, or roll back—not a full report or an automatically recorded experiment.
 
@@ -99,7 +99,7 @@ Ask: AC2.5 has tCPA 5, daily budget 100, and business CPA ceiling 6; mature CPA 
 Answer: Keep AC2.5 and do not open a Campaign; move tCPA 5.0 → 5.5 and hold budget 100. Review after 3 days or 10 mature events; restore tCPA 5.0 if mature CPA exceeds 6.0.
 ```
 
-`AC2.0`, `AC2.5`, `AC3.0`, and their team-local variants are internal labels, not official Google product names and not tCPA values. Actual optimization events, bid strategies, and value settings override a conflicting project glossary. Without a glossary, Codex can continue with a labeled inference, but it must obtain mapping confirmation before a critical level switch.
+`AC2.0`, `AC2.5`, `AC3.0`, and their team-local variants are internal labels, not official Google product names and not tCPA values. Actual optimization events, bid strategies, and value settings override a conflicting project glossary. Without a glossary, Kimi can continue with a labeled inference, but it must obtain mapping confirmation before a critical level switch.
 
 ### Example 1: choose a campaign level
 
@@ -148,7 +148,7 @@ python3 scripts/uac_experiment.py decide \
 
 See the fully synthetic [`UAC-QUICK-NUMERIC.example.yaml`](skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml), the [numeric decision contract](docs/quick-ops-numeric-decisions.md), and the complete [`quick-ops.md`](skills/ads-google-app/references/quick-ops.md) rules. Every live account write still requires exact human confirmation.
 
-## UAC Experiment Loop (v1.9.2)
+## UAC Experiment Loop (v2.0.0)
 
 The `ads-google-app` route checks measurement reliability, learning
 eligibility, optimization feasibility, and operator permissions before making
@@ -162,7 +162,7 @@ performance, permissions, recent changes, conversion delay, and Google Ads vs
 MMP/backend reconciliation. Preserve asset group, device, optimization event,
 asset, creative concept, cohort, and time-window grain when available.
 
-Codex Ads cannot guarantee growth without data, replace product/paywall/SDK/MMP
+Kimi Ads cannot guarantee growth without data, replace product/paywall/SDK/MMP
 work, optimize reliably toward an untrusted low-volume payment event, bypass
 platform learning or permissions, or prove causality from one review.
 
@@ -180,7 +180,7 @@ For an operator who can change only budget, tCPA, and creative, use these nine s
 
 ### Private workspace (recommended)
 
-Real-account projects belong under the Git-ignored `workspaces/` tree, not as loose customer exports in the repository root. An ordinary operator can simply ask Codex to initialize a UAC project; these are the source-checkout commands Codex composes internally:
+Real-account projects belong under the Git-ignored `workspaces/` tree, not as loose customer exports in the repository root. An ordinary operator can simply ask Kimi to initialize a UAC project; these are the source-checkout commands Kimi composes internally:
 
 ```bash
 python3 scripts/uac_experiment.py init-workspace my-uac-project
@@ -190,9 +190,9 @@ python3 scripts/uac_experiment.py doctor --workspace "workspaces/my-uac-project"
 python3 scripts/uac_experiment.py analyze --workspace "workspaces/my-uac-project"
 ```
 
-`normalize --workspace` always preserves `normalized/UAC-INPUT.draft.yaml` and `normalized/NORMALIZATION.json`. It creates the analyzable `normalized/UAC-INPUT.yaml` only when the strict input contract already passes. Otherwise the workflow stops so Codex can complete the contract from the envelope and user evidence; it must not analyze the draft. `analyze --workspace` writes analysis/report artifacts while explicitly leaving the ledger unchanged by default.
+`normalize --workspace` always preserves `normalized/UAC-INPUT.draft.yaml` and `normalized/NORMALIZATION.json`. It creates the analyzable `normalized/UAC-INPUT.yaml` only when the strict input contract already passes. Otherwise the workflow stops so Kimi can complete the contract from the envelope and user evidence; it must not analyze the draft. `analyze --workspace` writes analysis/report artifacts while explicitly leaving the ledger unchanged by default.
 
-The explicit root paths below remain compatible for legacy projects and advanced automation. Relative paths are for a source checkout; one-line-install users can ask Codex to run the installed helper or use the `~/.codex/skills/` paths documented below.
+The explicit root paths below remain compatible for legacy projects and advanced automation. Relative paths are for a source checkout; one-line-install users can ask Kimi to run the installed helper or use the `~/.kimi-code/skills/` paths documented below.
 
 ```bash
 cp skills/ads-google-app/assets/UAC-INPUT.example.yaml UAC-INPUT.yaml
@@ -234,13 +234,13 @@ See `ADS-EXPERIMENTS.full.yaml` for the fill-in scaffold and
 only the local ledger, never the ad account. Before the next loop, assign a new
 `experiment_policy.id`; completed and cancelled IDs are never reused.
 
-## v1.9.2 deterministic tools and migration
+## v2.0.0 deterministic tools and migration
 
-These are advanced, reproducible interfaces. An ordinary operator can ask Codex to run them and does not need to learn the commands or schema first. The commands below are for a source checkout. After a default one-line Codex install, the helper is at `~/.codex/skills/ads/scripts/uac_experiment.py`, its Python is at `~/.codex/skills/ads/.venv/bin/python`, and the UAC assets are under `~/.codex/skills/ads-google-app/assets/`. Verify the installed version through Doctor:
+These are advanced, reproducible interfaces. An ordinary operator can ask Kimi to run them and does not need to learn the commands or schema first. The commands below are for a source checkout. After a default one-line Kimi install, the helper is at `~/.kimi-code/skills/ads/scripts/uac_experiment.py`, its Python is at `~/.kimi-code/skills/ads/.venv/bin/python`, and the UAC assets are under `~/.kimi-code/skills/ads-google-app/assets/`. Verify the installed version through Doctor:
 
 ```bash
-"$HOME/.codex/skills/ads/.venv/bin/python" \
-  "$HOME/.codex/skills/ads/scripts/uac_experiment.py" doctor . --json
+"$HOME/.kimi-code/skills/ads/.venv/bin/python" \
+  "$HOME/.kimi-code/skills/ads/scripts/uac_experiment.py" doctor . --json
 ```
 
 | Capability | Source-checkout command | Purpose and boundary |
@@ -252,7 +252,7 @@ These are advanced, reproducible interfaces. An ordinary operator can ask Codex 
 | Router sync check | `python3 scripts/sync_skill_layout.py --check` | Source-maintainer command: checks canonical `skills/ads/` against legacy mirror `ads/`; `--write` synchronizes only from canonical to mirror |
 | Knowledge Doctor | `python3 scripts/knowledge_doctor.py` | Source-maintainer command: checks source/freshness metadata; warnings are advisory by default, external links are not checked, and freshness does not prove account-level correctness |
 
-Ledger schema `1.0` remains readable. v1.9.2 templates and newly created ledgers use `1.1`; the analysis-output schema remains `1.0`. Analyze, Quick Decision, append, review, and cancel never migrate a ledger implicitly. Migrate explicitly:
+Ledger schema `1.0` remains readable. v2.0.0 templates and newly created ledgers use `1.1`; the analysis-output schema remains `1.0`. Analyze, Quick Decision, append, review, and cancel never migrate a ledger implicitly. Migrate explicitly:
 
 ```bash
 # 1. Preview JSON without writing
@@ -270,37 +270,37 @@ The normalization output is an envelope containing `normalized`, `missing_fields
 
 ## Install
 
-Prefer a fixed version. After the `v1.9.2` tag is published, use this on Unix/macOS:
+Prefer a fixed version. After the `v2.0.0` tag is published, use this on Unix/macOS:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.sh | bash -s -- --ref=v1.9.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- --ref=v2.0.0
 ```
 
 If you already cloned the repository, run this from the repo directory:
 
 ```bash
-bash install.sh --ref=v1.9.2
+bash install.sh --ref=v2.0.0
 ```
 
 Install to a custom location:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.sh | bash -s -- \
-  --ref=v1.9.2 --target=codex \
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.sh | bash -s -- \
+  --ref=v2.0.0 --target=kimi \
   --skill-dir="$HOME/custom/skills" --agent-dir="$HOME/custom/agents"
 ```
 
 Windows PowerShell, after the tag is published:
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/codex-ads/v1.9.2/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v1.9.2
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.0.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.0.0
 ```
 
 `--ref` / `-Ref` accepts only a final `vX.Y.Z` tag, not a branch, commit, `main`, or prerelease. `main` is a rolling development snapshot and may be unstable. Use it only when you intentionally want the latest development state:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/codex-ads/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/main/install.sh | bash
 ```
 
 ### Roll back to a known-good version
@@ -313,7 +313,7 @@ replace `vX.Y.Z` below with an older tag that actually exists on the remote
 
 ```bash
 KNOWN_GOOD=vX.Y.Z  # replace first; do not run literally
-curl -fsSL "https://raw.githubusercontent.com/taotao135791-bit/codex-ads/${KNOWN_GOOD}/install.sh" | \
+curl -fsSL "https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/${KNOWN_GOOD}/install.sh" | \
   bash -s -- --ref="${KNOWN_GOOD}"
 ```
 
@@ -321,23 +321,30 @@ Windows:
 
 ```powershell
 $KnownGood = "vX.Y.Z" # replace first; do not run literally
-irm "https://raw.githubusercontent.com/taotao135791-bit/codex-ads/$KnownGood/install.ps1" -OutFile install.ps1
+irm "https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/$KnownGood/install.ps1" -OutFile install.ps1
 .\install.ps1 -Ref $KnownGood
 ```
 
 Reinstalling an older tag replaces files managed by the installer, but it does not promise to remove every extra file introduced by a newer version. It does not roll back Google Ads actions or downgrade ledger schema `1.1`. Preserve the original `1.0` ledger before migration and point an older tool at that backup; do not assume it can read `1.1`.
 
-The default install paths are:
+The default install paths are (`--target=kimi`, honoring `$KIMI_CODE_HOME`; Kimi also scans `~/.agents/skills/`):
 
 | Type | Path |
 | --- | --- |
-| Skills | `~/.codex/skills` |
-| Agents | `~/.codex/agents` |
-| Main skill | `~/.codex/skills/ads` |
+| Skills | `~/.kimi-code/skills` |
+| Agents | `~/.kimi-code/skills/ads/agents` (persona briefs, dispatched to Kimi's built-in `coder` subagent) |
+| Main skill | `~/.kimi-code/skills/ads` |
+| Python venv | `~/.kimi-code/skills/ads/.venv` |
+
+Alternatively, install the whole repository as a plugin from inside Kimi Code CLI:
+
+```text
+/plugins install https://github.com/taotao135791-bit/kimi-ads
+```
 
 ## Quick Start
 
-You do not need to memorize slash commands. Start Codex and paste a natural-language request:
+You do not need to memorize slash commands. Start Kimi and paste a natural-language request:
 
 ```text
 Review this ad account in read-only mode. Check budget pacing, conversion quality, goal setup, and next optimization actions. Do not change any settings.
@@ -345,27 +352,28 @@ Review this ad account in read-only mode. Check budget pacing, conversion qualit
 
 See [Quick Start](QUICKSTART.en.md) for copy-paste prompts.
 
-Codex Ads asks for business context before deep analysis: industry, monthly spend, primary goal, and active platforms. That context keeps benchmarks and priorities realistic.
+Kimi Ads asks for business context before deep analysis: industry, monthly spend, primary goal, and active platforms. That context keeps benchmarks and priorities realistic.
 
-For a junior operator taking over a new account, ask Codex Ads to start with
+For a junior operator taking over a new account, ask Kimi Ads to start with
 five questions: project type, final client KPI, what cannot be changed, the
 current symptom, and what data is available.
 
 ## Optimizer Customization
 
-Each optimizer can keep their own rules in `CODEX_ADS_OPTIMIZER.md`. Codex Ads reads it before analysis and uses the optimizer's judgment style, scaling rules, pause rules, creative preferences, and client reporting tone.
+Each optimizer can keep their own rules in `KIMI_ADS_OPTIMIZER.md`. Kimi Ads reads it before analysis and uses the optimizer's judgment style, scaling rules, pause rules, creative preferences, and client reporting tone.
 
 Example:
 
 ```text
-Create a CODEX_ADS_OPTIMIZER.md file for my optimization style. My style is: check conversion goals first, then budget pacing, then geo and creative. Client updates should be direct but not overly aggressive.
+Create a KIMI_ADS_OPTIMIZER.md file for my optimization style. My style is: check conversion goals first, then budget pacing, then geo and creative. Client updates should be direct but not overly aggressive.
 ```
 
 ## Routing Shorthand
 
-Codex Ads is primarily triggered by natural-language requests. The `/ads ...`
-items below are routing shorthand for Codex, not shell commands installed on
-your machine. You can also say "read-only review this Google Ads account" or
+Kimi Ads is primarily triggered by natural-language requests. The `/ads ...`
+items below are routing shorthand for Kimi, not shell commands installed on
+your machine; you can also invoke the main skill explicitly with `/skill:ads`.
+You can also say "read-only review this Google Ads account" or
 "create today's client report from this template."
 
 | Shorthand | Purpose |
@@ -410,25 +418,25 @@ your machine. You can also say "read-only review this Google Ads account" or
 
 ```text
 ads/                 Legacy/raw entry and reference files
-skills/ads/          Codex plugin entry, kept in sync with ads/
+skills/ads/          Kimi plugin entry, kept in sync with ads/
 skills/ads-*/        Platform and workflow sub-skills
-agents/              Audit and creative agents
+agents/              Audit and creative persona briefs (installed into the main skill's agents/ directory and dispatched to Kimi's built-in coder subagent)
 scripts/             Optional local Python utilities
 tests/               Pytest coverage
 evals/               Creative evaluation fixtures
 .github/workflows/   Cross-platform CI
-.codex-plugin/       Codex plugin metadata
+kimi.plugin.json     Kimi plugin manifest
 ```
 
 ## Local Utilities
 
 Some workflows use Python helpers from `scripts/`. The installer creates a
-local Codex skill venv at `~/.codex/skills/ads/.venv` instead of modifying
+local Kimi skill venv at `~/.kimi-code/skills/ads/.venv` instead of modifying
 system Python. To install manually:
 
 ```bash
-python3 -m venv ~/.codex/skills/ads/.venv
-~/.codex/skills/ads/.venv/bin/python -m pip install -r ~/.codex/skills/ads/requirements.txt
+python3 -m venv ~/.kimi-code/skills/ads/.venv
+~/.kimi-code/skills/ads/.venv/bin/python -m pip install -r ~/.kimi-code/skills/ads/requirements.txt
 ```
 
 Image generation is configured with `ADS_IMAGE_PROVIDER` and the matching provider key, such as `GOOGLE_API_KEY` or `OPENAI_API_KEY`.

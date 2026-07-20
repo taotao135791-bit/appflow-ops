@@ -51,9 +51,10 @@ the complete schema by hand.
 
 Use the first available helper:
 
-1. Installed Codex helper:
-   `~/.codex/skills/ads/scripts/uac_experiment.py`, with the installed virtual
-   environment Python when present.
+1. Installed Kimi helper:
+   `${KIMI_SKILL_DIR}/../ads/scripts/uac_experiment.py` (manual install:
+   `~/.kimi-code/skills/ads/scripts/uac_experiment.py`), with the installed
+   virtual environment Python when present.
 2. Source checkout: `python3 scripts/uac_experiment.py`.
 3. Windows PowerShell source checkout: `py -3 scripts/uac_experiment.py`.
 

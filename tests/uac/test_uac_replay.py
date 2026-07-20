@@ -13,13 +13,13 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from codex_ads.uac.replay import (  # noqa: E402
+from kimi_ads.uac.replay import (  # noqa: E402
     LEGACY_REPLAY_FILES,
     REPLAY_FILES,
     evaluate_replay,
     replay_path,
 )
-from codex_ads.uac.types import ContractError  # noqa: E402
+from kimi_ads.uac.types import ContractError  # noqa: E402
 
 
 def _documents(case_dir: Path) -> dict[str, dict]:
@@ -216,7 +216,7 @@ def test_unreported_variable_deviation_is_derived_and_unattributable(make_case):
             "deviated_from_recommendation": False,
         }
     )
-    documents["system-recommendation.yaml"]["codex_ads"]["protected_variables"] = [
+    documents["system-recommendation.yaml"]["kimi_ads"]["protected_variables"] = [
         "budget"
     ]
     _write_documents(path, documents)
@@ -312,7 +312,7 @@ def test_non_experiment_action_cannot_push_experiment_rates_above_one(
     make_case("valid-experiment")
     action_only = make_case("action-only")
     documents = _documents(action_only)
-    documents["system-recommendation.yaml"]["codex_ads"]["created_experiment"] = False
+    documents["system-recommendation.yaml"]["kimi_ads"]["created_experiment"] = False
     documents["actual-action.yaml"]["rollback_performed"] = True
     documents["evaluation.yaml"].update(
         {
@@ -498,7 +498,7 @@ def test_legacy_five_file_replay_remains_compatible(make_case):
             "schema_version": human["schema_version"],
             "case_id": human["case_id"],
             "human_judgment": human["human_judgment"],
-            "codex_ads": system["codex_ads"],
+            "kimi_ads": system["kimi_ads"],
         },
     }
     for filename in REPLAY_FILES:

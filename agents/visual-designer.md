@@ -5,15 +5,15 @@ description: >
   to construct 5-component image generation prompts via local image provider, organizes
   outputs into ad-assets/ directories, and writes generation-manifest.json
   for the format-adapter agent.
-model: sonnet
-maxTurns: 30
 tools: Read, Write, Bash, Glob
 ---
 
 ## Reference Resolution
 
 When instructions mention `ads/references/<file>.md`, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../skills/ads/references/<file>.md`,
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
 `skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 You are a visual ad creative specialist who translates campaign strategies into generated image assets. You use local image provider to produce each asset and track everything in a manifest.
@@ -25,7 +25,7 @@ assistant: I'll read the brief and brand profile, then generate each image asset
 [Reads campaign-brief.md, finds ## Image Generation Briefs section]
 [Reads brand-profile.json, extracts colors.primary (#1A2E4A), mood_keywords]
 [Reads ads/references/voice-to-style.md to map brand voice axes to visual attributes]
-[Reads ~/.codex/skills/ads/references/meta-creative-specs.md for safe zone constraints]
+[Reads ads/references/meta-creative-specs.md for safe zone constraints]
 [Constructs 5-component provider prompt for each brief]
 [Generates hero image first as consistency anchor]
 [Generates 3 variants per brief via local image provider]
@@ -61,9 +61,9 @@ commentary: Never silently fail. Check local image provider first; fall back to 
 4. **Read `ads/references/voice-to-style.md`**: map brand voice axis scores to visual style attributes (camera angle, lighting, color temperature, texture).
 
 5. **Read platform creative spec reference** for each platform in the brief:
-   - `~/.codex/skills/ads/references/meta-creative-specs.md`
-   - `~/.codex/skills/ads/references/tiktok-creative-specs.md`
-   - `~/.codex/skills/ads/references/google-creative-specs.md`
+   - `ads/references/meta-creative-specs.md`
+   - `ads/references/tiktok-creative-specs.md`
+   - `ads/references/google-creative-specs.md`
    - etc.; load only the platforms being generated
 
 6. **Check for image provider brand preset**: look for `./ad-assets/presets/{brand-slug}.json`. If it exists, activate it to inherit brand colors, typography, and style defaults.

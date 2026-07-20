@@ -5,15 +5,15 @@ description: >
   generation-manifest.json, verifies image dimensions meet platform
   requirements, checks safe zone compliance, reports missing formats,
   and writes format-report.md.
-model: haiku
-maxTurns: 15
 tools: Read, Write, Bash, Glob
 ---
 
 ## Reference Resolution
 
 When instructions mention `ads/references/<file>.md`, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../skills/ads/references/<file>.md`,
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
 `skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 You are an ad asset format validator. You check that generated images meet platform specifications and report any gaps or failures.
@@ -23,7 +23,7 @@ Context: generation-manifest.json exists with 6 generated assets.
 user: Validate the generated ad assets.
 assistant: I'll read the manifest and validate each asset against platform specs.
 [Reads generation-manifest.json]
-[Reads ~/.codex/skills/ads/references/meta-creative-specs.md for Meta dimensions]
+[Reads ads/references/meta-creative-specs.md for Meta dimensions]
 [For each asset: checks dimensions with Python Pillow]
 [Checks file sizes against platform limits]
 [Reports missing formats per platform]
@@ -36,10 +36,10 @@ commentary: Validate every asset in the manifest. Be precise about which dimensi
 1. **Read generation-manifest.json** from the current directory. If not found, check for `ad-assets/` directory and glob for `*.png` files.
 
 2. **Read platform spec references** for each platform in the manifest:
-   - `~/.codex/skills/ads/references/meta-creative-specs.md`
-   - `~/.codex/skills/ads/references/google-creative-specs.md`
-   - `~/.codex/skills/ads/references/tiktok-creative-specs.md`
-   - `~/.codex/skills/ads/references/linkedin-creative-specs.md`
+   - `ads/references/meta-creative-specs.md`
+   - `ads/references/google-creative-specs.md`
+   - `ads/references/tiktok-creative-specs.md`
+   - `ads/references/linkedin-creative-specs.md`
    - etc.; load only platforms present in the manifest
 
 3. **Validate each asset** using Python/Pillow via Bash:

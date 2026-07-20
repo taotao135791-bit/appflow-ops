@@ -18,12 +18,12 @@ audit but too important to improvise: checking accounts, explaining changes,
 turning problems into creative requests, cleaning exports, and preparing
 meeting notes. Default to read-only account inspection and local file outputs.
 
-## Computer Use First
+## WebBridge First
 
 For daily patrols, anomaly triage, creative performance review, changelog
 review, template inspection, and any task that depends on the current ad
-dashboard state, default to Computer Use-assisted read-only inspection when the
-user is logged in or has opened the relevant page.
+dashboard state, default to Kimi WebBridge-assisted read-only inspection when
+the user is logged in or has opened the relevant page.
 
 Before inspection:
 - Ask the user to open the correct account, date range, and relevant table or
@@ -32,7 +32,7 @@ Before inspection:
 - Do not click save, apply, pause, enable, edit, export, send, or write back
   unless the user confirms the exact action.
 
-If Computer Use is unavailable or the user has not opened the dashboard, fall
+If WebBridge is unavailable or the user has not opened the dashboard, fall
 back to exports, screenshots, pasted tables, local files, or read-only cloud
 document inspection.
 
@@ -69,8 +69,8 @@ repo:
    fields, formulas, data sources, and narrative rules.
 
 Use templates from the `assets/` directory next to this `SKILL.md` when
-creating new files. In a manual Codex install this is also
-`~/.codex/skills/ads-ops/assets/`:
+creating new files. In a manual Kimi install this is also
+`~/.kimi-code/skills/ads-ops/assets/`:
 
 - `project-context-template.md`
 - `ops-log-template.md`
@@ -282,7 +282,7 @@ different. Do not force one report layout. Instead, map the template to a
 standard internal data model, then fill a draft.
 
 Workflow:
-1. Inspect the template read-only through Computer Use, local file reading,
+1. Inspect the template read-only through Kimi WebBridge, local file reading,
    pasted table, or screenshot.
 2. Extract only the structure: sheet/tab names, section names, table columns,
    date fields, narrative blocks, formulas, required fields, and formatting

@@ -1,15 +1,15 @@
 # MCP Integration Guide
 
 <!-- Created: 2026-04-13 | v1.5 -->
-<!-- Purpose: How to pair codex-ads with live ad platform MCP servers -->
+<!-- Purpose: How to pair kimi-ads with live ad platform MCP servers -->
 
 ## Overview
 
-codex-ads defaults to Computer Use-assisted read-only inspection when the user
+kimi-ads defaults to Kimi WebBridge-assisted read-only inspection when the user
 is logged into an ad dashboard and asks for live account analysis. For API-level
-access, pair it with MCP servers that connect Codex CLI directly to ad platform
-APIs. Manual exports, screenshots, and pasted metrics remain supported fallback
-inputs.
+access, pair it with MCP servers that connect Kimi Code CLI directly to ad
+platform APIs. Manual exports, screenshots, and pasted metrics remain supported
+fallback inputs.
 
 ## Available MCP Servers
 
@@ -83,7 +83,7 @@ inputs.
 - EMQ scores for M04 (requires Events Manager access)
 
 **Alternative: Direct Meta API:**
-No bundled fetcher ships with codex-ads. For a free, self-hosted option, write
+No bundled fetcher ships with kimi-ads. For a free, self-hosted option, write
 a thin wrapper around the Meta Marketing API (Graph API) and import its JSON
 output via the standard data-collection flow.
 
@@ -116,14 +116,14 @@ No dedicated MCP server available as of April 2026. Use:
 ## Hybrid Workflow
 
 The recommended approach combines live UI inspection, MCP live data, and
-codex-ads structured analysis:
+kimi-ads structured analysis:
 
 ```
-1. If the user is logged in, inspect the ad dashboard with Computer Use in read-only mode
+1. If the user is logged in, inspect the ad dashboard with Kimi WebBridge in read-only mode
 2. Connect MCP server(s) for available platforms when API-level data is useful
-3. Run /ads audit (codex-ads combines UI observations, MCP data, and provided files)
+3. Run /ads audit (kimi-ads combines UI observations, MCP data, and provided files)
 4. For platforms without live access, provide exports manually
-5. codex-ads merges all data into unified audit
+5. kimi-ads merges all data into unified audit
 6. Health Score calculated across all platforms regardless of data source
 ```
 
@@ -133,4 +133,4 @@ codex-ads structured analysis:
 - **Never inline credentials in committed files.** Add `.mcp.json` to `.gitignore`, set `chmod 600 .mcp.json` on Unix, and use `${ENV_VAR}` interpolation so the file contains references — not values. See the Google Ads setup above for the canonical pattern; the same applies to Meta, LinkedIn, and any future MCP server.
 - **Use read-only OAuth scopes** for audit work. A refresh token issued for `https://www.googleapis.com/auth/adwords` allows campaign mutations; for audit-only the read scope is sufficient.
 - **Rotate any token that was ever committed to a public repo**, even briefly. Treat the credential as compromised — search-engine caches and forks make deletion unreliable.
-- **For write operations** (campaign changes, budget edits), see the CEP safety protocol discussion in the itallstartedwithaidea/google-ads-skills repo. Codex Ads itself is audit-only by design.
+- **For write operations** (campaign changes, budget edits), see the CEP safety protocol discussion in the itallstartedwithaidea/google-ads-skills repo. Kimi Ads itself is audit-only by design.

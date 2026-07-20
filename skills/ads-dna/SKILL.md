@@ -13,8 +13,10 @@ description: >-
 ## Reference Resolution
 
 For any `ads/references/<file>.md` path below, read the first existing path:
-`~/.codex/skills/ads/references/<file>.md`, `../ads/references/<file>.md`,
-`../skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
+`~/.kimi-code/skills/ads/references/<file>.md`,
+`~/.agents/skills/ads/references/<file>.md`,
+`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
 
 Extracts brand identity from a website and saves it as `brand-profile.json`
 for use by `/ads create`, `/ads generate`, and `/ads photoshoot`.
@@ -27,7 +29,7 @@ before you label it. Observe the visual choices before you classify them.
 
 ## Quick Reference
 
-These `/ads ...` entries are Codex routing shorthand, not shell commands.
+These `/ads ...` entries are Kimi routing shorthand, not shell commands.
 
 | Shorthand | What it does |
 |---------|-------------|
@@ -64,23 +66,25 @@ After fetching pages, capture 3 screenshots for comprehensive brand anchoring.
 These serve as visual style references during `/ads generate`; the same approach
 Pomelli uses to anchor ad images to the actual brand aesthetic.
 
-Capture the following:
+Capture the following (script path resolves to
+`${KIMI_SKILL_DIR}/../ads/scripts/capture_screenshot.py`; in a manual install
+use `~/.kimi-code/skills/ads/scripts/capture_screenshot.py`):
 
 1. **Homepage hero section** (above the fold):
 ```bash
-python ~/.codex/skills/ads/scripts/capture_screenshot.py [url]
+python "${KIMI_SKILL_DIR}/../ads/scripts/capture_screenshot.py" [url]
 ```
 Saves: `./brand-screenshots/{domain}_homepage.png`
 
 2. **Product or services page**:
 ```bash
-python ~/.codex/skills/ads/scripts/capture_screenshot.py [url]/products
+python "${KIMI_SKILL_DIR}/../ads/scripts/capture_screenshot.py" [url]/products
 ```
 Saves: `./brand-screenshots/{domain}_product.png`
 
 3. **About page** (brand personality):
 ```bash
-python ~/.codex/skills/ads/scripts/capture_screenshot.py [url]/about
+python "${KIMI_SKILL_DIR}/../ads/scripts/capture_screenshot.py" [url]/about
 ```
 Saves: `./brand-screenshots/{domain}_about.png`
 
@@ -145,7 +149,7 @@ Also extract structured data when available: schema.org markup, Open Graph tags 
 
 ### Step 4: Build brand-profile.json
 
-Read `~/.codex/skills/ads/references/brand-dna-template.md` for the exact schema.
+Read `ads/references/brand-dna-template.md` for the exact schema.
 
 Construct the JSON object following the schema precisely. Use `null` for any
 field that cannot be confidently extracted; do not guess.
@@ -162,7 +166,7 @@ Example of a low-confidence field:
 ### Step 5: Write brand-profile.json
 
 Write the JSON to `./brand-profile.json` in the current working directory
-(where the user is running Codex CLI).
+(where the user is running Kimi Code CLI).
 
 If screenshots were captured successfully in Step 2b, include a `screenshots` field:
 ```json

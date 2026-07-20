@@ -13,7 +13,7 @@
 | Display Paths | N/A | 2 | 15 chars each |
 | Final URL | 1 | 1 | Required |
 
-Best practice: 8-10 headlines, 2-3 descriptions (Codex), 12-15 for Excellent (Google).
+Best practice: 8-10 headlines, 2-3 descriptions (Kimi Ads), 12-15 for Excellent (Google).
 
 **Pinning Rules:**
 - Pin 1 headline to Position 1 (brand/main keyword)

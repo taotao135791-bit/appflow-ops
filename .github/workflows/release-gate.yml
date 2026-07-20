@@ -40,7 +40,7 @@ jobs:
 
           version = Path("VERSION").read_text(encoding="utf-8").strip()
           manifest = json.loads(
-              Path(".codex-plugin/plugin.json").read_text(encoding="utf-8")
+              Path("kimi.plugin.json").read_text(encoding="utf-8")
           )
           expected_tag = f"v{version}"
           if os.environ["GITHUB_REF_NAME"] != expected_tag:

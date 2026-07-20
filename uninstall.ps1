@@ -1,18 +1,21 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Codex Ads Uninstaller for Windows (multi-host).
+    Kimi Ads Uninstaller for Windows (multi-host).
 .DESCRIPTION
-    Removes every ads-* sub-skill directory plus the orchestrator and bundled
-    agents from the chosen host's install root. Uses glob discovery so new
-    sub-skills don't require uninstaller updates.
+    Removes every ads-* sub-skill directory plus the orchestrator from the
+    chosen host's install root. For Kimi Code CLI the bundled agents live
+    inside <skill-base>\ads\agents and are removed together with the
+    orchestrator; for hosts with a separate agents directory the bundled
+    agents are removed from there. Uses glob discovery so new sub-skills
+    don't require uninstaller updates.
 .PARAMETER Target
-    Which host CLI to uninstall from. Default: codex.
+    Which host CLI to uninstall from. Default: kimi.
 #>
 
 param(
-    [ValidateSet('codex','cursor','windsurf','gemini','goose')]
-    [string]$Target = 'codex'
+    [ValidateSet('kimi','codex','cursor','windsurf','gemini','goose')]
+    [string]$Target = 'kimi'
 )
 
 $ErrorActionPreference = "Stop"
@@ -20,10 +23,14 @@ $ErrorActionPreference = "Stop"
 function Resolve-TargetPaths {
     param([string]$T)
     switch ($T) {
+        'kimi' {
+            $KimiHome = if ($env:KIMI_CODE_HOME) { $env:KIMI_CODE_HOME } else { Join-Path $HOME ".kimi-code" }
+            return @{ SkillBase = Join-Path $KimiHome "skills";                                            AgentDir = '' }
+        }
         'codex'    { return @{ SkillBase = Join-Path $env:USERPROFILE ".codex\skills";                                 AgentDir = Join-Path $env:USERPROFILE ".codex\agents" } }
-        'cursor'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\codex-ads\skills";          AgentDir = Join-Path $env:USERPROFILE ".cursor\extensions\codex-ads\agents" } }
+        'cursor'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\skills";          AgentDir = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\agents" } }
         'windsurf' { return @{ SkillBase = Join-Path $env:USERPROFILE ".windsurf\skills";                              AgentDir = Join-Path $env:USERPROFILE ".windsurf\agents" } }
-        'gemini'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".gemini\extensions\codex-ads\skills";          AgentDir = Join-Path $env:USERPROFILE ".gemini\extensions\codex-ads\agents" } }
+        'gemini'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".gemini\extensions\kimi-ads\skills";          AgentDir = Join-Path $env:USERPROFILE ".gemini\extensions\kimi-ads\agents" } }
         'goose'    { return @{ SkillBase = Join-Path $env:USERPROFILE ".config\goose\skills";                          AgentDir = Join-Path $env:USERPROFILE ".config\goose\agents" } }
         default    { throw "Unknown target: $T" }
     }
@@ -34,9 +41,14 @@ function Main {
     $SkillBase = $paths.SkillBase
     $AgentDir = $paths.AgentDir
 
-    Write-Host "Uninstalling Codex Ads from $SkillBase and $AgentDir..."
+    if ($AgentDir) {
+        Write-Host "Uninstalling Kimi Ads from $SkillBase and $AgentDir..."
+    } else {
+        Write-Host "Uninstalling Kimi Ads from $SkillBase..."
+    }
 
-    # Remove orchestrator
+    # Remove orchestrator (for Kimi Code CLI this also removes the bundled
+    # agents under <skill-base>\ads\agents)
     $MainSkill = Join-Path $SkillBase "ads"
     if (Test-Path $MainSkill) {
         Remove-Item -Path $MainSkill -Recurse -Force
@@ -49,25 +61,29 @@ function Main {
         }
     }
 
-    # Remove bundled audit + creative agents.
+    # Remove bundled audit + creative agents from hosts that have a separate
+    # agents directory. Skipped for Kimi Code CLI — there the persona briefs
+    # live inside <skill-base>\ads\agents and are already removed above.
     # NOTE: Keep this list in sync with the contents of `agents/` in the repo.
     # install.ps1 uses `Copy-Item agents\*.md` so any new agent file added
     # there must also be appended below. Pre-v1.7.1 the list contained
     # non-existent entries (audit-amazon, audit-attribution, audit-server-side)
     # and missed the actual shipped agents.
-    $Agents = @(
-        "audit-budget", "audit-compliance", "audit-creative",
-        "audit-google", "audit-meta", "audit-tracking",
-        "copy-writer", "creative-strategist", "format-adapter", "visual-designer"
-    )
-    foreach ($agent in $Agents) {
-        $AgentPath = Join-Path $AgentDir "$agent.md"
-        if (Test-Path $AgentPath) {
-            Remove-Item -Path $AgentPath -Force
+    if ($AgentDir) {
+        $Agents = @(
+            "audit-budget", "audit-compliance", "audit-creative",
+            "audit-google", "audit-meta", "audit-tracking",
+            "copy-writer", "creative-strategist", "format-adapter", "visual-designer"
+        )
+        foreach ($agent in $Agents) {
+            $AgentPath = Join-Path $AgentDir "$agent.md"
+            if (Test-Path $AgentPath) {
+                Remove-Item -Path $AgentPath -Force
+            }
         }
     }
 
-    Write-Host "[OK] Codex Ads uninstalled." -ForegroundColor Green
+    Write-Host "[OK] Kimi Ads uninstalled." -ForegroundColor Green
 }
 
 Main

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/taotao135791-bit/codex-ads/schemas/uac-quick-decision.schema.json",
-  "title": "Codex Ads UAC Quick Decision",
+  "$id": "https://github.com/taotao135791-bit/kimi-ads/schemas/uac-quick-decision.schema.json",
+  "title": "Kimi Ads UAC Quick Decision",
   "type": "object",
   "required": [
     "schema_version",

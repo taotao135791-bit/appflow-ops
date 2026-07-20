@@ -17,12 +17,13 @@ def _frontmatter(text: str) -> dict:
 
 
 def test_plugin_repository_points_to_actual_repo(repo_root):
-    manifest = json.loads(_read(repo_root, ".codex-plugin/plugin.json"))
-    assert manifest["repository"] == "https://github.com/taotao135791-bit/codex-ads"
+    manifest = json.loads(_read(repo_root, "kimi.plugin.json"))
+    assert manifest["name"] == "kimi-ads"
+    assert manifest["repository"] == "https://github.com/taotao135791-bit/kimi-ads"
     assert manifest["skills"] == "./skills/"
     assert "interface" in manifest
-    assert manifest["interface"]["displayName"] == "Codex Ads"
-    assert manifest["interface"]["defaultPrompt"]
+    assert manifest["interface"]["displayName"] == "Kimi Ads"
+    assert manifest["interface"]["shortDescription"]
 
 
 def test_main_ads_skill_stays_lean_router(repo_root):
@@ -34,7 +35,7 @@ def test_main_ads_skill_stays_lean_router(repo_root):
     assert "## Route Table" in text
     assert "references/orchestrator.md" in text
     assert "## Project Memory" in text
-    assert "~/.codex/skills/ads-google/SKILL.md" in text
+    assert "~/.kimi-code/skills/ads-google/SKILL.md" in text
 
     frontmatter_description = _frontmatter(text)["description"]
     for trigger in ["广告账户审计", "日报/周报", "甲方模板", "每日巡检", "KPI受限诊断"]:

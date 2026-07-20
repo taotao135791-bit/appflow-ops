@@ -8,18 +8,18 @@ description: >-
 
 # Ads Router
 
-Codex Ads is a router for paid-media work. Keep this file lean: route the task,
+Kimi Ads is a router for paid-media work. Keep this file lean: route the task,
 load only the needed sub-skill, and use references on demand.
 
 ## Always Do First
 
 1. Read optimizer profile files in the current working directory if present:
-   `CODEX_ADS_OPTIMIZER.md`, `optimizer-profile.md`, or
-   `.codex-ads-optimizer.md`.
+   `KIMI_ADS_OPTIMIZER.md`, `optimizer-profile.md`, or
+   `.kimi-ads-optimizer.md`.
 2. Stay read-only in ad platforms unless the user confirms an exact edit.
 3. Keep real account names, IDs, campaign names, emails, payment details, and
    live metrics out of reusable skill files, examples, tests, and templates.
-4. For live dashboard work, load `references/computer-use-live-audit.md`.
+4. For live dashboard work, load `references/webbridge-live-audit.md`.
 5. For global protocols, quality gates, and style learning details, load
    `references/orchestrator.md`.
 
@@ -28,27 +28,30 @@ load only the needed sub-skill, and use references on demand.
 For logged-in ad platforms, analytics dashboards, MMP dashboards, client report
 templates opened in a browser, or any page containing private account data:
 
-- MUST use Computer Use for live UI inspection.
-- MUST NOT use Browser Plugin, in-app browser automation, Playwright,
-  screenshot scripts, page HTML extraction, or network scraping.
+- MUST use Kimi WebBridge (the browser bridge that drives the user's real,
+  logged-in Chrome/Edge session) for live UI inspection.
+- If WebBridge is not installed or not connected, tell the user to install it
+  (https://www.kimi.com/zh-cn/features/webbridge) or ask for exports, pasted
+  tables, or user-provided screenshots instead.
+- MUST NOT use headless Playwright, screenshot scripts, page HTML extraction,
+  or network scraping against logged-in dashboards.
 - MUST NOT take screenshots of private dashboards unless the user explicitly
   asks for a current-work deliverable that requires screenshots.
-- If Computer Use is unavailable, ask for exports, pasted tables, or
-  user-provided screenshots instead of switching to Browser Plugin.
-- Browser/Playwright tools are allowed only for public landing pages, public
-  brand sites, or local files that do not contain logged-in account data.
+- Headless browser and script tools are allowed only for public landing pages,
+  public brand sites, or local files that do not contain logged-in account data.
 
 ## Path Resolution
 
-This router may run from a manual Codex install or from a plugin/source tree.
+This router may run from a manual Kimi install or from a plugin/source tree.
 
-- Manual install: router at `~/.codex/skills/ads/SKILL.md`, sub-skills at
-  `~/.codex/skills/ads-*/SKILL.md`.
-- Plugin/source layout: router at `skills/ads/SKILL.md`, sub-skills as sibling
-  directories under `skills/`.
+- Manual install: router at `~/.kimi-code/skills/ads/SKILL.md`, sub-skills at
+  `~/.kimi-code/skills/ads-*/SKILL.md`.
+- Plugin/source layout: router at `skills/ads/SKILL.md`, sub-skills as
+  `${KIMI_SKILL_DIR}` sibling directories under `skills/`.
 - When the route table says load `ads-google`, read that sub-skill's `SKILL.md`
-  from the first existing path: `~/.codex/skills/ads-google/SKILL.md`,
-  `../ads-google/SKILL.md`, or `../skills/ads-google/SKILL.md`.
+  from the first existing path: `${KIMI_SKILL_DIR}/../ads-google/SKILL.md`,
+  `~/.kimi-code/skills/ads-google/SKILL.md`,
+  `~/.agents/skills/ads-google/SKILL.md`, then `../skills/ads-google/SKILL.md`.
 - For UAC/App campaigns, resolve `ads-google-app` from the equivalent sibling
   paths before loading the generic Google skill.
 
@@ -134,7 +137,7 @@ working documents in the current project directory:
 2. `ADS-OPS-LOG.md` for daily actions, reasons, observed results, and review.
 3. `ADS-REPORT-FORMAT.md` for fixed client daily/weekly report formats.
 
-Use the first existing template directory: `~/.codex/skills/ads-ops/assets/`,
+Use the first existing template directory: `~/.kimi-code/skills/ads-ops/assets/`,
 `../ads-ops/assets/`, or `../skills/ads-ops/assets/`. Ask before storing real
 client identifiers; anonymize by default.
 

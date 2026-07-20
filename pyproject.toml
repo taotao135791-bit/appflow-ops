@@ -1,7 +1,7 @@
 [tool.mypy]
 python_version = "3.10"
 files = [
-  "scripts/codex_ads/uac",
+  "scripts/kimi_ads/uac",
 ]
 check_untyped_defs = true
 disallow_untyped_defs = true
@@ -13,7 +13,7 @@ warn_unused_ignores = true
 warn_unreachable = true
 
 [tool.coverage.run]
-source = ["codex_ads.uac"]
+source = ["kimi_ads.uac"]
 relative_files = true
 parallel = true
 patch = ["subprocess"]

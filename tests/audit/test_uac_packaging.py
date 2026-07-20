@@ -42,7 +42,7 @@ def test_uac_assets_and_scripts_are_installed(repo_root):
         assert extension in shell
     for extension in ["'.md'", "'.yaml'", "'.yml'", "'.json'"]:
         assert extension in powershell
-    assert 'cp "${TEMP_DIR}/codex-ads/scripts/"*.py' in shell
+    assert 'cp "${TEMP_DIR}/kimi-ads/scripts/"*.py' in shell
     assert 'Copy-Item (Join-Path $ScriptsSource "*.py")' in powershell
     assert "find \"${skill_dir}references\" -type f -name '*.md' -print0" in shell
     assert "Get-ChildItem -LiteralPath $SubskillReferences -File -Recurse" in powershell
@@ -117,7 +117,7 @@ def test_readmes_document_capability_maturity_without_equating_platforms(repo_ro
     assert "没有与 UAC 等价的确定性实验引擎" in readme
     assert "no deterministic experiment engine equivalent to UAC" in readme_en
     assert "## 无法保证的内容" in readme
-    assert "## What Codex Ads cannot guarantee" in readme_en
+    assert "## What Kimi Ads cannot guarantee" in readme_en
 
 
 def test_operator_docs_prefer_private_workspace_without_hiding_stop_condition(
@@ -142,13 +142,13 @@ def test_operator_docs_prefer_private_workspace_without_hiding_stop_condition(
 
 
 def test_uac_version_and_docs_are_present(repo_root):
-    manifest = json.loads(_read(repo_root, ".codex-plugin/plugin.json"))
+    manifest = json.loads(_read(repo_root, "kimi.plugin.json"))
     version = _read(repo_root, "VERSION").strip()
-    assert manifest["version"] == version == "1.9.2"
+    assert manifest["version"] == version == "2.0.0"
     assert "UAC" in _read(repo_root, "README.md")
     assert "UAC" in _read(repo_root, "README.en.md")
     assert f"## {version}" in _read(repo_root, "CHANGELOG.md")
-    assert f"CodexAds/{version}" in _read(repo_root, "scripts/fetch_page.py")
+    assert f"KimiAds/{version}" in _read(repo_root, "scripts/fetch_page.py")
     assert f'__version__ = "{version}"' in _read(
         repo_root, "scripts/generate_report.py"
     )
@@ -176,12 +176,12 @@ def test_ci_installer_smoke_covers_numeric_quick_decision_package(repo_root):
 
     for installed_artifact in [
         "UAC-QUICK-NUMERIC.example.yaml",
-        "scripts/codex_ads/uac/signals.py",
-        "scripts/codex_ads/uac/numeric_decision.py",
-        "scripts/codex_ads/uac/policy_loader.py",
-        "scripts/codex_ads/uac/policies/uac-heuristic-policy.schema.json",
-        "scripts/codex_ads/uac/policies/uac-numeric-policy-v1.yaml",
-        "scripts/codex_ads/uac/policies/uac-signal-policy-v1.yaml",
+        "scripts/kimi_ads/uac/signals.py",
+        "scripts/kimi_ads/uac/numeric_decision.py",
+        "scripts/kimi_ads/uac/policy_loader.py",
+        "scripts/kimi_ads/uac/policies/uac-heuristic-policy.schema.json",
+        "scripts/kimi_ads/uac/policies/uac-numeric-policy-v1.yaml",
+        "scripts/kimi_ads/uac/policies/uac-signal-policy-v1.yaml",
     ]:
         assert installed_artifact in workflow
 

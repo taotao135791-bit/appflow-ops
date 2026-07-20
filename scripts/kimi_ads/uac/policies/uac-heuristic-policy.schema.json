@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/taotao135791-bit/codex-ads/schemas/uac-heuristic-policy.schema.json",
-  "title": "Codex Ads UAC Heuristic Policy",
+  "$id": "https://github.com/taotao135791-bit/kimi-ads/schemas/uac-heuristic-policy.schema.json",
+  "title": "Kimi Ads UAC Heuristic Policy",
   "description": "Calibratable heuristics only. Runtime validation additionally enforces threshold ordering and a 100 percent proxy-weight total.",
   "type": "object",
   "required": ["schema_version", "policy_version", "policy_kind", "policy_mode"],

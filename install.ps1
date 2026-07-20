@@ -1,38 +1,39 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Codex Ads Installer for Windows (multi-host).
+    Kimi Ads Installer for Windows (multi-host).
 .DESCRIPTION
-    Installs the Codex Ads skill, sub-skills, agents, and reference files
-    for Codex CLI (default) or any of the supported experimental host CLIs.
+    Installs the Kimi Ads skill, sub-skills, agents, and reference files
+    for Kimi Code CLI (default) or any of the supported experimental host CLIs.
 
     Targets:
+      kimi       Kimi Code CLI (default; agents install under <skill-base>\ads\agents)
       codex      OpenAI Codex CLI
       cursor     Cursor IDE (experimental)
       windsurf   Windsurf IDE (experimental)
       gemini     Gemini CLI (experimental)
       goose      Goose CLI (experimental)
 .PARAMETER Target
-    Which host CLI to install for. Default: codex.
+    Which host CLI to install for. Default: kimi.
 .PARAMETER SkillDir
     Override the target's default skill install root.
 .PARAMETER AgentDir
     Override the target's default agent install root.
 .PARAMETER Ref
-    Install one exact final release tag, for example v1.9.2.
+    Install one exact final release tag, for example v2.0.0.
 .EXAMPLE
     .\install.ps1
 .EXAMPLE
-    .\install.ps1 -Target codex
+    .\install.ps1 -Target kimi
 .EXAMPLE
     .\install.ps1 -SkillDir C:\Custom\Skills
 .EXAMPLE
-    .\install.ps1 -Ref v1.9.2
+    .\install.ps1 -Ref v2.0.0
 #>
 
 param(
-    [ValidateSet('codex','cursor','windsurf','gemini','goose')]
-    [string]$Target = 'codex',
+    [ValidateSet('kimi','codex','cursor','windsurf','gemini','goose')]
+    [string]$Target = 'kimi',
     [string]$SkillDir = '',
     [string]$AgentDir = '',
     [ValidatePattern('^v[0-9]+\.[0-9]+\.[0-9]+$')]
@@ -44,6 +45,15 @@ $ErrorActionPreference = "Stop"
 function Resolve-TargetPaths {
     param([string]$T)
     switch ($T) {
+        'kimi' {
+            $KimiHome = if ($env:KIMI_CODE_HOME) { $env:KIMI_CODE_HOME } else { Join-Path $HOME ".kimi-code" }
+            return @{
+                SkillBase = Join-Path $KimiHome "skills"
+                AgentDir  = ''
+                AllowPip  = $true
+                Label     = "Kimi Code CLI"
+            }
+        }
         'codex' {
             return @{
                 SkillBase = Join-Path $env:USERPROFILE ".codex\skills"
@@ -54,8 +64,8 @@ function Resolve-TargetPaths {
         }
         'cursor' {
             return @{
-                SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\codex-ads\skills"
-                AgentDir  = Join-Path $env:USERPROFILE ".cursor\extensions\codex-ads\agents"
+                SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\skills"
+                AgentDir  = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\agents"
                 AllowPip  = $false
                 Label     = "Cursor IDE"
             }
@@ -70,8 +80,8 @@ function Resolve-TargetPaths {
         }
         'gemini' {
             return @{
-                SkillBase = Join-Path $env:USERPROFILE ".gemini\extensions\codex-ads\skills"
-                AgentDir  = Join-Path $env:USERPROFILE ".gemini\extensions\codex-ads\agents"
+                SkillBase = Join-Path $env:USERPROFILE ".gemini\extensions\kimi-ads\skills"
+                AgentDir  = Join-Path $env:USERPROFILE ".gemini\extensions\kimi-ads\agents"
                 AllowPip  = $false
                 Label     = "Gemini CLI"
             }
@@ -125,14 +135,14 @@ function Main {
     $SkillDirResolved = Join-Path $SkillBase "ads"
     # The environment override supports packaging smoke tests and downstream
     # mirrors. Normal installs keep using the canonical repository.
-    $RepoUrl = if ($env:CODEX_ADS_REPO_URL) {
-        $env:CODEX_ADS_REPO_URL
+    $RepoUrl = if ($env:KIMI_ADS_REPO_URL) {
+        $env:KIMI_ADS_REPO_URL
     } else {
-        "https://github.com/taotao135791-bit/codex-ads.git"
+        "https://github.com/taotao135791-bit/kimi-ads.git"
     }
 
     Write-Host "=================================="
-    Write-Host "   Codex Ads - Installer"
+    Write-Host "   Kimi Ads - Installer"
     Write-Host "   Target: $HostLabel"
     Write-Host "=================================="
     Write-Host ""
@@ -144,22 +154,25 @@ function Main {
     }
     Write-Host "OK Git detected" -ForegroundColor Green
 
-    # Create directories
+    # Create directories. Kimi Code CLI has no separate agents directory
+    # (AgentDir is empty) — its persona briefs live inside the main skill.
     New-Item -ItemType Directory -Path (Join-Path $SkillDirResolved "references") -Force | Out-Null
-    New-Item -ItemType Directory -Path $AgentDirResolved -Force | Out-Null
+    if ($AgentDirResolved) {
+        New-Item -ItemType Directory -Path $AgentDirResolved -Force | Out-Null
+    }
 
     # Clone to temp directory
-    $TempDir = Join-Path $env:TEMP "codex-ads-install-$(Get-Random)"
+    $TempDir = Join-Path $env:TEMP "kimi-ads-install-$(Get-Random)"
     if ($Ref) {
-        Write-Host "Downloading Codex Ads $Ref..."
+        Write-Host "Downloading Kimi Ads $Ref..."
     } else {
-        Write-Host "Downloading Codex Ads..."
+        Write-Host "Downloading Kimi Ads..."
     }
 
     try {
         # Temporarily allow stderr (git writes progress to stderr — treated as error in PS 5.1)
         $ErrorActionPreference = "Continue"
-        $SourceDir = Join-Path $TempDir "codex-ads"
+        $SourceDir = Join-Path $TempDir "kimi-ads"
         if ($Ref) {
             New-Item -ItemType Directory -Path $SourceDir -Force | Out-Null
             git -C $SourceDir init --quiet 2>&1 | Out-Null
@@ -199,7 +212,7 @@ function Main {
             $CloneExitCode = $LASTEXITCODE
             $ErrorActionPreference = "Stop"
             if ($CloneExitCode -ne 0) {
-                Write-Host "X Failed to clone Codex Ads from $RepoUrl" -ForegroundColor Red
+                Write-Host "X Failed to clone Kimi Ads from $RepoUrl" -ForegroundColor Red
                 Write-Host "  Check that the repository exists and that you have access." -ForegroundColor Yellow
                 $CloneOutput | ForEach-Object { Write-Host "  $_" }
                 exit 1
@@ -258,10 +271,18 @@ function Main {
             }
         }
 
-        # Copy agents
+        # Copy agents. Hosts with a separate agents directory (codex etc.)
+        # receive the persona briefs there; for Kimi Code CLI they are
+        # installed into the main skill at <skill-base>\ads\agents instead.
         Write-Host "Installing subagents..."
         $AgentsSource = Join-Path $SourceDir "agents"
-        Copy-Item (Join-Path $AgentsSource "*.md") -Destination $AgentDirResolved -Force
+        if ($AgentDirResolved) {
+            Copy-Item (Join-Path $AgentsSource "*.md") -Destination $AgentDirResolved -Force
+        } else {
+            $SkillAgentsDir = Join-Path $SkillDirResolved "agents"
+            New-Item -ItemType Directory -Path $SkillAgentsDir -Force | Out-Null
+            Copy-Item (Join-Path $AgentsSource "*.md") -Destination $SkillAgentsDir -Force
+        }
 
         # Copy scripts (optional Python tools)
         $ScriptsSource = Join-Path $SourceDir "scripts"
@@ -270,7 +291,7 @@ function Main {
             $ScriptsDir = Join-Path $SkillDirResolved "scripts"
             New-Item -ItemType Directory -Path $ScriptsDir -Force | Out-Null
             Copy-Item (Join-Path $ScriptsSource "*.py") -Destination $ScriptsDir -Force
-            $InternalPackage = Join-Path $ScriptsSource "codex_ads"
+            $InternalPackage = Join-Path $ScriptsSource "kimi_ads"
             if (Test-Path $InternalPackage) {
                 Copy-Item $InternalPackage -Destination $ScriptsDir -Recurse -Force
             }
@@ -319,11 +340,15 @@ function Main {
         Write-Host "   Set GOOGLE_API_KEY, OPENAI_API_KEY, STABILITY_API_KEY, or REPLICATE_API_TOKEN as needed."
 
         Write-Host ""
-        Write-Host "Codex Ads installed successfully for $HostLabel!" -ForegroundColor Green
+        Write-Host "Kimi Ads installed successfully for $HostLabel!" -ForegroundColor Green
         Write-Host ""
         Write-Host "  Installed to:"
         Write-Host "    Skills: $SkillBase"
-        Write-Host "    Agents: $AgentDirResolved"
+        if ($AgentDirResolved) {
+            Write-Host "    Agents: $AgentDirResolved"
+        } else {
+            Write-Host "    Agents: $SkillDirResolved\agents (persona briefs)"
+        }
         Write-Host ""
         Write-Host "  Bundled:"
         Write-Host "    - 1 main skill (ads orchestrator)"
@@ -333,10 +358,10 @@ function Main {
         Write-Host "    - 15 templates (12 industry + 3 ops memory)"
         Write-Host ""
         Write-Host "Usage:"
-        Write-Host "  1. Start your host CLI"
+        Write-Host "  1. Start Kimi Code CLI"
         Write-Host "  2. Ask naturally, for example:"
         Write-Host "       Read-only review this ad account. Check KPI, spend pacing, conversion goals, and today's actions."
-        Write-Host "       Or use shorthand: /ads audit, /ads plan saas, /ads google"
+        Write-Host "       Or use /skill:ads or routing shorthand: /ads audit, /ads plan saas, /ads google"
         Write-Host ""
         Write-Host "To uninstall: .\uninstall.ps1 -Target $Target"
     }

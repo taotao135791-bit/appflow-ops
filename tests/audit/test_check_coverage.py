@@ -75,7 +75,7 @@ def test_every_reference_row_appears_in_catalog(check_catalog, repo_root):
 
 
 def test_total_check_count_is_at_least_209(check_catalog):
-    """Sanity: codex-ads's README headline is '250+ checks'. The 5 platform
+    """Sanity: kimi-ads's README headline is '250+ checks'. The 5 platform
     catalogs alone account for 209; cross-platform (creative, landing, budget,
     compliance) make up the rest. This test pins the baseline so a future
     regression that drops checks fires immediately."""
