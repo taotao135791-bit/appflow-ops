@@ -2,6 +2,32 @@
 
 All notable changes to Kimi Ads are documented here.
 
+## 2.2.0 — 2026-07-20
+
+### Kimi Work install target
+
+- Added a `kimi-work` target to `install.sh` / `install.ps1` (and the
+  uninstallers): installs the bundle into the Kimi Work desktop app's skill
+  directory (`~/Library/Application Support/kimi-desktop/daimon-share/daimon/skills`
+  on macOS, `%APPDATA%\kimi-desktop\daimon-share\daimon\skills` on Windows,
+  overridable via `KIMI_WORK_HOME` or `--skill-dir`). Previously only
+  Kimi Code CLI (`~/.kimi-code/skills`) was covered, so Kimi Work never saw
+  the skills.
+
+### Release plumbing
+
+- `privacy_doctor.py` gained `--waive KIND[,KIND...]`: waived finding kinds
+  stay in the report as INFO with `waived=true` but no longer fail the audit.
+  The release gate waives the pre-migration identity findings (personal
+  email, local hostname) and historical `.pyc` files accepted by the repo
+  owner; real secret/private-data kinds still fail.
+- Fixed the release gate's annotated-tag check to re-fetch the real tag
+  object (actions/checkout re-points the local tag ref at the commit).
+- Fixed `scripts/ci/*.py` console output on Windows (forced UTF-8; the
+  check markers crashed the cp1252 console).
+- Bumped dev pytest to >=9.0.3 (PYSEC-2026-1845) and made the top-level
+  scripts mypy override tolerate third-party stub drift.
+
 ## 2.1.0 — 2026-07-20
 
 ### Playwright removal and WebBridge-only browser work

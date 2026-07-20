@@ -39,6 +39,7 @@ REPO_URL="${KIMI_ADS_REPO_URL:-https://github.com/taotao135791-bit/kimi-ads.git}
 # update only this case statement plus the help text.
 #
 # kimi      — Kimi Code CLI (agents install into <skill-base>/ads/agents)
+# kimi-work — Kimi Work desktop app (daimon skills dir; agents into ads/agents)
 # codex     — OpenAI Codex CLI
 # cursor    — Cursor IDE (EXPERIMENTAL, extension model differs)
 # windsurf  — Windsurf IDE (EXPERIMENTAL)
@@ -53,6 +54,12 @@ resolve_target_paths() {
             AGENT_DIR=""
             ALLOW_PIP=1
             HOST_LABEL="Kimi Code CLI"
+            ;;
+        kimi-work)
+            SKILL_BASE="${KIMI_WORK_HOME:-${HOME}/Library/Application Support/kimi-desktop/daimon-share/daimon}/skills"
+            AGENT_DIR=""
+            ALLOW_PIP=1
+            HOST_LABEL="Kimi Work (desktop)"
             ;;
         codex)
             SKILL_BASE="${HOME}/.codex/skills"
@@ -125,6 +132,7 @@ Usage:
 
 Targets (default: kimi):
   kimi       Kimi Code CLI (default)
+  kimi-work  Kimi Work desktop app
   codex      OpenAI Codex CLI
   cursor     Cursor IDE (experimental)
   windsurf   Windsurf IDE (experimental)
@@ -215,7 +223,7 @@ main() {
     # Resolve target paths (rejects unknown targets via whitelist)
     if ! resolve_target_paths "$TARGET"; then
         echo "✗ Unknown target: $TARGET" >&2
-        echo "  Valid targets: kimi, codex, cursor, windsurf, gemini, goose" >&2
+        echo "  Valid targets: kimi, kimi-work, codex, cursor, windsurf, gemini, goose" >&2
         echo "  Run: bash install.sh --help" >&2
         exit 1
     fi

@@ -8,6 +8,7 @@
 
     Targets:
       kimi       Kimi Code CLI (default; agents install under <skill-base>\ads\agents)
+      kimi-work  Kimi Work desktop app
       codex      OpenAI Codex CLI
       cursor     Cursor IDE (experimental)
       windsurf   Windsurf IDE (experimental)
@@ -32,7 +33,7 @@
 #>
 
 param(
-    [ValidateSet('kimi','codex','cursor','windsurf','gemini','goose')]
+    [ValidateSet('kimi','kimi-work','codex','cursor','windsurf','gemini','goose')]
     [string]$Target = 'kimi',
     [string]$SkillDir = '',
     [string]$AgentDir = '',
@@ -52,6 +53,15 @@ function Resolve-TargetPaths {
                 AgentDir  = ''
                 AllowPip  = $true
                 Label     = "Kimi Code CLI"
+            }
+        }
+        'kimi-work' {
+            $KimiWorkHome = if ($env:KIMI_WORK_HOME) { $env:KIMI_WORK_HOME } else { Join-Path $env:APPDATA "kimi-desktop\daimon-share\daimon" }
+            return @{
+                SkillBase = Join-Path $KimiWorkHome "skills"
+                AgentDir  = ''
+                AllowPip  = $true
+                Label     = "Kimi Work (desktop)"
             }
         }
         'codex' {

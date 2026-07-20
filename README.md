@@ -19,10 +19,10 @@ Kimi Ads 是一套围绕 Kimi 组织的广告决策工作流。优化师用自�
 
 ## 非程序员最短路径
 
-推荐先安装当前稳定版本 `v2.1.0`：
+推荐先安装当前稳定版本 `v2.2.0`：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.sh | bash -s -- --ref=v2.2.0
 ```
 
 然后打开 Kimi，附上导出表、粘贴表格或说明已打开的后台，直接说：
@@ -307,31 +307,37 @@ python3 scripts/uac_experiment.py migrate-ledger ADS-EXPERIMENTS.yaml --write
 
 ## 安装
 
-推荐固定版本。当前稳定版本为 `v2.1.0`，Unix/macOS 使用：
+推荐固定版本。当前稳定版本为 `v2.2.0`，Unix/macOS 使用：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.sh | bash -s -- --ref=v2.2.0
 ```
 
 如果已经 clone 仓库，可以在仓库目录运行：
 
 ```bash
-bash install.sh --ref=v2.1.0
+bash install.sh --ref=v2.2.0
 ```
 
 自定义安装目录：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- \
-  --ref=v2.1.0 --target=kimi \
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.sh | bash -s -- \
+  --ref=v2.2.0 --target=kimi \
   --skill-dir="$HOME/custom/skills" --agent-dir="$HOME/custom/agents"
+```
+
+装到 Kimi Work 桌面应用（macOS 装入 `~/Library/Application Support/kimi-desktop/daimon-share/daimon/skills`，可用 `KIMI_WORK_HOME` 或 `--skill-dir` 覆盖）：
+
+```bash
+bash install.sh --target=kimi-work
 ```
 
 Windows PowerShell：
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v2.1.0
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.2.0
 ```
 
 `--ref` / `-Ref` 只接受 `vX.Y.Z` 形式的最终 tag，不接受 branch、commit、`main` 或 prerelease。`main` 是滚动开发快照，可能不稳定；只有想试用最新开发状态时才使用：

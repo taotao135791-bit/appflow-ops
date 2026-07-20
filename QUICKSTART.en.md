@@ -4,17 +4,17 @@ Kimi Ads is a Kimi-first advertising decision workflow. **You do not need slash 
 
 ## Install the stable channel first
 
-The current stable release is `v2.1.0`; pin that version:
+The current stable release is `v2.2.0`; pin that version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.sh | bash -s -- --ref=v2.2.0
 ```
 
 Windows:
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v2.1.0
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.2.0
 ```
 
 `main` is a rolling development snapshot and may be unstable; it is not the default stable channel. To roll back, reinstall an older tag that actually exists and has been verified. That does not undo ad-account actions or downgrade ledger schema `1.1`, so preserve a `1.0` backup before migration. See the [README](README.en.md#install) for complete install and rollback commands.

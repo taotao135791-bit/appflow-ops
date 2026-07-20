@@ -28,7 +28,7 @@ from datetime import datetime
 
 # Version stamp shown in PDF header/footer. Keep in sync with
 # kimi.plugin.json `version`.
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 try:
     from reportlab.lib import colors

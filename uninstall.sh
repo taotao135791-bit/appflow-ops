@@ -18,6 +18,7 @@ resolve_target_paths() {
     local target="$1"
     case "$target" in
         kimi)     SKILL_BASE="${KIMI_CODE_HOME:-${HOME}/.kimi-code}/skills";             AGENT_DIR="" ;;
+        kimi-work) SKILL_BASE="${KIMI_WORK_HOME:-${HOME}/Library/Application Support/kimi-desktop/daimon-share/daimon}/skills"; AGENT_DIR="" ;;
         codex)    SKILL_BASE="${HOME}/.codex/skills";                                    AGENT_DIR="${HOME}/.codex/agents" ;;
         cursor)   SKILL_BASE="${HOME}/.cursor/extensions/kimi-ads/skills";             AGENT_DIR="${HOME}/.cursor/extensions/kimi-ads/agents" ;;
         windsurf) SKILL_BASE="${HOME}/.windsurf/skills";                                 AGENT_DIR="${HOME}/.windsurf/agents" ;;
@@ -36,7 +37,7 @@ main() {
             --target=*) TARGET="${1#*=}" ;;
             --target)   shift; [ $# -eq 0 ] && { echo "✗ --target requires a value" >&2; exit 1; }; TARGET="$1" ;;
             --help|-h)
-                echo "Usage: bash uninstall.sh [--target=<kimi|codex|cursor|windsurf|gemini|goose>]"
+                echo "Usage: bash uninstall.sh [--target=<kimi|kimi-work|codex|cursor|windsurf|gemini|goose>]"
                 exit 0
                 ;;
             *) echo "✗ Unknown argument: $1" >&2; exit 1 ;;
@@ -46,7 +47,7 @@ main() {
 
     if ! resolve_target_paths "$TARGET"; then
         echo "✗ Unknown target: $TARGET" >&2
-        echo "  Valid targets: kimi, codex, cursor, windsurf, gemini, goose" >&2
+        echo "  Valid targets: kimi, kimi-work, codex, cursor, windsurf, gemini, goose" >&2
         exit 1
     fi
 

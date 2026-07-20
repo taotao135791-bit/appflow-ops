@@ -10,10 +10,10 @@ Kimi Ads organizes paid-media decisions around Kimi. Operators describe goals, p
 
 ## Shortest path for non-programmers
 
-Install the current stable version `v2.1.0`:
+Install the current stable version `v2.2.0`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.sh | bash -s -- --ref=v2.2.0
 ```
 
 Then open Kimi, attach an export, paste a table, or say that the dashboard is already open, and ask naturally:
@@ -270,31 +270,39 @@ The normalization output is an envelope containing `normalized`, `missing_fields
 
 ## Install
 
-Prefer a fixed version. The current stable release is `v2.1.0`; use this on Unix/macOS:
+Prefer a fixed version. The current stable release is `v2.2.0`; use this on Unix/macOS:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.sh | bash -s -- --ref=v2.2.0
 ```
 
 If you already cloned the repository, run this from the repo directory:
 
 ```bash
-bash install.sh --ref=v2.1.0
+bash install.sh --ref=v2.2.0
 ```
 
 Install to a custom location:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- \
-  --ref=v2.1.0 --target=kimi \
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.sh | bash -s -- \
+  --ref=v2.2.0 --target=kimi \
   --skill-dir="$HOME/custom/skills" --agent-dir="$HOME/custom/agents"
+```
+
+Install for the Kimi Work desktop app (on macOS this targets
+`~/Library/Application Support/kimi-desktop/daimon-share/daimon/skills`;
+override with `KIMI_WORK_HOME` or `--skill-dir`):
+
+```bash
+bash install.sh --target=kimi-work
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v2.1.0
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.2.0
 ```
 
 `--ref` / `-Ref` accepts only a final `vX.Y.Z` tag, not a branch, commit, `main`, or prerelease. `main` is a rolling development snapshot and may be unstable. Use it only when you intentionally want the latest development state:

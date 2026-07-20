@@ -14,7 +14,7 @@
 #>
 
 param(
-    [ValidateSet('kimi','codex','cursor','windsurf','gemini','goose')]
+    [ValidateSet('kimi','kimi-work','codex','cursor','windsurf','gemini','goose')]
     [string]$Target = 'kimi'
 )
 
@@ -26,6 +26,10 @@ function Resolve-TargetPaths {
         'kimi' {
             $KimiHome = if ($env:KIMI_CODE_HOME) { $env:KIMI_CODE_HOME } else { Join-Path $HOME ".kimi-code" }
             return @{ SkillBase = Join-Path $KimiHome "skills";                                            AgentDir = '' }
+        }
+        'kimi-work' {
+            $KimiWorkHome = if ($env:KIMI_WORK_HOME) { $env:KIMI_WORK_HOME } else { Join-Path $env:APPDATA "kimi-desktop\daimon-share\daimon" }
+            return @{ SkillBase = Join-Path $KimiWorkHome "skills";                                        AgentDir = '' }
         }
         'codex'    { return @{ SkillBase = Join-Path $env:USERPROFILE ".codex\skills";                                 AgentDir = Join-Path $env:USERPROFILE ".codex\agents" } }
         'cursor'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\skills";          AgentDir = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\agents" } }

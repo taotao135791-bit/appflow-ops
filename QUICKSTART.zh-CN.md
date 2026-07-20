@@ -4,17 +4,17 @@ Kimi Ads 是一个 Kimi-first 广告决策工作流。**不用背 `/ads` 命令�
 
 ## 先安装稳定通道
 
-当前稳定版本是 `v2.1.0`，推荐固定这个版本：
+当前稳定版本是 `v2.2.0`，推荐固定这个版本：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.sh | bash -s -- --ref=v2.1.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.sh | bash -s -- --ref=v2.2.0
 ```
 
 Windows：
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.1.0/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v2.1.0
+irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/v2.2.0/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v2.2.0
 ```
 
 `main` 是可能不稳定的滚动开发快照，不是默认稳定通道。需要回滚时，重新安装一个真实存在、已验证的旧 tag；这不会撤销广告账户操作或自动降级 ledger `1.1`，所以 schema 迁移前必须保留 `1.0` 备份。完整安装和回滚命令见 [README](README.md#安装)。
