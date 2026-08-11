@@ -6,7 +6,9 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
+from .account_state import RunContext
 from .contracts import _validate_case, validate_ledger
 from .doctor import doctor_exit_code, render_doctor, run_doctor
 from .engine import analyze_case
@@ -30,6 +32,7 @@ from .quick_ops import decide_case
 from .quick_reporting import render_quick_card
 from .replay import render_replay, replay_path
 from .reporting import render_markdown
+from .state_store import StateStore
 from .types import ContractError
 from .workspace import (
     Workspace,
@@ -102,6 +105,97 @@ def _render_json(value: object) -> str:
         default=str,
         allow_nan=False,
     )
+
+
+def _run_state_command(args: argparse.Namespace, workspace: Workspace | None) -> int:
+    """Internal/debug commands for the workspace-scoped state store.
+
+    Every subcommand requires an explicit workspace: state is never global,
+    and normal user workflows do not need to manage it manually.
+    """
+
+    if workspace is None:
+        raise ContractError("state commands require --workspace")
+    workspace.require_initialized()
+    store = StateStore(RunContext.from_workspace(workspace))
+
+    if args.state_command == "init":
+        store.ensure_initialized()
+        print(f"state initialized: {_display_cli_path(store.context.state_dir)}")
+        print("isolation: one workspace = one state store; no global business memory")
+        return 0
+
+    if args.state_command == "status":
+        status = store.status()
+        if args.json_output:
+            print(_render_json(status))
+        else:
+            print(f"state store: {status['event_count']} event(s)")
+            for event_type, count in sorted(status["events_by_type"].items()):
+                print(f"  {event_type}: {count}")
+            print(f"  initialized: {status['initialized']}")
+            print(f"  client: {status['client_scope'] or '-'}")
+            print(f"  project: {status['project_scope'] or '-'}")
+        return 0
+
+    if args.state_command == "show":
+        events = store.get_recent(limit=args.limit, event_type=args.event_type)
+        if args.json_output:
+            print(_render_json(list(events)))
+        else:
+            for event in events:
+                summary = _event_summary(event)
+                print(
+                    f"{event.get('event_id')} {event.get('type')} "
+                    f"[{event.get('evidence_status')}/{event.get('source_type')}] "
+                    f"{summary}"
+                )
+        return 0
+
+    if args.state_command == "rebuild":
+        current = store.rebuild_current_state()
+        print(
+            f"current state rebuilt from {current['event_count']} event(s): "
+            f"measurement={current['measurement_state']} "
+            f"maturity={current['maturity_state']}"
+        )
+        return 0
+
+    if args.state_command == "clear":
+        if not args.yes:
+            raise ContractError(
+                "state clear is destructive and workspace-scoped; re-run with --yes"
+            )
+        store.clear()
+        print("state cleared for this workspace only; other workspaces untouched")
+        return 0
+
+    raise ContractError(f"unknown state subcommand: {args.state_command}")
+
+
+def _event_summary(event: dict[str, Any]) -> str:
+    payload = event.get("payload", {})
+    event_type = event.get("type")
+    if event_type == "observation":
+        facts = payload.get("facts", {})
+        keys = ", ".join(sorted(facts.keys())) or "no facts"
+        return f"platform={event.get('platform') or '-'} facts({keys})"
+    if event_type == "change":
+        magnitude = payload.get("magnitude")
+        magnitude_text = f" {magnitude}%" if magnitude is not None else ""
+        return (
+            f"{payload.get('change_type')} {payload.get('direction')}"
+            f"{magnitude_text} origin={payload.get('origin')}"
+        )
+    if event_type == "decision":
+        return (
+            f"{payload.get('decision_class')} "
+            f"confidence={payload.get('confidence')} "
+            f"measurement={payload.get('measurement_state')}"
+        )
+    if event_type == "outcome":
+        return f"{payload.get('outcome_class')} decision={payload.get('decision_id')}"
+    return ""
 
 
 def _cli() -> int:
@@ -252,6 +346,46 @@ def _cli() -> int:
         help="explicit HTML output path; workspace defaults stay private",
     )
 
+    state_parser = subparsers.add_parser(
+        "state",
+        help="workspace-scoped continuous account state (internal/debug)",
+    )
+    state_subparsers = state_parser.add_subparsers(dest="state_command", required=True)
+    state_init_parser = state_subparsers.add_parser(
+        "init", help="idempotently create the workspace state store"
+    )
+    _add_workspace_argument(state_init_parser)
+    state_status_parser = state_subparsers.add_parser(
+        "status", help="show state store health and event counts"
+    )
+    _add_workspace_argument(state_status_parser)
+    state_status_parser.add_argument("--json", action="store_true", dest="json_output")
+    state_show_parser = state_subparsers.add_parser(
+        "show", help="list recent state events (bounded, newest first)"
+    )
+    _add_workspace_argument(state_show_parser)
+    state_show_parser.add_argument(
+        "--limit", type=int, default=10, help="max events to show (default 10)"
+    )
+    state_show_parser.add_argument(
+        "--type",
+        dest="event_type",
+        choices=["observation", "change", "decision", "outcome"],
+        help="filter by event type",
+    )
+    state_show_parser.add_argument("--json", action="store_true", dest="json_output")
+    state_rebuild_parser = state_subparsers.add_parser(
+        "rebuild", help="rebuild current-state.json from the event log"
+    )
+    _add_workspace_argument(state_rebuild_parser)
+    state_clear_parser = state_subparsers.add_parser(
+        "clear", help="delete THIS workspace's state only (explicit)"
+    )
+    _add_workspace_argument(state_clear_parser)
+    state_clear_parser.add_argument(
+        "--yes", action="store_true", help="confirm the destructive operation"
+    )
+
     args = parser.parse_args()
     try:
         if args.command == "init-workspace":
@@ -280,6 +414,9 @@ def _cli() -> int:
             return 0
 
         workspace = _workspace_for(args)
+        if args.command == "state":
+            return _run_state_command(args, workspace)
+
         if args.command == "funnel-dashboard":
             written_dashboard = write_funnel_dashboard(
                 workspace=workspace,

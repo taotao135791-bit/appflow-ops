@@ -69,10 +69,17 @@ Seek evidence for every hypothesis that matters. Evidence priority:
 Observed facts
 > deterministic state
 > historical comparison
+> workspace state (prior observations / changes / decisions / outcomes)
 > previous changes
 > policy
 > inferred explanation
 ```
+
+Workspace state (`docs/account-state.md`) is an additional evidence source:
+read only the current workspace's bounded history — recent observations,
+changes, decisions, and pending review. Never borrow another workspace's
+history to fill a gap; when the current workspace has no state, say so and
+rely on observed facts, policy, and general platform knowledge.
 
 Evidence sources include: current metrics, historical metrics, workspace
 state, snapshots, experiment ledger, previous actions, reports, screenshots,

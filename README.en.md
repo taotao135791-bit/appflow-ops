@@ -219,6 +219,11 @@ Broad internally, concise externally    Explore widely inside; return a focused 
   campaigns — measurement reliability, learning eligibility, single-variable
   experiment admission (draft shown first, ledger written only after
   confirmation), and review
+- **Continuous account state**: workspace-scoped operational state
+  (Observation / Change / Decision / Outcome / Current State) so follow-up
+  questions reuse prior observations, changes, decisions, and outcomes.
+  State is isolated per workspace; AppFlow maintains no global cross-client
+  business memory (see [docs/account-state.md](docs/account-state.md))
 - **Funnel dashboard**: spend → installs → registrations → payments rendered
   as one self-contained HTML file with the bottleneck layer highlighted
 - **Daily agency ops**: patrols, anomaly triage, creative request briefs,
@@ -273,7 +278,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.2.1/install.sh | bash -s -- --ref=v3.2.1
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.0/install.sh | bash -s -- --ref=v3.3.0
 ```
 
 Then talk to your AI coding assistant in natural language:

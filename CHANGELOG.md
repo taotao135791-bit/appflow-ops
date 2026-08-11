@@ -2,6 +2,48 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.3.0 — 2026-08-11
+
+### Continuous Account State (isolation-first)
+
+- **Isolation architecture before state**: one workspace = one state store,
+  physically under `workspaces/<client>/<project>/state/`; no global
+  business memory, no global index, no cross-client database, no vector
+  store. All state access is workspace-bound through a frozen `RunContext`;
+  no API accepts an arbitrary filesystem path.
+- Five object types, append-only JSON events with a derived, rebuildable
+  `current-state.json`: Observation (facts, not explanations, common
+  envelope + platform payload), Change (confirmed operations only;
+  unconfirmed user statements stay `reported` observations), Decision
+  (concise rationale, evidence refs, policy/measurement/maturity state,
+  confidence, review condition; no hidden chain-of-thought), Outcome
+  (linked to decision/change/observation), Current State (derived summary
+  with pending review).
+- Pending review: a decision with a review condition stays pending until an
+  outcome links to it — a marker for the next conversation, never a
+  background job (no daemon/cron/polling).
+- Bounded retrieval (`get_recent(limit=…)`, capped at 100); current-state
+  derivation consumes only recent events while counting the full log.
+- Workspace containment enforced everywhere via the existing
+  `Workspace.require_contained_path`: traversal, absolute external paths,
+  symlink escapes (including symlinks planted inside the events directory),
+  and cross-workspace source references are contract errors. Corrupted
+  current state rebuilds from events; corrupted events fail loudly.
+- CLI (internal/debug): `state init|status|show|rebuild|clear` under
+  `uac_experiment.py`; clear is destructive, workspace-scoped, requires
+  `--yes`.
+- Reasoning Contract: workspace state is an additional Verify-stage
+  evidence source (bounded, current workspace only; never borrow another
+  workspace's history).
+- Docs: new `docs/account-state.md` (stores / does not store / isolation /
+  cross-workspace / privacy); README (zh/en) capability line; AGENTS.md
+  non-negotiable principles (no global business memory; every persistent
+  business state has an explicit workspace owner).
+- New tests: storage, lifecycle, pending review, reasoning integration,
+  privacy, and the cross-workspace isolation suite (A–H: read/write/
+  traversal/symlink/delete/rebuild/retrieval/identifier leakage) plus
+  adversarial path variants.
+
 ## 3.2.1 — 2026-08-11
 
 ### Privacy: scoped allowlist replaces kind-wide waivers
