@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 import math
+from collections.abc import Mapping
 from typing import Any
 
 from ._common import _mapping, _number
 from .policy_loader import LoadedPolicy
 from .types import ContractError
-
 
 NUMERIC_DECISION_SCHEMA_VERSION = "1.0"
 

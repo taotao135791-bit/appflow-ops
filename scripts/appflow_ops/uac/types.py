@@ -5,8 +5,8 @@ from __future__ import annotations
 from .models import (
     BudgetDeliveryState,
     CalculationEvidenceType,
-    EvidenceQuality,
     EventVolumeState,
+    EvidenceQuality,
     ExperimentOutcome,
     ExperimentStatus,
     FeasibilityState,
@@ -19,7 +19,6 @@ from .models import (
     TargetConstraintState,
     ValueSignalState,
 )
-
 
 ANALYSIS_SCHEMA_VERSION = "1.0"
 CURRENT_LEDGER_SCHEMA_VERSION = "1.1"

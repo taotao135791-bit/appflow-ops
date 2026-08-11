@@ -6,9 +6,9 @@ call Google Ads, an LLM, or any other external service.
 
 from __future__ import annotations
 
+import sys
 from copy import deepcopy
 from pathlib import Path
-import sys
 
 import pytest
 import yaml
@@ -17,13 +17,12 @@ FIXTURE_PATH = Path(__file__).resolve().parents[1] / "fixtures" / "uac-cases.yam
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from uac_experiment import (  # noqa: E402
+from uac_experiment import (
     PERMISSION_CLASSES,
     analyze_case,
     review_experiment,
     validate_experiment,
 )
-
 
 FIXTURES = yaml.safe_load(FIXTURE_PATH.read_text(encoding="utf-8"))
 CASES = FIXTURES["cases"]

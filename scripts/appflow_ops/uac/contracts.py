@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date
 import math
+from datetime import date
 from typing import Any
 
 from .review import review_experiment
@@ -64,7 +64,7 @@ def _non_finite_number_paths(value: Any, path: str) -> list[str]:
     return []
 
 
-def _is_number_at_least(value: Any, minimum: int | float) -> bool:
+def _is_number_at_least(value: Any, minimum: float) -> bool:
     if not _is_finite_number(value):
         return False
     assert isinstance(value, (int, float)) and not isinstance(value, bool)

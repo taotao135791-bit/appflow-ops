@@ -17,7 +17,7 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.evals.vague_query import (  # noqa: E402
+from appflow_ops.evals.vague_query import (
     coverage,
     evaluate_fixture,
     load_cases,
@@ -69,9 +69,7 @@ def test_diagnosis_skills_inherit_the_contract(repo_root: Path) -> None:
         text = path.read_text(encoding="utf-8")
         if "reasoning-contract.md" not in text:
             failures.append(f"{skill} does not reference the reasoning contract")
-    assert not failures, "skills missing contract inheritance:\n" + "\n".join(
-        failures
-    )
+    assert not failures, "skills missing contract inheritance:\n" + "\n".join(failures)
 
 
 # Test 3 — README's reasoning loop must be consistent with the contract.
@@ -84,12 +82,16 @@ def test_readme_matches_contract_definitions(repo_root: Path) -> None:
         contract.index(f"## Stage {index} — {stage}")
         for index, stage in enumerate(FIVE_STAGES, 1)
     ]
-    assert stage_positions == sorted(stage_positions), "contract stages are out of order"
+    assert stage_positions == sorted(stage_positions), (
+        "contract stages are out of order"
+    )
 
     for readme_name in ("README.md", "README.en.md"):
         readme = _read(repo_root, readme_name)
         assert "Diverge → Verify → Eliminate → Rank → Converge" in readme
-        assert "Problem over procedure" in readme or "Problem over procedure" in contract
+        assert (
+            "Problem over procedure" in readme or "Problem over procedure" in contract
+        )
         assert "Broad internally, concise externally" in readme
 
 
@@ -170,8 +172,8 @@ def test_vague_query_evals_consistent_with_deterministic_uac(
     failures = [
         f"{result.case_id}: {result.checks}" for result in results if not result.passed
     ]
-    assert not failures, "eval expectations conflict with deterministic UAC:\n" + "\n".join(
-        failures
+    assert not failures, (
+        "eval expectations conflict with deterministic UAC:\n" + "\n".join(failures)
     )
     assert any(case.uac_fixture for case in cases), "no golden uac_fixture cases"
 

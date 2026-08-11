@@ -28,25 +28,25 @@ from datetime import datetime
 
 # Version stamp shown in PDF header/footer. Keep in sync with
 # appflow.plugin.json `version`.
-__version__ = "3.1.0"
+__version__ = "3.2.0"
 
 try:
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
     from reportlab.lib.pagesizes import letter
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import inch
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFError, TTFont
     from reportlab.platypus import (
-        SimpleDocTemplate,
-        Paragraph,
-        Spacer,
-        Table,
-        TableStyle,
         HRFlowable,
         Image,
         KeepTogether,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
     )
 except ImportError:
     print("Error: reportlab required. Install with: pip install reportlab")
@@ -165,7 +165,9 @@ def parse_markdown(filepath: str) -> dict:
             continue
 
         # Health score
-        m = re.search(r"(?:Ads\s+)?Health\s+Score[:\s]*(\d+)\s*/\s*100", line, re.I)
+        m = re.search(
+            r"(?:Ads\s+)?Health\s+Score[:\s]*(\d+)\s*/\s*100", line, re.IGNORECASE
+        )
         if m:
             data["health_score"] = int(m.group(1))
 
@@ -180,7 +182,7 @@ def parse_markdown(filepath: str) -> dict:
             r"(Google|Meta|LinkedIn|TikTok|Microsoft|Apple|YouTube)"
             r".*?(\d{1,3})\s*/\s*100",
             line,
-            re.I,
+            re.IGNORECASE,
         )
         if m:
             data["platform_scores"][m.group(1)] = int(m.group(2))
@@ -400,7 +402,7 @@ def build_result_distribution_chart(result_counts: dict) -> str | None:
 
     fig, ax = plt.subplots(figsize=(3.5, 3))
     fig.patch.set_facecolor("white")
-    wedges, texts, autotexts = ax.pie(  # type: ignore[misc]
+    _wedges, _texts, autotexts = ax.pie(  # type: ignore[misc]
         sizes,
         labels=labels,
         colors=chart_colors,

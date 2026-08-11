@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-
 _REPORT_PATTERNS = (
     r"/ads\s+report\b",
     r"日报",

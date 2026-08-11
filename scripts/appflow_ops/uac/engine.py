@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import math
+from copy import deepcopy
 from typing import Any
 
 from .contracts import (
@@ -628,11 +628,14 @@ def analyze_case(
 
     if diagnosis in {"measurement_mismatch", "ios_measurement_anomaly"}:
         feasibility = "TRACKING_BLOCKED"
-    elif measurement_state in {"measurement_uncertain", "insufficient_evidence"}:
-        feasibility = "DATA_BLOCKED"
-    elif not evidence or not scope_ready or not segmentation_ready:
-        feasibility = "DATA_BLOCKED"
-    elif learning_state == "INSUFFICIENT_EVIDENCE" or not goal_ready:
+    elif (
+        measurement_state in {"measurement_uncertain", "insufficient_evidence"}
+        or not evidence
+        or not scope_ready
+        or not segmentation_ready
+        or learning_state == "INSUFFICIENT_EVIDENCE"
+        or not goal_ready
+    ):
         feasibility = "DATA_BLOCKED"
     elif confounded or unresolved_active:
         feasibility = "LEARNING_BLOCKED"

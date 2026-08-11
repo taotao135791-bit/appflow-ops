@@ -14,7 +14,7 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from uac_experiment import (  # noqa: E402
+from uac_experiment import (
     analyze_case,
     render_markdown,
     review_experiment,

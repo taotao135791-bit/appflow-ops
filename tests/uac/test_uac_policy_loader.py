@@ -2,28 +2,27 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import json
 import os
-from pathlib import Path
 import sys
+from copy import deepcopy
+from pathlib import Path
 
-from jsonschema import Draft202012Validator
 import pytest
 import yaml
+from jsonschema import Draft202012Validator
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.policy_loader import (  # noqa: E402
+from appflow_ops.uac.policy_loader import (
     POLICY_DIRECTORY,
     POLICY_SCHEMA_PATH,
     load_policy,
     load_policy_set,
 )
-from appflow_ops.uac.types import ContractError  # noqa: E402
-from appflow_ops.uac.workspace import initialize_workspace  # noqa: E402
-
+from appflow_ops.uac.types import ContractError
+from appflow_ops.uac.workspace import initialize_workspace
 
 _NUMERIC_OVERRIDE_NAME = "uac-numeric-policy.yaml"
 _SIGNAL_OVERRIDE_NAME = "uac-signal-policy.yaml"

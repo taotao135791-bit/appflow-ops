@@ -16,9 +16,10 @@ module requires no model API key and no network access.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Protocol, Sequence
+from typing import Any, Protocol
 
 from ..uac.quick_ops import decide_case
 
@@ -30,6 +31,16 @@ PLATFORMS = frozenset(
 SAFETY_GATES = frozenset({"none", "measurement_invalid", "maturity_pending"})
 MINIMUM_CASE_COUNT = 20
 
+# Data tiers (Part 8 of the privacy-safe eval design):
+# - synthetic: fully authored fixtures; allowed in CI and future external
+#   benchmarks.
+# - sanitized: derived from real replays through the local sanitizer;
+#   allowed in the repository only after the privacy check passes.
+# - production: real operator data; DENY BY DEFAULT for any evaluation
+#   runner.
+DATA_CLASSES = frozenset({"synthetic", "sanitized", "production"})
+SOURCE_TYPES = frozenset({"authored", "replay"})
+
 _KNOWN_MUST_NOT = frozenset(
     {
         "claim_causality_without_evidence",
@@ -40,6 +51,15 @@ _KNOWN_MUST_NOT = frozenset(
         "ask_for_full_metric_checklist",
     }
 )
+
+
+class ProductionDataError(RuntimeError):
+    """Raised when production advertising data reaches the default runner.
+
+    Production data may only be used in an operator-controlled local
+    environment; the default evaluation runner refuses it loudly instead of
+    degrading silently.
+    """
 
 
 @dataclass(frozen=True)
@@ -60,6 +80,8 @@ class EvalCase:
     context: Mapping[str, Any]
     expectations: EvalExpectations
     uac_fixture: str | None = None
+    data_class: str = "synthetic"
+    source_type: str = "authored"
 
 
 @dataclass(frozen=True)
@@ -95,7 +117,9 @@ def _string_list(value: Any, field: str) -> tuple[str, ...]:
 
 
 def parse_expectations(data: Mapping[str, Any]) -> EvalExpectations:
-    must_consider = _string_list(data.get("must_consider"), "expectations.must_consider")
+    must_consider = _string_list(
+        data.get("must_consider"), "expectations.must_consider"
+    )
     must_not = _string_list(data.get("must_not"), "expectations.must_not")
     _require(
         len(must_consider) >= 1,
@@ -161,6 +185,20 @@ def parse_case(data: Mapping[str, Any]) -> EvalCase:
         fixture is None or (isinstance(fixture, str) and fixture.endswith(".yaml")),
         "case.uac_fixture must be a .yaml path or null",
     )
+    data_class = data.get("data_class", "synthetic")
+    _require(
+        isinstance(data_class, str) and data_class in DATA_CLASSES,
+        f"unknown data_class: {data_class}",
+    )
+    source_type = data.get("source_type", "authored")
+    _require(
+        isinstance(source_type, str) and source_type in SOURCE_TYPES,
+        f"unknown source_type: {source_type}",
+    )
+    _require(
+        data_class == "synthetic" or source_type == "replay",
+        "sanitized/production cases must declare source_type: replay",
+    )
     expectations = parse_expectations(data.get("expectations", {}))
     return EvalCase(
         case_id=str(case_id),
@@ -169,6 +207,8 @@ def parse_case(data: Mapping[str, Any]) -> EvalCase:
         context=dict(context),
         expectations=expectations,
         uac_fixture=str(fixture) if fixture is not None else None,
+        data_class=str(data_class),
+        source_type=str(source_type),
     )
 
 
@@ -211,16 +251,20 @@ def coverage(cases: Sequence[EvalCase]) -> Mapping[str, int]:
 
 
 def _load_uac_fixture(fixture_name: str, repo_root: Path) -> dict[str, Any]:
-    path = (
-        repo_root / "skills" / "ads-google-app" / "assets" / fixture_name
+    # Source layout: <root>/skills/ads-google-app/assets/. Installed bundle:
+    # <root>/../ads-google-app/assets/ (skill base is the router's parent).
+    candidates = (
+        repo_root / "skills" / "ads-google-app" / "assets" / fixture_name,
+        repo_root.parent / "ads-google-app" / "assets" / fixture_name,
     )
-    if not path.is_file():
-        raise FileNotFoundError(f"uac_fixture not found: {path}")
+    path = next((candidate for candidate in candidates if candidate.is_file()), None)
+    if path is None:
+        raise FileNotFoundError(f"uac_fixture not found: {fixture_name}")
     import yaml
 
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, Mapping):
-        raise ValueError(f"uac_fixture must be a mapping: {fixture_name}")
+        raise TypeError(f"uac_fixture must be a mapping: {fixture_name}")
     return dict(data)
 
 
@@ -269,17 +313,25 @@ def uac_consistency_checks(
 def evaluate_fixture(
     path: Path, repo_root: Path
 ) -> tuple[tuple[EvalCase, ...], tuple[EvalResult, ...]]:
-    """Run the offline fixture checks. Returns (cases, results)."""
+    """Run the offline fixture checks. Returns (cases, results).
+
+    Cases carrying ``data_class: production`` are rejected: production
+    advertising data must not leave the operator's environment and cannot be
+    used by the default evaluation runner.
+    """
     cases = load_cases(path)
     results: list[EvalResult] = []
     for case in cases:
+        if case.data_class == "production":
+            raise ProductionDataError(
+                "Production advertising data cannot be used by the default "
+                "evaluation runner; production data stays local by default."
+            )
         checks: dict[str, bool] = {"fixture_schema_valid": True}
         if case.uac_fixture is not None:
             fixture = _load_uac_fixture(case.uac_fixture, repo_root)
             engine_decision = decide_case(fixture)
-            checks.update(
-                uac_consistency_checks(case, engine_decision, repo_root)
-            )
+            checks.update(uac_consistency_checks(case, engine_decision, repo_root))
         results.append(
             EvalResult(
                 case_id=case.case_id,

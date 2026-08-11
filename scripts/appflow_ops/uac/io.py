@@ -13,7 +13,7 @@ from .types import ContractError
 
 yaml: Any
 try:
-    import yaml as yaml
+    import yaml
 except ImportError:  # pragma: no cover - exercised by CLI error path
     yaml = None
 

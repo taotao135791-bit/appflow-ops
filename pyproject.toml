@@ -46,6 +46,37 @@ warn_unused_ignores = false
 module = ["requests", "requests.*"]
 ignore_missing_imports = true
 
+# Explicit lint contract. ruff is pinned to 0.16.2 (requirements-dev.txt)
+# because 0.16 widened the default rule set; without a pin, CI and local
+# tooling drift. Rules below are intentionally disabled with reasons:
+# - BLE001 / S110: CLI-facing tools deliberately degrade gracefully on any
+#   exception (doctor, generate_report, generate_image).
+# - SIM102: nested-if style in contract/normalization code reads clearer
+#   there.
+# - DTZ005 / DTZ007 / DTZ011: existing naive-datetime behavior is a
+#   separate decision; changing it alters report output and normalization
+#   semantics.
+# - PLW1510: generate_report intentionally runs helpers without check.
+# - PLR0124: `result != result` in funnel.py is the NaN-check idiom.
+# - TRY004: normalization / knowledge_doctor raise ValueError as their
+#   public contract; callers and tests depend on it.
+# - FLY002: privacy tests deliberately build synthetic sensitive values at
+#   runtime ("987" + "-654" + ...) so the worktree scanner sees no literal
+#   secret-shaped text while the runtime value stays detectable.
+[tool.ruff.lint]
+ignore = [
+  "BLE001",
+  "S110",
+  "SIM102",
+  "DTZ005",
+  "DTZ007",
+  "DTZ011",
+  "PLW1510",
+  "PLR0124",
+  "TRY004",
+  "FLY002",
+]
+
 [tool.coverage.run]
 source = ["appflow_ops.uac"]
 relative_files = true

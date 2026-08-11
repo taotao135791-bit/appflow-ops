@@ -377,6 +377,13 @@ main() {
         cp "${TEMP_DIR}/appflow-ops/requirements.txt" "${SKILL_DIR}/requirements.txt"
     fi
 
+    # Copy synthetic eval fixtures (privacy-safe, no production data).
+    if [ -d "${TEMP_DIR}/appflow-ops/evals" ]; then
+        echo "→ Installing eval fixtures..."
+        mkdir -p "${SKILL_DIR}/evals"
+        cp "${TEMP_DIR}/appflow-ops/evals/"*.json "${SKILL_DIR}/evals/"
+    fi
+
     # Install Python dependencies only for hosts that explicitly support
     # Python execution. Use a local venv; never mutate system Python packages.
     echo ""

@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import re
 
-
 _ID_ROW_RE = re.compile(r"^\|\s*([A-Z]+(?:-[A-Z]+)?[0-9]+)\s*\|", re.MULTILINE)
 
 

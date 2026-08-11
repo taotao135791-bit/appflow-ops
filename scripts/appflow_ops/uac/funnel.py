@@ -9,11 +9,12 @@ data is reported as a data gap instead of a fake bar.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from .contracts import _validate_case
 from .io import _load
@@ -183,11 +184,7 @@ def render_funnel_html(
                 f'<div class="num">—</div></div>'
             )
             continue
-        width = (
-            max(4.0, (stage.value / max_value) ** 0.5 * 100.0)
-            if max_value
-            else 4.0
-        )
+        width = max(4.0, (stage.value / max_value) ** 0.5 * 100.0) if max_value else 4.0
         css_class = "bar bottleneck" if is_bottleneck else "bar"
         badge = '<span class="badge">瓶颈层</span>' if is_bottleneck else ""
         rows.append(
@@ -221,12 +218,15 @@ def render_funnel_html(
         ),
     ]
     observed.extend(
-        f"{stage.label}：{_format_number(stage.value)}"
-        for stage in diagnosis.stages
+        f"{stage.label}：{_format_number(stage.value)}" for stage in diagnosis.stages
     )
     calculated = [
         f"{conversion.label} 转化率："
-        + ("—" if conversion.rate_percent is None else f"{conversion.rate_percent:.1f}%")
+        + (
+            "—"
+            if conversion.rate_percent is None
+            else f"{conversion.rate_percent:.1f}%"
+        )
         for conversion in diagnosis.conversions
     ]
     inferences: list[str] = []
@@ -241,8 +241,9 @@ def render_funnel_html(
         )
     if diagnosis.missing:
         inferences.append(
-            "缺失层级：" + "、".join(diagnosis.missing) +
-            "。补齐这些数据前，漏斗诊断不完整，不要据此修改账户。"
+            "缺失层级："
+            + "、".join(diagnosis.missing)
+            + "。补齐这些数据前，漏斗诊断不完整，不要据此修改账户。"
         )
     if not inferences:
         inferences.append("现有层级未见明显瓶颈；保持观察，不修改账户。")
@@ -291,11 +292,11 @@ def render_funnel_html(
 <div class="grid">
   <div class="panel">
     <h2>转化漏斗（数量层）</h2>
-    {''.join(rows)}
+    {"".join(rows)}
   </div>
   <div>
     <div class="panel"><h2>相邻层转化率</h2>
-      <table>{conversion_rows or '<tr><td>—</td></tr>'}</table></div>
+      <table>{conversion_rows or "<tr><td>—</td></tr>"}</table></div>
     <div class="panel"><h2>成本</h2>
       <table>{cost_rows}</table></div>
   </div>

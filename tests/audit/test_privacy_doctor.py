@@ -5,17 +5,17 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-import privacy_doctor  # noqa: E402
-from privacy_doctor import build_report  # noqa: E402
+import privacy_doctor
+from privacy_doctor import build_report
 
 
 def _git(root: Path, *args: str) -> None:
@@ -322,7 +322,7 @@ def test_advertising_secrets_and_identifiers_are_redacted(
         "google-ads-developer-token": "DevToken" + "8B" * 8,
         "oauth-refresh-token": "1//" + "RefreshToken8" * 3,
         "access-token": "EAAB" + "MetaAccess8" * 3,
-        "google-ads-customer-id": "-".join(("987", "654", "3210")),
+        "google-ads-customer-id": "987" + "-654" + "-3210",
         "meta-ad-account-id": "act_" + "9081726354",
         "mmp-token": "mmp" + "PrivateToken9" * 2,
     }
@@ -341,7 +341,7 @@ def test_quoted_json_secret_keys_and_nonexact_placeholder_substrings_are_detecte
 ):
     _git(tmp_path, "init", "-q")
     secret_value = "example_live_secret_material_" + "9X" * 4
-    customer_id = "-".join(("987", "654", "3210"))
+    customer_id = "987" + "-654" + "-3210"
     mmp_token = "MmpPrivate" + "9X" * 2
     developer_token = "Developer" + "7Y" * 2
     refresh_token = "1//" + "RefreshPrivate7" * 2
@@ -508,7 +508,7 @@ def test_common_private_key_headers_aws_sts_and_credentialed_urls_are_detected(
     host = "db" + ".internal"
     database_url = "postgresql" + "://" + userinfo + "@" + host + "/app"
     (tmp_path / "unsafe.txt").write_text(
-        "\n".join((aws_key, encrypted_pem, pgp_pem, database_url)),
+        f"{aws_key}\n{encrypted_pem}\n{pgp_pem}\n{database_url}",
         encoding="utf-8",
     )
 
@@ -549,9 +549,9 @@ def test_placeholder_identifiers_and_explicit_synthetic_allowlist_do_not_fail(
     tmp_path,
 ):
     _git(tmp_path, "init", "-q")
-    placeholder_customer = "-".join(("123", "456", "7890"))
+    placeholder_customer = "123-456-7890"
     placeholder_meta = "act_" + "1234567890"
-    allowlisted_customer = "-".join(("987", "654", "3210"))
+    allowlisted_customer = "987-654-3210"
     (tmp_path / "public-example.txt").write_text(
         "\n".join(
             (

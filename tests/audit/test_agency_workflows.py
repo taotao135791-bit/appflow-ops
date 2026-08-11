@@ -9,9 +9,7 @@ def _read(repo_root, relative_path: str) -> str:
 
 
 def test_question_discipline_policy_is_shipped_and_wired(repo_root):
-    policy = _read(
-        repo_root, "skills/appflow/references/client-questions-policy.md"
-    )
+    policy = _read(repo_root, "skills/appflow/references/client-questions-policy.md")
     for phrase in [
         "Must Ask",
         "Do Not Ask",

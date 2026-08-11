@@ -74,7 +74,7 @@ def _derive_maturity(context: Mapping[str, Any]) -> dict[str, Any]:
         )
         if (
             isinstance(changes, list)
-            and len(set(str(item) for item in changes)) > 1
+            and len({str(item) for item in changes}) > 1
             and change_window_open
         ):
             hard_failures.append("recent_multi_variable_change")

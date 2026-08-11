@@ -215,7 +215,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.1.0/install.sh | bash -s -- --ref=v3.1.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.2.0/install.sh | bash -s -- --ref=v3.2.0
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -242,6 +242,14 @@ python3 scripts/uac_experiment.py funnel-dashboard --workspace "workspaces/acme/
 - 客户/账户/业务三隔离：一个 workspace 只属于一个客户，跨 workspace 引用被拒绝
 - 数值安全上限：单次变化默认 ≤20%，超限走分阶段计划；急单也不能突破
 - 隐私：真实数据只进私有 workspace，报告默认匿名化，甲方版交付物单独存放
+
+## Evaluation Privacy
+
+> AppFlow does not require production advertising data to leave the operator's environment in order to evaluate its decision behavior.
+
+> Synthetic-first. Sanitized when useful. Production stays local.
+
+评测默认使用合成用例（`evals/`，全部标记 `synthetic`）；真实数据只能留在操作者本机，默认评测 runner 直接拒绝 `production` 数据（`ProductionDataError`），不静默降级。脱敏 replay 只保留决策结构（指标指数、时间桶、分类状态），不保留任何身份信息，且脱敏是单向的。详见 [docs/eval-privacy.md](docs/eval-privacy.md)。
 
 ## 边界（不会做的事）
 

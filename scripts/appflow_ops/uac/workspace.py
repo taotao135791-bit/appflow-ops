@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
-from pathlib import Path
 import os
 import re
 import tempfile
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from .io import _dump
 from .types import CURRENT_LEDGER_SCHEMA_VERSION, ContractError
-
 
 WORKSPACE_DIRECTORY_NAMES = (
     "input",
@@ -491,9 +490,7 @@ def initialize_workspace(
     if client_label is not None:
         safe_client = validate_workspace_name(client_label)
         if safe_client == safe_name:
-            raise ContractError(
-                "workspace name must differ from its client label"
-            )
+            raise ContractError("workspace name must differ from its client label")
         target = base / safe_client / safe_name
     else:
         target = base / safe_name

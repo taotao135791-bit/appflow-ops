@@ -17,7 +17,6 @@ import sys
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-
 _BINARY_SUFFIXES = {
     ".gif",
     ".ico",
@@ -369,7 +368,7 @@ def _path_findings(*, scope: str, reference: str, path: str) -> list[dict[str, s
         lower_name.startswith(".env.") and lower_name not in _SAFE_ENV_FILENAMES
     ):
         findings.append(_finding(scope, reference, path, "environment-file", "HIGH"))
-    if set(part.lower() for part in pure_path.parts) & _PRIVATE_DIRECTORY_NAMES:
+    if {part.lower() for part in pure_path.parts} & _PRIVATE_DIRECTORY_NAMES:
         findings.append(
             _finding(scope, reference, path, "private-workspace-path", "HIGH")
         )

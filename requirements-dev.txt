@@ -4,7 +4,7 @@
 pytest>=9.0.3,<10.0  # PYSEC-2026-1845 fix
 pytest-cov>=5.0,<8.0
 coverage[toml]>=7.10,<8.0
-ruff>=0.12,<1.0
+ruff==0.16.2  # pinned: 0.16 widened the default rule set; keep lint contract stable
 jsonschema>=4.23,<5.0
 PyYAML>=6.0.2,<7.0
 requests>=2.32.4,<3.0.0  # fetch_page redirect/SSRF regression tests

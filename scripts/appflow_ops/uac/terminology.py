@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import re
-from typing import Any, Mapping
-
+from collections.abc import Mapping
+from copy import deepcopy
+from typing import Any
 
 CAMPAIGN_LEVELS = ("AC2.0", "AC2.5", "AC3.0")
 _CANONICAL_KEYS = {"ac20": "AC2.0", "ac25": "AC2.5", "ac30": "AC3.0"}

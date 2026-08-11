@@ -307,6 +307,15 @@ function Main {
             Copy-Item (Join-Path $SourceDir "requirements.txt") -Destination (Join-Path $SkillDirResolved "requirements.txt") -Force
         }
 
+        # Copy synthetic eval fixtures (privacy-safe, no production data).
+        $EvalsSource = Join-Path $SourceDir "evals"
+        if (Test-Path $EvalsSource) {
+            Write-Host "Installing eval fixtures..."
+            $EvalsDir = Join-Path $SkillDirResolved "evals"
+            New-Item -ItemType Directory -Path $EvalsDir -Force | Out-Null
+            Copy-Item (Join-Path $EvalsSource "*.json") -Destination $EvalsDir -Force
+        }
+
         Write-Host ""
         if ($AllowPip) {
             Write-Host "Installing Python dependencies into local skill venv..."

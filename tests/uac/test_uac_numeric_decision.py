@@ -7,8 +7,8 @@ one universal percentage step. All account values are synthetic.
 
 from __future__ import annotations
 
-from copy import deepcopy
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +17,8 @@ import pytest
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.numeric_decision import recommend_numeric  # noqa: E402
-from appflow_ops.uac.policy_loader import load_policy  # noqa: E402
-
+from appflow_ops.uac.numeric_decision import recommend_numeric
+from appflow_ops.uac.policy_loader import load_policy
 
 ALLOWED_EVIDENCE_TYPES = {
     "ACCOUNT_EVIDENCE",

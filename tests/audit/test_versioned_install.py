@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -155,9 +155,9 @@ def test_unix_installer_pins_a_tag_and_preserves_default_clone_behavior(
 
     assert pinned.returncode == 0, pinned.stdout + pinned.stderr
     assert development.returncode == 0, development.stdout + development.stderr
-    assert (tmp_path / "pinned" / "skills with spaces" / "appflow" / "VERSION").read_text(
-        encoding="utf-8"
-    ) == "1.2.3\n"
+    assert (
+        tmp_path / "pinned" / "skills with spaces" / "appflow" / "VERSION"
+    ).read_text(encoding="utf-8") == "1.2.3\n"
     assert (
         tmp_path / "development" / "skills with spaces" / "appflow" / "VERSION"
     ).read_text(encoding="utf-8") == "9.9.9\n"

@@ -10,7 +10,6 @@ from .engine import _permission_class
 from .terminology import canonical_campaign_level
 from .types import ContractError
 
-
 QUICK_DECISION_SCHEMA_VERSION = "1.0"
 
 CAMPAIGN_VERDICTS = {

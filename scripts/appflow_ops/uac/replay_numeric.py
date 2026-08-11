@@ -13,7 +13,6 @@ from .replay_fields import (
 )
 from .types import ContractError
 
-
 _NUMERIC_DIRECTIONS = {"INCREASE", "DECREASE", "NO_CHANGE"}
 _NUMERIC_ACTIONS = _NUMERIC_DIRECTIONS | {"WAIT", "ROLLBACK"}
 _NUMERIC_COMPONENTS = {

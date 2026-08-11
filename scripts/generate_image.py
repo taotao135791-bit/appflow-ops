@@ -221,8 +221,10 @@ def generate_gemini(
         ref_part = types.Part.from_bytes(data=ref_bytes, mime_type=mime)
         contents: Any = [
             ref_part,
-            f"Generate an ad creative that matches the visual style, color palette, "
-            f"and aesthetic of the brand shown in the reference image. {prompt}",
+            (
+                f"Generate an ad creative that matches the visual style, color palette, "
+                f"and aesthetic of the brand shown in the reference image. {prompt}"
+            ),
         ]
     else:
         contents = prompt

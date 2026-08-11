@@ -19,10 +19,7 @@ def _frontmatter(text: str) -> dict:
 def test_plugin_repository_points_to_actual_repo(repo_root):
     manifest = json.loads(_read(repo_root, "appflow.plugin.json"))
     assert manifest["name"] == "appflow-ops"
-    assert (
-        manifest["repository"]
-        == "https://github.com/taotao135791-bit/appflow-ops"
-    )
+    assert manifest["repository"] == "https://github.com/taotao135791-bit/appflow-ops"
     assert manifest["skills"] == "./skills/"
     assert "interface" in manifest
     assert manifest["interface"]["displayName"] == "AppFlow Ops"
@@ -95,9 +92,7 @@ def test_install_and_template_files_preserve_line_breaks(repo_root):
 
 def test_template_headings_do_not_touch_tables(repo_root):
     template_files = list((repo_root / "skills").glob("*/assets/*.md"))
-    template_files += list(
-        (repo_root / "appflow" / "references").glob("*template*.md")
-    )
+    template_files += list((repo_root / "appflow" / "references").glob("*template*.md"))
     template_files += list(
         (repo_root / "skills" / "appflow" / "references").glob("*template*.md")
     )
@@ -129,15 +124,11 @@ def test_plugin_ads_entry_matches_legacy_raw_entry(repo_root):
     )
 
     legacy_refs = sorted((repo_root / "appflow" / "references").glob("*.md"))
-    plugin_refs = sorted(
-        (repo_root / "skills" / "appflow" / "references").glob("*.md")
-    )
+    plugin_refs = sorted((repo_root / "skills" / "appflow" / "references").glob("*.md"))
     assert [path.name for path in plugin_refs] == [path.name for path in legacy_refs]
 
     for legacy_path in legacy_refs:
-        plugin_path = (
-            repo_root / "skills" / "appflow" / "references" / legacy_path.name
-        )
+        plugin_path = repo_root / "skills" / "appflow" / "references" / legacy_path.name
         assert plugin_path.read_text(encoding="utf-8") == legacy_path.read_text(
             encoding="utf-8"
         )

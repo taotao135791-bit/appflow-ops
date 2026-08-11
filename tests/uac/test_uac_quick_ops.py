@@ -2,30 +2,29 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import json
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from jsonschema import Draft202012Validator
 import pytest
 import yaml
+from jsonschema import Draft202012Validator
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.quick_ops import (  # noqa: E402
+from appflow_ops.uac.quick_ops import (
     decide_case,
     validate_quick_decision,
 )
-from appflow_ops.uac.quick_reporting import render_quick_card  # noqa: E402
-from appflow_ops.uac.routing import route_question  # noqa: E402
-from appflow_ops.uac.terminology import (  # noqa: E402
+from appflow_ops.uac.quick_reporting import render_quick_card
+from appflow_ops.uac.routing import route_question
+from appflow_ops.uac.terminology import (
     canonical_campaign_level,
     resolve_campaign_level,
 )
-
 
 QUICK_SCENARIOS = yaml.safe_load(
     (

@@ -8,18 +8,17 @@ zero-change policy; malformed policy files always fail explicitly.
 
 from __future__ import annotations
 
+import math
+import re
 from collections.abc import Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field
-import math
 from pathlib import Path
-import re
 from typing import Any
 
 from .io import _load
 from .types import ContractError
 from .workspace import Workspace
-
 
 POLICY_SCHEMA_VERSION = "1.0"
 POLICY_DIRECTORY = Path(__file__).with_name("policies")
@@ -518,7 +517,7 @@ def _validate_policy(
         raise ContractError("policy.extends is only valid for an override")
     present_sections = sections.intersection(value)
     if full and present_sections != sections:
-        missing = sorted(sections - present_sections)[0]
+        missing = min(sections - present_sections)
         raise ContractError(f"policy.{missing} is required")
     if mode == "override" and not present_sections:
         raise ContractError(
@@ -728,10 +727,10 @@ def load_policy_set(
 
 
 __all__ = [
-    "LoadedPolicy",
     "POLICY_DIRECTORY",
     "POLICY_SCHEMA_PATH",
     "POLICY_SCHEMA_VERSION",
+    "LoadedPolicy",
     "load_policy",
     "load_policy_set",
 ]

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import sys
+from copy import deepcopy
 from pathlib import Path
 
 import yaml
@@ -11,8 +11,8 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-import uac_experiment  # noqa: E402
-from appflow_ops import uac  # noqa: E402
+import uac_experiment
+from appflow_ops import uac
 
 
 def test_legacy_entry_is_a_small_compatibility_layer(repo_root):

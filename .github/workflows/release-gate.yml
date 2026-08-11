@@ -65,7 +65,10 @@ jobs:
         # Identity findings in pre-migration history (personal email, local
         # hostname) and committed .pyc files are accepted by the repo owner
         # (2026-07-20); they stay visible in the report as waived INFO items.
-        # Real secrets and private-data kinds still fail the gate.
+        # Annotated release tags v3.0.0/v3.1.0 carry the owner's personal
+        # email as tagger identity; the owner accepted this on 2026-08-11 and
+        # instructed that it may be used. Real secrets and private-data kinds
+        # still fail the gate.
         run: >-
           python scripts/privacy_doctor.py --history --json
-          --waive non-noreply-identity,non-pseudonymous-identity-name,python-bytecode
+          --waive non-noreply-identity,non-pseudonymous-identity-name,python-bytecode,non-placeholder-email

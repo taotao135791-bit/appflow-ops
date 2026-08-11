@@ -12,8 +12,8 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.types import ContractError  # noqa: E402
-from appflow_ops.uac.workspace import (  # noqa: E402
+from appflow_ops.uac.types import ContractError
+from appflow_ops.uac.workspace import (
     Workspace,
     initialize_workspace,
     reject_cross_workspace_reference,
@@ -24,7 +24,9 @@ def _script(repo_root: Path) -> Path:
     return repo_root / "scripts" / "uac_experiment.py"
 
 
-def _run(repo_root: Path, *arguments: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+def _run(
+    repo_root: Path, *arguments: str, cwd: Path
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(_script(repo_root)), *arguments],
         cwd=cwd,
@@ -81,25 +83,22 @@ def test_legacy_flat_workspace_layout_still_initializes(tmp_path: Path) -> None:
     workspace = initialize_workspace("legacy-project", base_dir=tmp_path)
     assert workspace.initialized
     assert workspace.root == (tmp_path / "legacy-project").resolve()
-    context = yaml.safe_load(
-        workspace.context_path.read_text(encoding="utf-8")
-    )
+    context = yaml.safe_load(workspace.context_path.read_text(encoding="utf-8"))
     assert context["project"]["client_label"] is None
 
 
 def test_cross_client_workspace_reference_is_rejected(tmp_path: Path) -> None:
-    client_a = initialize_workspace(
-        "project-a", base_dir=tmp_path, client_label="acme"
-    )
+    client_a = initialize_workspace("project-a", base_dir=tmp_path, client_label="acme")
     client_b = initialize_workspace(
         "project-b", base_dir=tmp_path, client_label="globex"
     )
 
     internal = client_a.input_dir / "note.txt"
     internal.write_text("internal\n", encoding="utf-8")
-    assert reject_cross_workspace_reference(
-        client_a, internal, "note"
-    ) == internal.resolve()
+    assert (
+        reject_cross_workspace_reference(client_a, internal, "note")
+        == internal.resolve()
+    )
 
     with pytest.raises(ContractError):
         reject_cross_workspace_reference(
@@ -113,8 +112,6 @@ def test_cross_client_workspace_reference_is_rejected(tmp_path: Path) -> None:
 
 def test_two_clients_can_hold_the_same_project_name(tmp_path: Path) -> None:
     acme = initialize_workspace("main", base_dir=tmp_path, client_label="acme")
-    globex = initialize_workspace(
-        "main", base_dir=tmp_path, client_label="globex"
-    )
+    globex = initialize_workspace("main", base_dir=tmp_path, client_label="globex")
     assert acme.root != globex.root
     assert acme.initialized and globex.initialized

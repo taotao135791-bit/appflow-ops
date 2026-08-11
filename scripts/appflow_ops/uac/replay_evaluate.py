@@ -27,7 +27,6 @@ from .replay_numeric import (
 )
 from .types import FEASIBILITY_STATES, ContractError
 
-
 REPLAY_FILES = (
     "snapshot-before.yaml",
     "system-recommendation.yaml",

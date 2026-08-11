@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from sync_skill_layout import (  # noqa: E402
+from sync_skill_layout import (
     LayoutError,
     inspect_layout,
     synchronize_layout,

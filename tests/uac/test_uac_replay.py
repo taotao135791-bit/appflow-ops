@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import shutil
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pytest
 import yaml
@@ -13,13 +13,13 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.replay import (  # noqa: E402
+from appflow_ops.uac.replay import (
     LEGACY_REPLAY_FILES,
     REPLAY_FILES,
     evaluate_replay,
     replay_path,
 )
-from appflow_ops.uac.types import ContractError  # noqa: E402
+from appflow_ops.uac.types import ContractError
 
 
 def _documents(case_dir: Path) -> dict[str, dict]:

@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import json
 import sys
+from copy import deepcopy
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
 import pytest
 import yaml
+from jsonschema import Draft202012Validator
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.quick_ops import decide_case  # noqa: E402
-from appflow_ops.uac.quick_reporting import render_quick_card  # noqa: E402
-from appflow_ops.uac.types import ContractError  # noqa: E402
+from appflow_ops.uac.quick_ops import decide_case
+from appflow_ops.uac.quick_reporting import render_quick_card
+from appflow_ops.uac.types import ContractError
 
 
 def _numeric_case(repo_root: Path) -> dict:

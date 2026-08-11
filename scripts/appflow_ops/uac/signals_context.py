@@ -7,16 +7,15 @@ substitute for account evidence.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from datetime import date
-import math
 from statistics import fmean
 from typing import Any
 
 from ._common import _mapping
 from .policy_loader import LoadedPolicy, load_policy
 from .types import ContractError
-
 
 SIGNAL_DERIVATION_SCHEMA_VERSION = "1.0"
 

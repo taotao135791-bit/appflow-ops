@@ -10,6 +10,7 @@ from pathlib import Path
 from .contracts import _validate_case, validate_ledger
 from .doctor import doctor_exit_code, render_doctor, run_doctor
 from .engine import analyze_case
+from .funnel import write_funnel_dashboard
 from .io import _dump, _load
 from .ledger import (
     _append_to_ledger_path,
@@ -25,7 +26,6 @@ from .normalization import (
     render_normalization,
 )
 from .policy_loader import load_policy_set
-from .funnel import write_funnel_dashboard
 from .quick_ops import decide_case
 from .quick_reporting import render_quick_card
 from .replay import render_replay, replay_path

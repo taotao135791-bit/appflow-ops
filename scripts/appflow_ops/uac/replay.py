@@ -16,7 +16,9 @@ from pathlib import Path
 from typing import Any
 
 from .policy_loader import LoadedPolicy
-from .quick_ops import decide_case as decide_case  # re-exported for tests
+from .quick_ops import (
+    decide_case,  # noqa: F401 - re-exported: tests monkeypatch it here
+)
 from .replay_evaluate import (
     LEGACY_REPLAY_FILES,
     REPLAY_DISCLAIMERS,

@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from datetime import date
 import json
-from pathlib import Path
 import subprocess
 import sys
+from datetime import date
+from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from knowledge_doctor import (  # noqa: E402
+from knowledge_doctor import (
     evaluate_metadata,
     exit_code,
     load_metadata,

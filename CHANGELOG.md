@@ -2,6 +2,44 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.2.0 — 2026-08-11
+
+### Release health (P0)
+
+- Fixed CI foundation-contracts failure: ruff was unpinned (`>=0.12,<1.0`)
+  and 0.16 widened its default rule set. ruff is now pinned to 0.16.2 and
+  the lint contract is explicit in `pyproject.toml` (rules disabled with
+  documented reasons); scripts gained executable bits, and a private
+  test re-export lost by an auto-fix was restored.
+- Fixed installer smoke failure: `check_install_layout.py` still expected
+  the pre-rebrand `ads/` layout; required files and reference/agent paths
+  now check `appflow/`. Verified with a real local install.
+- Fixed Release Privacy Gate: annotated tags v3.0.0/v3.1.0 carry the
+  owner's personal email as tagger identity; the owner accepted this on
+  2026-08-11, so `non-placeholder-email` joins the waiver list (kept
+  visible as waived INFO).
+- New `scripts/release_check.py` preflight: version consistency, reasoning
+  contract presence, eval fixture schema/privacy, worktree privacy scan.
+
+### Privacy-safe evaluation (P1)
+
+- Eval fixtures now declare `data_class` (`synthetic`/`sanitized`/
+  `production`) and `source_type` provenance; all 24 vague-query cases are
+  `synthetic`/`authored`.
+- The default evaluation runner refuses `production` data with
+  `ProductionDataError`; no silent degradation.
+- New one-way replay sanitizer (`appflow_ops.evals.sanitize`): drops
+  identity/free text/URLs/paths, normalizes money to indexes, buckets
+  time, never creates reversible mappings.
+- New deterministic safety derivation (`appflow_ops.evals.safety`):
+  measurement=invalid forbids aggressive numeric optimization and
+  confident deep-event diagnosis; maturity=insufficient forbids premature
+  bid changes.
+- New `docs/eval-privacy.md` threat model and README Evaluation Privacy
+  principles (synthetic-first; production stays local).
+- CI: eval schema/privacy checks and release preflight added to
+  foundation contracts.
+
 ## 3.1.0 — 2026-08-11
 
 ### Added

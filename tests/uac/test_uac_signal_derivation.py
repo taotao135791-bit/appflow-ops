@@ -6,9 +6,9 @@ percentage threshold or recommendation formula. All fixtures are synthetic.
 
 from __future__ import annotations
 
-from copy import deepcopy
 import math
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +17,7 @@ import pytest
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.signals import derive_signals  # noqa: E402
+from appflow_ops.uac.signals import derive_signals
 
 
 def _daily_series(

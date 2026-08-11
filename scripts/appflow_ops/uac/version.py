@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
 _SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
 

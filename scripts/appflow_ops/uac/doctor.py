@@ -20,7 +20,6 @@ from .types import (
 from .version import read_project_version
 from .workspace import Workspace
 
-
 _INPUT_NAMES = ("UAC-INPUT.yaml", "UAC-INPUT.yml", "UAC-INPUT.json")
 _LEDGER_NAMES = (
     "ADS-EXPERIMENTS.yaml",

@@ -14,12 +14,12 @@ from typing import Any
 from ._common import _mapping, _number
 from .numeric_budgets import _budget_recommendation
 from .numeric_common import (
+    _OPERATION_CLASSIFICATIONS,
     EMERGENCY_INTERVENTION,
     NORMAL_OPTIMIZATION,
     NUMERIC_DECISION_SCHEMA_VERSION,
     OPERATIONAL_CORRECTION,
     STAGED_OPTIMIZATION,
-    _OPERATION_CLASSIFICATIONS,
 )
 from .numeric_safety import _apply_numeric_safety
 from .numeric_targets import _target_recommendation

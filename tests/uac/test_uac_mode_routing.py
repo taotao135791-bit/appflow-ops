@@ -10,7 +10,7 @@ import pytest
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.routing import route_question  # noqa: E402
+from appflow_ops.uac.routing import route_question
 
 
 @pytest.mark.parametrize(

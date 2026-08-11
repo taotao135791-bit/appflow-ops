@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
-import os
 from copy import deepcopy
 from pathlib import Path
 from typing import Any

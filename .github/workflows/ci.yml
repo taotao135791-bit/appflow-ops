@@ -103,6 +103,11 @@ jobs:
           python scripts/sync_skill_layout.py --check
           python scripts/privacy_doctor.py --json
 
+      - name: Run eval schema, eval privacy, and release preflight checks
+        run: |
+          python scripts/release_check.py
+          python -c "from pathlib import Path; import sys; sys.path.insert(0, 'scripts'); from appflow_ops.evals.vague_query import evaluate_fixture; _, results = evaluate_fixture(Path('evals/vague-query-evals.json'), Path('.')); assert all(r.passed for r in results), [r.case_id for r in results if not r.passed]"
+
       - name: Validate schema and legacy ledger commands explicitly
         run: |
           python scripts/uac_experiment.py validate-ledger \

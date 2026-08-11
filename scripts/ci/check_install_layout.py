@@ -13,7 +13,7 @@ Usage:
 
 ``--agents-dir`` is the separate agent install root used by hosts such as
 cursor/codex. Omit it for the local layout, where persona briefs live
-inside the main skill at ``<skill-dir>/ads/agents``.
+inside the main skill at ``<skill-dir>/appflow/agents``.
 """
 
 from __future__ import annotations
@@ -28,18 +28,19 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 REQUIRED_SKILL_FILES = [
-    "ads/SKILL.md",
-    "ads/VERSION",
-    "ads/references/reasoning-contract.md",
-    "ads/scripts/uac_experiment.py",
-    "ads/scripts/appflow_ops/uac/engine.py",
-    "ads/scripts/appflow_ops/uac/quick_ops.py",
-    "ads/scripts/appflow_ops/uac/signals.py",
-    "ads/scripts/appflow_ops/uac/numeric_decision.py",
-    "ads/scripts/appflow_ops/uac/policy_loader.py",
-    "ads/scripts/appflow_ops/uac/policies/uac-heuristic-policy.schema.json",
-    "ads/scripts/appflow_ops/uac/policies/uac-numeric-policy-v1.yaml",
-    "ads/scripts/appflow_ops/uac/policies/uac-signal-policy-v1.yaml",
+    "appflow/SKILL.md",
+    "appflow/VERSION",
+    "appflow/references/reasoning-contract.md",
+    "appflow/scripts/uac_experiment.py",
+    "appflow/scripts/appflow_ops/uac/engine.py",
+    "appflow/scripts/appflow_ops/uac/quick_ops.py",
+    "appflow/scripts/appflow_ops/uac/signals.py",
+    "appflow/scripts/appflow_ops/uac/numeric_decision.py",
+    "appflow/scripts/appflow_ops/uac/policy_loader.py",
+    "appflow/scripts/appflow_ops/uac/policies/uac-heuristic-policy.schema.json",
+    "appflow/scripts/appflow_ops/uac/policies/uac-numeric-policy-v1.yaml",
+    "appflow/scripts/appflow_ops/uac/policies/uac-signal-policy-v1.yaml",
+    "appflow/evals/vague-query-evals.json",
     "ads-google-app/SKILL.md",
     "ads-google-app/assets/UAC-INPUT.example.yaml",
     "ads-google-app/assets/UAC-QUICK-OPS.example.yaml",
@@ -59,7 +60,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--skill-dir",
         type=Path,
         required=True,
-        help="skill install root passed to the installer (contains ads/ etc.)",
+        help="skill install root passed to the installer (contains appflow/ etc.)",
     )
     parser.add_argument(
         "--agents-dir",
@@ -81,13 +82,13 @@ def main(argv: list[str] | None = None) -> int:
         if not (skill_dir / relative).is_file():
             failures.append(f"missing installed artifact: {skill_dir / relative}")
 
-    reference_files = sorted((skill_dir / "ads" / "references").glob("*.md"))
+    reference_files = sorted((skill_dir / "appflow" / "references").glob("*.md"))
     if not reference_files:
         failures.append(
             f"no Markdown reference files under {skill_dir / 'ads' / 'references'}"
         )
 
-    agents_dir = args.agents_dir or skill_dir / "ads" / "agents"
+    agents_dir = args.agents_dir or skill_dir / "appflow" / "agents"
     agent_files = sorted(agents_dir.glob("*.md")) if agents_dir.is_dir() else []
     if not agent_files:
         failures.append(f"no agent persona briefs (*.md) under {agents_dir}")

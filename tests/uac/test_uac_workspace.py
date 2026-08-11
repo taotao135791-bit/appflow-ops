@@ -16,7 +16,7 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.workspace import (  # noqa: E402
+from appflow_ops.uac.workspace import (
     WORKSPACE_DIRECTORY_NAMES,
     Workspace,
     initialize_workspace,

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 _ACTION_LABELS = {
     "ADD_TO_EXISTING": "加入现有 Campaign",
     "ADJUST_EXISTING": "调整现有 Campaign",
@@ -517,8 +516,10 @@ def _render_numeric_card(result: dict[str, Any]) -> str:
         lines.extend(
             [
                 "",
-                f"{_numeric_display(after_days, '声明天数')} 天或新增 "
-                f"{_numeric_display(mature_events, '声明数量')} 个成熟事件后复查。",
+                (
+                    f"{_numeric_display(after_days, '声明天数')} 天或新增 "
+                    f"{_numeric_display(mature_events, '声明数量')} 个成熟事件后复查。"
+                ),
             ]
         )
 
@@ -641,8 +642,10 @@ def render_quick_card(result: dict[str, Any]) -> str:
         lines.extend(
             [
                 "",
-                "紧急提示：这是多变量运营干预，不是有效实验；"
-                "结果归因将被混淆，不得记录为因果结论。",
+                (
+                    "紧急提示：这是多变量运营干预，不是有效实验；"
+                    "结果归因将被混淆，不得记录为因果结论。"
+                ),
             ]
         )
     if result["data_gaps"]:

@@ -14,7 +14,7 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.workspace import initialize_workspace  # noqa: E402
+from appflow_ops.uac.workspace import initialize_workspace
 
 
 def _run(repo_root: Path, *arguments: str) -> subprocess.CompletedProcess[str]:

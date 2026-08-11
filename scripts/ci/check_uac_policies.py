@@ -23,7 +23,7 @@ if hasattr(sys.stdout, "reconfigure"):
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from appflow_ops.uac.policy_loader import load_policy_set  # noqa: E402
+from appflow_ops.uac.policy_loader import load_policy_set
 
 EXPECTED_VERSIONS = {
     "uac_numeric": "uac-numeric-policy-v1",

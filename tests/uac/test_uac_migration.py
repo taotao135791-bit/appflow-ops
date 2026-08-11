@@ -14,13 +14,13 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.ledger import (  # noqa: E402
+from appflow_ops.uac.ledger import (
     _append_proposal,
     _append_to_ledger_path,
     _cancel_proposal_path,
     _ledger_context,
 )
-from uac_experiment import (  # noqa: E402
+from uac_experiment import (
     ANALYSIS_SCHEMA_VERSION,
     CURRENT_LEDGER_SCHEMA_VERSION,
     SUPPORTED_LEDGER_SCHEMA_VERSIONS,

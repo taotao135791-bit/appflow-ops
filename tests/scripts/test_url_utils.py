@@ -15,13 +15,11 @@ from pathlib import Path
 
 import pytest
 
-
 # Make scripts/ importable without requiring an installed package
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from url_utils import sanitize_error, sanitize_url, validate_url  # noqa: E402
-
+from url_utils import sanitize_error, sanitize_url, validate_url
 
 # ─── SSRF blocklist ─────────────────────────────────────────────────────────
 
@@ -206,8 +204,8 @@ def test_fetch_page_blocks_redirect_to_private_ip(monkeypatch):
     `Location: http://169.254.169.254/` and similar. After the fix, fetch_page
     refuses to follow a redirect into the SSRF blocklist.
     """
-    from unittest.mock import MagicMock
     import importlib
+    from unittest.mock import MagicMock
 
     fetch_page_module = importlib.import_module("fetch_page")
 
@@ -241,8 +239,8 @@ def test_fetch_page_blocks_redirect_to_private_ip(monkeypatch):
 
 def test_fetch_page_allows_redirect_to_public_ip(monkeypatch):
     """A redirect chain that stays on public addresses should succeed."""
-    from unittest.mock import MagicMock
     import importlib
+    from unittest.mock import MagicMock
 
     fetch_page_module = importlib.import_module("fetch_page")
 

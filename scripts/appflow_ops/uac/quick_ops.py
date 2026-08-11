@@ -9,9 +9,10 @@ contract validation.
 
 from __future__ import annotations
 
+import itertools
+import math
 from collections.abc import Mapping
 from copy import deepcopy
-import math
 from typing import Any, cast
 
 from ._common import _finite_number, _mapping
@@ -149,11 +150,11 @@ def validate_quick_decision(result: Mapping[str, Any]) -> None:
                 float(cast(int | float, value)) for value in ordered_values
             ]
             if recommendation.get("recommended_action") == "INCREASE" and any(
-                left > right for left, right in zip(numeric_values, numeric_values[1:])
+                left > right for left, right in itertools.pairwise(numeric_values)
             ):
                 errors.append(f"{section_name} increase candidates must be ordered")
             if recommendation.get("recommended_action") == "DECREASE" and any(
-                left < right for left, right in zip(numeric_values, numeric_values[1:])
+                left < right for left, right in itertools.pairwise(numeric_values)
             ):
                 errors.append(f"{section_name} decrease candidates must be ordered")
         if (

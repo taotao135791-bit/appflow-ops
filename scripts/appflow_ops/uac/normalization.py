@@ -15,7 +15,6 @@ from .io import _load
 from .models import NormalizationIssue, NormalizationResult, NormalizationSource
 from .types import ContractError
 
-
 _STRUCTURED_KEYS = {
     "scope",
     "goal",
@@ -188,9 +187,11 @@ def _normalize_number(
             number = float(cleaned)
         except ValueError as exc:
             raise ValueError("must be a number or numeric string") from exc
-    elif isinstance(value, int) and not isinstance(value, bool):
-        number = value
-    elif isinstance(value, float):
+    elif (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        or isinstance(value, float)
+    ):
         number = value
     else:
         raise ValueError("must be a number or numeric string")

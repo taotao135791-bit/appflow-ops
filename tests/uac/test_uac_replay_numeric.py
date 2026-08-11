@@ -5,8 +5,9 @@ from __future__ import annotations
 import importlib
 import shutil
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import pytest
 import yaml
@@ -14,14 +15,14 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.replay import (  # noqa: E402
+from appflow_ops.uac.policy_loader import load_policy_set
+from appflow_ops.uac.replay import (
     REPLAY_FILES,
     evaluate_replay,
     render_replay,
     replay_path,
 )
-from appflow_ops.uac.policy_loader import load_policy_set  # noqa: E402
-from appflow_ops.uac.types import ContractError  # noqa: E402
+from appflow_ops.uac.types import ContractError
 
 replay_module = importlib.import_module("appflow_ops.uac.replay")
 

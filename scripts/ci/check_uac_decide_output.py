@@ -124,8 +124,10 @@ def check_markdown_conclusion(markdown_path: Path) -> list[str]:
     text = markdown_path.read_text(encoding="utf-8")
     if not any(line.startswith(CONCLUSION_PREFIX) for line in text.splitlines()):
         return [
-            f"{markdown_path}: no line starts with "
-            f"'{CONCLUSION_PREFIX}' (Quick Decision card contract)"
+            (
+                f"{markdown_path}: no line starts with "
+                f"'{CONCLUSION_PREFIX}' (Quick Decision card contract)"
+            )
         ]
     return []
 

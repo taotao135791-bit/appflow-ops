@@ -12,13 +12,24 @@
       },
       "uac_fixture": "UAC-QUICK-NUMERIC.example.yaml",
       "expectations": {
-        "must_consider": ["delivery", "bid", "budget", "measurement", "recent_changes"],
-        "must_not": ["claim_causality_without_evidence", "recommend_new_campaign_immediately"],
+        "must_consider": [
+          "delivery",
+          "bid",
+          "budget",
+          "measurement",
+          "recent_changes"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_new_campaign_immediately"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "google_spend_stop_002",
@@ -29,13 +40,24 @@
         "symptom": "spend near zero for two days; no recent operator change reported"
       },
       "expectations": {
-        "must_consider": ["delivery", "budget", "bid", "measurement", "review_status"],
-        "must_not": ["claim_causality_without_evidence", "recommend_pause_immediately"],
+        "must_consider": [
+          "delivery",
+          "budget",
+          "bid",
+          "measurement",
+          "review_status"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_pause_immediately"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "google_cpa_bid_003",
@@ -48,13 +70,24 @@
       },
       "uac_fixture": "UAC-QUICK-NUMERIC.example.yaml",
       "expectations": {
-        "must_consider": ["measurement", "conversion_delay", "target_cpa_vs_ceiling", "bid_history", "maturity"],
-        "must_not": ["recommend_new_campaign_immediately", "recommend_numeric_change_without_maturity"],
+        "must_consider": [
+          "measurement",
+          "conversion_delay",
+          "target_cpa_vs_ceiling",
+          "bid_history",
+          "maturity"
+        ],
+        "must_not": [
+          "recommend_new_campaign_immediately",
+          "recommend_numeric_change_without_maturity"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "google_campaign_salvage_004",
@@ -65,13 +98,24 @@
         "symptom": "poor recent efficiency; learning state unknown"
       },
       "expectations": {
-        "must_consider": ["maturity", "learning", "measurement", "budget", "recent_changes"],
-        "must_not": ["claim_causality_without_evidence", "recommend_new_campaign_immediately"],
+        "must_consider": [
+          "maturity",
+          "learning",
+          "measurement",
+          "budget",
+          "recent_changes"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_new_campaign_immediately"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "google_worse_after_change_005",
@@ -84,13 +128,23 @@
       },
       "uac_fixture": "UAC-QUICK-NUMERIC.example.yaml",
       "expectations": {
-        "must_consider": ["recent_changes", "conversion_delay", "measurement", "noise_vs_signal"],
-        "must_not": ["claim_causality_without_evidence", "recommend_new_campaign_immediately"],
+        "must_consider": [
+          "recent_changes",
+          "conversion_delay",
+          "measurement",
+          "noise_vs_signal"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_new_campaign_immediately"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "google_cheap_install_pay_006",
@@ -102,13 +156,23 @@
         "optimization_event": "registration or install"
       },
       "expectations": {
-        "must_consider": ["funnel", "payment_quality", "optimization_event", "measurement_reconciliation"],
-        "must_not": ["claim_causality_without_evidence", "ask_for_full_metric_checklist"],
+        "must_consider": [
+          "funnel",
+          "payment_quality",
+          "optimization_event",
+          "measurement_reconciliation"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "ask_for_full_metric_checklist"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "google_reopen_007",
@@ -121,13 +185,24 @@
       },
       "uac_fixture": "UAC-QUICK-NUMERIC.example.yaml",
       "expectations": {
-        "must_consider": ["learning", "split_feasibility", "budget", "measurement", "recent_changes"],
-        "must_not": ["recommend_new_campaign_immediately", "claim_causality_without_evidence"],
+        "must_consider": [
+          "learning",
+          "split_feasibility",
+          "budget",
+          "measurement",
+          "recent_changes"
+        ],
+        "must_not": [
+          "recommend_new_campaign_immediately",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meta_creative_fatigue_001",
@@ -138,13 +213,23 @@
         "symptom": "creative performance drifting"
       },
       "expectations": {
-        "must_consider": ["ctr_trend", "frequency", "creative_diversity", "fatigue_thresholds"],
-        "must_not": ["claim_causality_without_evidence", "ask_for_full_metric_checklist"],
+        "must_consider": [
+          "ctr_trend",
+          "frequency",
+          "creative_diversity",
+          "fatigue_thresholds"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "ask_for_full_metric_checklist"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meta_audience_cost_002",
@@ -155,13 +240,24 @@
         "symptom": "a targeting slice suddenly costs more"
       },
       "expectations": {
-        "must_consider": ["auction", "audience", "placement", "measurement", "recent_changes"],
-        "must_not": ["claim_causality_without_evidence", "recommend_action_when_measurement_invalid"],
+        "must_consider": [
+          "auction",
+          "audience",
+          "placement",
+          "measurement",
+          "recent_changes"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_action_when_measurement_invalid"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meta_ctr_drop_003",
@@ -172,13 +268,24 @@
         "symptom": "CTR declining over recent days"
       },
       "expectations": {
-        "must_consider": ["fatigue", "structure_change", "audience", "measurement", "recent_changes"],
-        "must_not": ["claim_causality_without_evidence", "recommend_pause_immediately"],
+        "must_consider": [
+          "fatigue",
+          "structure_change",
+          "audience",
+          "measurement",
+          "recent_changes"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_pause_immediately"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meta_adset_close_004",
@@ -190,13 +297,24 @@
         "kill_rule": "3x target CPA"
       },
       "expectations": {
-        "must_consider": ["evidence_sufficiency", "learning", "kill_rule", "budget", "measurement"],
-        "must_not": ["recommend_pause_immediately", "claim_causality_without_evidence"],
+        "must_consider": [
+          "evidence_sufficiency",
+          "learning",
+          "kill_rule",
+          "budget",
+          "measurement"
+        ],
+        "must_not": [
+          "recommend_pause_immediately",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meta_budget_now_005",
@@ -207,13 +325,23 @@
         "symptom": "asking whether to scale now"
       },
       "expectations": {
-        "must_consider": ["budget_sufficiency", "learning", "pacing", "efficiency_trend"],
-        "must_not": ["recommend_numeric_change_without_maturity", "claim_causality_without_evidence"],
+        "must_consider": [
+          "budget_sufficiency",
+          "learning",
+          "pacing",
+          "efficiency_trend"
+        ],
+        "must_not": [
+          "recommend_numeric_change_without_maturity",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "tiktok_volume_001",
@@ -224,13 +352,24 @@
         "symptom": "delivery volume degraded over two days"
       },
       "expectations": {
-        "must_consider": ["delivery", "creative", "smart_plus", "measurement", "recent_changes"],
-        "must_not": ["claim_causality_without_evidence", "recommend_pause_immediately"],
+        "must_consider": [
+          "delivery",
+          "creative",
+          "smart_plus",
+          "measurement",
+          "recent_changes"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_pause_immediately"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "tiktok_clicks_no_install_002",
@@ -241,13 +380,24 @@
         "symptom": "high clicks, low installs"
       },
       "expectations": {
-        "must_consider": ["funnel", "tracking", "traffic_quality", "creative", "store_page"],
-        "must_not": ["claim_causality_without_evidence", "ask_for_full_metric_checklist"],
+        "must_consider": [
+          "funnel",
+          "tracking",
+          "traffic_quality",
+          "creative",
+          "store_page"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "ask_for_full_metric_checklist"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "tiktok_creative_scale_003",
@@ -258,13 +408,23 @@
         "symptom": "creative performing; asking about expansion"
       },
       "expectations": {
-        "must_consider": ["fatigue", "volume_thresholds", "expansion_cap", "budget"],
-        "must_not": ["recommend_numeric_change_without_maturity", "claim_causality_without_evidence"],
+        "must_consider": [
+          "fatigue",
+          "volume_thresholds",
+          "expansion_cap",
+          "budget"
+        ],
+        "must_not": [
+          "recommend_numeric_change_without_maturity",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "cross_priority_001",
@@ -275,13 +435,24 @@
         "symptom": "several open issues of unknown severity"
       },
       "expectations": {
-        "must_consider": ["severity", "impact", "reversibility", "measurement", "client_deadline"],
-        "must_not": ["ask_for_full_metric_checklist", "claim_causality_without_evidence"],
+        "must_consider": [
+          "severity",
+          "impact",
+          "reversibility",
+          "measurement",
+          "client_deadline"
+        ],
+        "must_not": [
+          "ask_for_full_metric_checklist",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 1,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "cross_both_platforms_002",
@@ -292,13 +463,23 @@
         "symptom": "correlated drop across platforms"
       },
       "expectations": {
-        "must_consider": ["product_side", "measurement_reconciliation", "market_effects", "per_platform_structure"],
-        "must_not": ["claim_causality_without_evidence", "recommend_action_when_measurement_invalid"],
+        "must_consider": [
+          "product_side",
+          "measurement_reconciliation",
+          "market_effects",
+          "per_platform_structure"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_action_when_measurement_invalid"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "cross_creative_or_account_003",
@@ -309,13 +490,23 @@
         "symptom": "performance issue could be creative or account-level"
       },
       "expectations": {
-        "must_consider": ["creative", "account_structure", "measurement", "recent_changes"],
-        "must_not": ["ask_for_full_metric_checklist", "claim_causality_without_evidence"],
+        "must_consider": [
+          "creative",
+          "account_structure",
+          "measurement",
+          "recent_changes"
+        ],
+        "must_not": [
+          "ask_for_full_metric_checklist",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "cross_payments_drop_004",
@@ -326,13 +517,24 @@
         "symptom": "bottom-of-funnel drop across the board"
       },
       "expectations": {
-        "must_consider": ["funnel_bottom", "measurement", "product_side", "seasonality", "attribution"],
-        "must_not": ["claim_causality_without_evidence", "recommend_action_when_measurement_invalid"],
+        "must_consider": [
+          "funnel_bottom",
+          "measurement",
+          "product_side",
+          "seasonality",
+          "attribution"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_action_when_measurement_invalid"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "none"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meas_data_weird_001",
@@ -343,13 +545,23 @@
         "reconciliation_unknown": true
       },
       "expectations": {
-        "must_consider": ["measurement_reconciliation", "dedup", "conversion_delay", "attribution"],
-        "must_not": ["recommend_action_when_measurement_invalid", "claim_causality_without_evidence"],
+        "must_consider": [
+          "measurement_reconciliation",
+          "dedup",
+          "conversion_delay",
+          "attribution"
+        ],
+        "must_not": [
+          "recommend_action_when_measurement_invalid",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "measurement_invalid"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meas_firebase_mismatch_002",
@@ -360,13 +572,23 @@
         "dedup_status": "unknown"
       },
       "expectations": {
-        "must_consider": ["reconciliation", "dedup", "attribution_window", "backend_events"],
-        "must_not": ["recommend_action_when_measurement_invalid", "claim_causality_without_evidence"],
+        "must_consider": [
+          "reconciliation",
+          "dedup",
+          "attribution_window",
+          "backend_events"
+        ],
+        "must_not": [
+          "recommend_action_when_measurement_invalid",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "measurement_invalid"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meas_cpa_spike_003",
@@ -378,13 +600,23 @@
         "permission": "budget, target, creative only"
       },
       "expectations": {
-        "must_consider": ["conversion_delay", "noise_vs_signal", "measurement", "maturity"],
-        "must_not": ["recommend_numeric_change_without_maturity", "recommend_action_when_measurement_invalid"],
+        "must_consider": [
+          "conversion_delay",
+          "noise_vs_signal",
+          "measurement",
+          "maturity"
+        ],
+        "must_not": [
+          "recommend_numeric_change_without_maturity",
+          "recommend_action_when_measurement_invalid"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "measurement_invalid"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meas_skan_delay_004",
@@ -395,13 +627,23 @@
         "platform": "iOS app campaign"
       },
       "expectations": {
-        "must_consider": ["attribution_delay", "skan", "maturity", "measurement"],
-        "must_not": ["recommend_action_when_measurement_invalid", "claim_causality_without_evidence"],
+        "must_consider": [
+          "attribution_delay",
+          "skan",
+          "maturity",
+          "measurement"
+        ],
+        "must_not": [
+          "recommend_action_when_measurement_invalid",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 1,
         "safety_gate": "measurement_invalid"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     },
     {
       "id": "meas_attribution_window_005",
@@ -412,13 +654,23 @@
         "symptom": "reported conversions shifted"
       },
       "expectations": {
-        "must_consider": ["attribution_window", "dedup", "measurement", "recent_changes"],
-        "must_not": ["recommend_action_when_measurement_invalid", "claim_causality_without_evidence"],
+        "must_consider": [
+          "attribution_window",
+          "dedup",
+          "measurement",
+          "recent_changes"
+        ],
+        "must_not": [
+          "recommend_action_when_measurement_invalid",
+          "claim_causality_without_evidence"
+        ],
         "must_converge": true,
         "must_have_primary_action": true,
         "must_not_ask_more_than": 2,
         "safety_gate": "measurement_invalid"
-      }
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     }
   ]
 }

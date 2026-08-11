@@ -12,7 +12,7 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from appflow_ops.uac.funnel import (  # noqa: E402
+from appflow_ops.uac.funnel import (
     build_funnel,
     render_funnel_html,
     write_funnel_dashboard,
@@ -20,13 +20,7 @@ from appflow_ops.uac.funnel import (  # noqa: E402
 
 
 def _example_case(repo_root: Path) -> dict:
-    path = (
-        repo_root
-        / "skills"
-        / "ads-google-app"
-        / "assets"
-        / "UAC-INPUT.example.yaml"
-    )
+    path = repo_root / "skills" / "ads-google-app" / "assets" / "UAC-INPUT.example.yaml"
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
@@ -117,9 +111,7 @@ def test_funnel_dashboard_workspace_output_stays_inside_workspace(
     case = _example_case(repo_root)
     input_path = workspace.normalized_dir / "UAC-INPUT.yaml"
     input_path.parent.mkdir(parents=True, exist_ok=True)
-    input_path.write_text(
-        yaml.safe_dump(case, allow_unicode=True), encoding="utf-8"
-    )
+    input_path.write_text(yaml.safe_dump(case, allow_unicode=True), encoding="utf-8")
 
     written = write_funnel_dashboard(workspace=workspace)
     assert written == workspace.reports_dir / "funnel-dashboard.html"
