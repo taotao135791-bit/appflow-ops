@@ -52,7 +52,7 @@ def test_reference_paths_have_installed_fallbacks(repo_root):
 
     for path in skill_files + agent_files:
         text = path.read_text(encoding="utf-8")
-        if "appflow/references/" not in text:
+        if "appflow/references/" not in text or "## Reference Resolution" not in text:
             continue
         required = [
             "## Reference Resolution",

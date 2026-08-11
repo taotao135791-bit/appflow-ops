@@ -20,6 +20,8 @@ For any `appflow/references/<file>.md` path below, read the first existing path:
 `~/.appflow/skills/appflow/references/<file>.md`,
 `~/.agents/skills/appflow/references/<file>.md`,
 `skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
+Ambiguous operational diagnosis follows the AppFlow Reasoning Contract: `appflow/references/reasoning-contract.md` (resolve per Reference Resolution).
+
 
 <!-- Updated: 2026-04-13 | v1.5: Demand Gen replaces VAC, Shorts expansion, CTV section, frequency capping -->
 

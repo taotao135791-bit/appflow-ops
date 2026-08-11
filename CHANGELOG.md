@@ -2,6 +2,32 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.1.0 — 2026-08-11
+
+### Added
+
+- **AppFlow Reasoning Contract** (`skills/appflow/references/reasoning-contract.md`):
+  single canonical definition of Diverge → Verify → Eliminate → Rank →
+  Converge, with trigger conditions, evidence priority, elimination states,
+  ranking dimensions, convergence output shape, ask-only-when-material, and
+  the no-chain-of-thought rule.
+- **Vague Query Eval Suite** (`evals/vague-query-evals.json`): 24 fixture
+  cases across Google/UAC, Meta, TikTok, cross-platform, and measurement,
+  with a thin `Evaluator` interface for future model benchmarks and
+  deterministic schema/consistency checks.
+- Reasoning Contract inheritance in 12 diagnosis skills (one-line reference;
+  no prompt duplication).
+- Version alignment guard: README/QUICKSTART pinned install version must
+  equal VERSION; all version sources are checked in CI.
+
+### Changed
+
+- Main router behavior: `Reasoning Loop` section replaced by a reference to
+  the canonical contract; ambiguous diagnosis now inherits the contract
+  across skills instead of duplicating prompt text.
+- Release/version alignment: README install target moved from v3.0.0 to
+  v3.1.0 so documented behavior matches the released artifact.
+
 ## 3.0.0 — 2026-08-11 (breaking)
 
 ### Rebrand and repositioning

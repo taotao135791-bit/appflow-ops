@@ -159,6 +159,8 @@ Converge
 
 而不是几十段 AI 自言自语。
 
+完整的行为合同（触发条件、证据优先级、排除状态、排序维度、收敛输出、提问纪律）见 [`skills/appflow/references/reasoning-contract.md`](skills/appflow/references/reasoning-contract.md)；模糊问题的离线评测用例见 [`evals/vague-query-evals.json`](evals/vague-query-evals.json)。
+
 ### Design Principles
 
 ```text
@@ -213,7 +215,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.0.0/install.sh | bash -s -- --ref=v3.0.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.1.0/install.sh | bash -s -- --ref=v3.1.0
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：

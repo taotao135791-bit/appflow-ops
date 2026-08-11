@@ -20,6 +20,9 @@ audit but too important to improvise: checking accounts, explaining changes,
 turning problems into creative requests, cleaning exports, and preparing
 meeting notes. Default to read-only account inspection and local file outputs.
 
+Ambiguous operational diagnosis follows the AppFlow Reasoning Contract:
+`appflow/references/reasoning-contract.md` (resolve per Reference Resolution).
+
 ## Data Access (Browser Bridge Optional)
 
 For daily patrols, anomaly triage, creative performance review, changelog

@@ -17,6 +17,9 @@ goal is not to redesign the product. The goal is to find the strongest
 controllable levers, prove what is outside media-buying control, and give the
 operator clear internal and client-facing language.
 
+Ambiguous operational diagnosis follows the AppFlow Reasoning Contract:
+`appflow/references/reasoning-contract.md` (resolve per Reference Resolution).
+
 ## Core Rule
 
 Do not optimize a shallow metric when the KPI is deeper.

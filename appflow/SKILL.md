@@ -30,29 +30,25 @@ references on demand.
 7. Investigate vague questions with the reasoning loop below; users state
    problems, not analysis procedures.
 
-## Reasoning Loop
+## Reasoning Contract
 
-Follow **Diverge → Verify → Eliminate → Rank → Converge** (README: Core
-Product Principle) when a natural-language question is ambiguous:
+Ambiguous operational diagnosis follows the **AppFlow Reasoning Contract** —
+`references/reasoning-contract.md` is the single canonical definition:
 
-1. Diverge — generate only hypotheses that are platform-, workspace-, and
-   problem-relevant and verifiable with existing evidence. No unbounded
-   brainstorming.
-2. Verify — seek evidence from workspace files, metrics, funnel data,
-   ledger/replay history, and declared policy. Evidence-seeking, not
-   imagination-driven.
-3. Eliminate — classify each hypothesis as supported, contradicted,
-   insufficient evidence, or not applicable; drop contradicted explanations
-   from the final answer.
-4. Rank — order survivors by evidence strength and decision impact
-   (Most likely / Possible but secondary / Unresolved / Ruled out).
-5. Converge — produce the smallest useful operational decision
-   (keep / increase / decrease / pause / reopen / replace / wait / observe /
-   investigate / request missing evidence).
+```text
+Diverge → Verify → Eliminate → Rank → Converge
+```
 
-If evidence is insufficient: state what is most likely, what was ruled out,
-which single missing fact would change the decision, and whether getting it
-is worth it. Ask for missing data only when it can change the decision.
+- Triggers on symptoms, vague business problems, decision requests,
+  unexplained performance changes, and prioritization questions; direct
+  lookups and fully specified procedures skip the loop.
+- Diverge only relevant, plausible, decision-material, evidence-addressable
+  hypotheses. No unbounded brainstorming.
+- Verify with observed facts and deterministic state before inferred
+  explanations; never override deterministic safety gates.
+- Eliminate contradicted explanations explicitly; rank survivors; converge
+  on the smallest useful operational decision.
+- Ask for missing data only when it can change the decision.
 
 Report broad internally, concise externally: conclusion, evidence, ruled-out
 items, risks, and next step. Never dump the internal chain of thought to the

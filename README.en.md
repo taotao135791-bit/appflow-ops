@@ -192,6 +192,12 @@ Next step
 
 ...not pages of AI self-talk.
 
+The full behavior contract (trigger conditions, evidence priority, elimination
+states, ranking dimensions, convergence output, question discipline) lives in
+[`skills/appflow/references/reasoning-contract.md`](skills/appflow/references/reasoning-contract.md);
+offline vague-query eval fixtures live in
+[`evals/vague-query-evals.json`](evals/vague-query-evals.json).
+
 ### Design Principles
 
 ```text
@@ -267,7 +273,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.0.0/install.sh | bash -s -- --ref=v3.0.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.1.0/install.sh | bash -s -- --ref=v3.1.0
 ```
 
 Then talk to your AI coding assistant in natural language:

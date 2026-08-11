@@ -1,0 +1,424 @@
+{
+  "schema_version": "1.0",
+  "description": "Vague Query Eval Suite: fixture cases for the AppFlow Reasoning Contract (skills/appflow/references/reasoning-contract.md). Each case is anonymized and checks behavior dimensions, not keywords. uac_fixture cases run the real deterministic UAC engine as ground truth.",
+  "cases": [
+    {
+      "id": "google_delivery_drop_001",
+      "query": "Google最近怎么跑不动了？",
+      "platform": "google_uac",
+      "context": {
+        "campaign_type": "app_campaign",
+        "symptom": "spend and volume dropped recently without an obvious account change"
+      },
+      "uac_fixture": "UAC-QUICK-NUMERIC.example.yaml",
+      "expectations": {
+        "must_consider": ["delivery", "bid", "budget", "measurement", "recent_changes"],
+        "must_not": ["claim_causality_without_evidence", "recommend_new_campaign_immediately"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "google_spend_stop_002",
+      "query": "这两天突然不花钱了。",
+      "platform": "google_uac",
+      "context": {
+        "campaign_type": "app_campaign",
+        "symptom": "spend near zero for two days; no recent operator change reported"
+      },
+      "expectations": {
+        "must_consider": ["delivery", "budget", "bid", "measurement", "review_status"],
+        "must_not": ["claim_causality_without_evidence", "recommend_pause_immediately"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "google_cpa_bid_003",
+      "query": "CPA高了，是不是应该收出价？",
+      "platform": "google_uac",
+      "context": {
+        "campaign_type": "app_campaign",
+        "business_ceiling": "max CPA stated by client",
+        "permission": "budget, target, creative only"
+      },
+      "uac_fixture": "UAC-QUICK-NUMERIC.example.yaml",
+      "expectations": {
+        "must_consider": ["measurement", "conversion_delay", "target_cpa_vs_ceiling", "bid_history", "maturity"],
+        "must_not": ["recommend_new_campaign_immediately", "recommend_numeric_change_without_maturity"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "google_campaign_salvage_004",
+      "query": "这个campaign还有救吗？",
+      "platform": "google_uac",
+      "context": {
+        "campaign_type": "app_campaign",
+        "symptom": "poor recent efficiency; learning state unknown"
+      },
+      "expectations": {
+        "must_consider": ["maturity", "learning", "measurement", "budget", "recent_changes"],
+        "must_not": ["claim_causality_without_evidence", "recommend_new_campaign_immediately"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "google_worse_after_change_005",
+      "query": "昨天调完价更差了。",
+      "platform": "google_uac",
+      "context": {
+        "campaign_type": "app_campaign",
+        "recent_change": "target reduced yesterday",
+        "symptom": "metrics appear worse the next day"
+      },
+      "uac_fixture": "UAC-QUICK-NUMERIC.example.yaml",
+      "expectations": {
+        "must_consider": ["recent_changes", "conversion_delay", "measurement", "noise_vs_signal"],
+        "must_not": ["claim_causality_without_evidence", "recommend_new_campaign_immediately"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "google_cheap_install_pay_006",
+      "query": "安装挺便宜，为什么付费还是很贵？",
+      "platform": "google_uac",
+      "context": {
+        "campaign_type": "app_campaign",
+        "symptom": "low CPI but high cost per payment",
+        "optimization_event": "registration or install"
+      },
+      "expectations": {
+        "must_consider": ["funnel", "payment_quality", "optimization_event", "measurement_reconciliation"],
+        "must_not": ["claim_causality_without_evidence", "ask_for_full_metric_checklist"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "google_reopen_007",
+      "query": "要不要重新开一个campaign？",
+      "platform": "google_uac",
+      "context": {
+        "campaign_type": "app_campaign",
+        "symptom": "existing campaign underperforming",
+        "permission": "budget, target, creative only"
+      },
+      "uac_fixture": "UAC-QUICK-NUMERIC.example.yaml",
+      "expectations": {
+        "must_consider": ["learning", "split_feasibility", "budget", "measurement", "recent_changes"],
+        "must_not": ["recommend_new_campaign_immediately", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "meta_creative_fatigue_001",
+      "query": "这个素材是不是衰减了？",
+      "platform": "meta",
+      "context": {
+        "objective": "app promotion",
+        "symptom": "creative performance drifting"
+      },
+      "expectations": {
+        "must_consider": ["ctr_trend", "frequency", "creative_diversity", "fatigue_thresholds"],
+        "must_not": ["claim_causality_without_evidence", "ask_for_full_metric_checklist"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "meta_audience_cost_002",
+      "query": "女生怎么突然变贵了？",
+      "platform": "meta",
+      "context": {
+        "objective": "app promotion",
+        "symptom": "a targeting slice suddenly costs more"
+      },
+      "expectations": {
+        "must_consider": ["auction", "audience", "placement", "measurement", "recent_changes"],
+        "must_not": ["claim_causality_without_evidence", "recommend_action_when_measurement_invalid"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "meta_ctr_drop_003",
+      "query": "CTR掉了还能继续跑吗？",
+      "platform": "meta",
+      "context": {
+        "objective": "app promotion",
+        "symptom": "CTR declining over recent days"
+      },
+      "expectations": {
+        "must_consider": ["fatigue", "structure_change", "audience", "measurement", "recent_changes"],
+        "must_not": ["claim_causality_without_evidence", "recommend_pause_immediately"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "meta_adset_close_004",
+      "query": "这个广告组是不是该关了？",
+      "platform": "meta",
+      "context": {
+        "objective": "app promotion",
+        "symptom": "ad set underperforming",
+        "kill_rule": "3x target CPA"
+      },
+      "expectations": {
+        "must_consider": ["evidence_sufficiency", "learning", "kill_rule", "budget", "measurement"],
+        "must_not": ["recommend_pause_immediately", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "meta_budget_now_005",
+      "query": "现在应该加预算吗？",
+      "platform": "meta",
+      "context": {
+        "objective": "app promotion",
+        "symptom": "asking whether to scale now"
+      },
+      "expectations": {
+        "must_consider": ["budget_sufficiency", "learning", "pacing", "efficiency_trend"],
+        "must_not": ["recommend_numeric_change_without_maturity", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "tiktok_volume_001",
+      "query": "TT这两天的量是不是废了？",
+      "platform": "tiktok",
+      "context": {
+        "objective": "app promotion",
+        "symptom": "delivery volume degraded over two days"
+      },
+      "expectations": {
+        "must_consider": ["delivery", "creative", "smart_plus", "measurement", "recent_changes"],
+        "must_not": ["claim_causality_without_evidence", "recommend_pause_immediately"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "tiktok_clicks_no_install_002",
+      "query": "点击很多为什么安装不行？",
+      "platform": "tiktok",
+      "context": {
+        "objective": "app promotion",
+        "symptom": "high clicks, low installs"
+      },
+      "expectations": {
+        "must_consider": ["funnel", "tracking", "traffic_quality", "creative", "store_page"],
+        "must_not": ["claim_causality_without_evidence", "ask_for_full_metric_checklist"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "tiktok_creative_scale_003",
+      "query": "这素材还能继续扩吗？",
+      "platform": "tiktok",
+      "context": {
+        "objective": "app promotion",
+        "symptom": "creative performing; asking about expansion"
+      },
+      "expectations": {
+        "must_consider": ["fatigue", "volume_thresholds", "expansion_cap", "budget"],
+        "must_not": ["recommend_numeric_change_without_maturity", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "cross_priority_001",
+      "query": "今天最该先处理什么？",
+      "platform": "cross_platform",
+      "context": {
+        "scope": "multiple platforms and accounts",
+        "symptom": "several open issues of unknown severity"
+      },
+      "expectations": {
+        "must_consider": ["severity", "impact", "reversibility", "measurement", "client_deadline"],
+        "must_not": ["ask_for_full_metric_checklist", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 1,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "cross_both_platforms_002",
+      "query": "Google和Meta都变差了，是产品问题吗？",
+      "platform": "cross_platform",
+      "context": {
+        "scope": "google and meta both degrading",
+        "symptom": "correlated drop across platforms"
+      },
+      "expectations": {
+        "must_consider": ["product_side", "measurement_reconciliation", "market_effects", "per_platform_structure"],
+        "must_not": ["claim_causality_without_evidence", "recommend_action_when_measurement_invalid"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "cross_creative_or_account_003",
+      "query": "现在最应该换素材还是调账户？",
+      "platform": "cross_platform",
+      "context": {
+        "scope": "ambiguous either/or decision",
+        "symptom": "performance issue could be creative or account-level"
+      },
+      "expectations": {
+        "must_consider": ["creative", "account_structure", "measurement", "recent_changes"],
+        "must_not": ["ask_for_full_metric_checklist", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "cross_payments_drop_004",
+      "query": "为什么所有平台的支付都掉了？",
+      "platform": "cross_platform",
+      "context": {
+        "scope": "payments down on every platform",
+        "symptom": "bottom-of-funnel drop across the board"
+      },
+      "expectations": {
+        "must_consider": ["funnel_bottom", "measurement", "product_side", "seasonality", "attribution"],
+        "must_not": ["claim_causality_without_evidence", "recommend_action_when_measurement_invalid"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      }
+    },
+    {
+      "id": "meas_data_weird_001",
+      "query": "数据看起来怪怪的。",
+      "platform": "measurement",
+      "context": {
+        "symptom": "numbers look internally inconsistent",
+        "reconciliation_unknown": true
+      },
+      "expectations": {
+        "must_consider": ["measurement_reconciliation", "dedup", "conversion_delay", "attribution"],
+        "must_not": ["recommend_action_when_measurement_invalid", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "measurement_invalid"
+      }
+    },
+    {
+      "id": "meas_firebase_mismatch_002",
+      "query": "后台支付和Firebase为什么对不上？",
+      "platform": "measurement",
+      "context": {
+        "symptom": "platform-reported payments differ from Firebase",
+        "dedup_status": "unknown"
+      },
+      "expectations": {
+        "must_consider": ["reconciliation", "dedup", "attribution_window", "backend_events"],
+        "must_not": ["recommend_action_when_measurement_invalid", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "measurement_invalid"
+      }
+    },
+    {
+      "id": "meas_cpa_spike_003",
+      "query": "今天CPA突然爆了，要不要马上动？",
+      "platform": "measurement",
+      "context": {
+        "symptom": "single-day CPA spike",
+        "conversion_delay": "not assessed",
+        "permission": "budget, target, creative only"
+      },
+      "expectations": {
+        "must_consider": ["conversion_delay", "noise_vs_signal", "measurement", "maturity"],
+        "must_not": ["recommend_numeric_change_without_maturity", "recommend_action_when_measurement_invalid"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "measurement_invalid"
+      }
+    },
+    {
+      "id": "meas_skan_delay_004",
+      "query": "iOS归因的数据一直没回来，现在能判断好坏吗？",
+      "platform": "measurement",
+      "context": {
+        "symptom": "SKAN/AdAttributionKit postbacks lagging",
+        "platform": "iOS app campaign"
+      },
+      "expectations": {
+        "must_consider": ["attribution_delay", "skan", "maturity", "measurement"],
+        "must_not": ["recommend_action_when_measurement_invalid", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 1,
+        "safety_gate": "measurement_invalid"
+      }
+    },
+    {
+      "id": "meas_attribution_window_005",
+      "query": "改了归因窗口之后数字变了，正常吗？",
+      "platform": "measurement",
+      "context": {
+        "recent_change": "attribution window changed",
+        "symptom": "reported conversions shifted"
+      },
+      "expectations": {
+        "must_consider": ["attribution_window", "dedup", "measurement", "recent_changes"],
+        "must_not": ["recommend_action_when_measurement_invalid", "claim_causality_without_evidence"],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "measurement_invalid"
+      }
+    }
+  ]
+}

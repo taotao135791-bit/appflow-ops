@@ -20,6 +20,8 @@ For any `appflow/references/<file>.md` path below, read the first existing path:
 `~/.appflow/skills/appflow/references/<file>.md`,
 `~/.agents/skills/appflow/references/<file>.md`,
 `skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
+Ambiguous operational diagnosis follows the AppFlow Reasoning Contract: `appflow/references/reasoning-contract.md` (resolve per Reference Resolution).
+
 
 ## Andromeda + GEM + Lattice (2026)
 

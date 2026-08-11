@@ -30,6 +30,7 @@ if hasattr(sys.stdout, "reconfigure"):
 REQUIRED_SKILL_FILES = [
     "ads/SKILL.md",
     "ads/VERSION",
+    "ads/references/reasoning-contract.md",
     "ads/scripts/uac_experiment.py",
     "ads/scripts/appflow_ops/uac/engine.py",
     "ads/scripts/appflow_ops/uac/quick_ops.py",

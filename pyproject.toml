@@ -2,6 +2,7 @@
 python_version = "3.10"
 files = [
   "scripts/appflow_ops/uac",
+  "scripts/appflow_ops/evals",
 ]
 # Lets bare `from url_utils import ...` / `from appflow_ops.uac import ...`
 # imports between top-level scripts resolve when the scripts are checked.
