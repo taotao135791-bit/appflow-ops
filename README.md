@@ -215,7 +215,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.2.0/install.sh | bash -s -- --ref=v3.2.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.2.1/install.sh | bash -s -- --ref=v3.2.1
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -247,9 +247,11 @@ python3 scripts/uac_experiment.py funnel-dashboard --workspace "workspaces/acme/
 
 > AppFlow does not require production advertising data to leave the operator's environment in order to evaluate its decision behavior.
 
-> Synthetic-first. Sanitized when useful. Production stays local.
+> Repository evals are synthetic by default.
+> Sanitized replay is a local transformation boundary.
+> Production data stays local.
 
-评测默认使用合成用例（`evals/`，全部标记 `synthetic`）；真实数据只能留在操作者本机，默认评测 runner 直接拒绝 `production` 数据（`ProductionDataError`），不静默降级。脱敏 replay 只保留决策结构（指标指数、时间桶、分类状态），不保留任何身份信息，且脱敏是单向的。详见 [docs/eval-privacy.md](docs/eval-privacy.md)。
+评测默认使用合成用例（`evals/`，全部标记 `synthetic`）；默认评测 runner 对 `production` 和 `sanitized` 数据一律直接拒绝（`ProductionDataError`），不静默降级——本地脱敏的 replay 不会悄悄进入 CI。脱敏 replay 只保留决策结构（指标指数、时间桶、分类状态），不保留任何身份信息，单向不可逆；它是本地检查工具，不是默认提交的 fixture 类型。仓库维护者的公开联系方式可以被精确地加入 `privacy-allowlist.json`（限定到具体值/提交），但这不会放松对客户或生产数据身份的保护。详见 [docs/eval-privacy.md](docs/eval-privacy.md)。
 
 ## 边界（不会做的事）
 

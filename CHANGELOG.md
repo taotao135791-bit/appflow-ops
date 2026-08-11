@@ -2,6 +2,64 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.2.1 — 2026-08-11
+
+### Privacy: scoped allowlist replaces kind-wide waivers
+
+- `privacy_doctor.py` findings now carry stable `value_sha256s` digests
+  (email/identity values, bytecode paths) so an exception can accept one
+  exact known finding instead of a whole finding kind.
+- New `privacy-allowlist.json`: human-readable, reviewable, deterministic
+  scoped exceptions. Every exception must pin `value_sha256s` and/or
+  `references`; a kind-only exception is rejected at load time (it would
+  silently become a kind-wide waiver).
+- The GitHub release gate no longer uses `--waive`; it runs
+  `release_check.py --full --allowlist privacy-allowlist.json`, the same
+  preflight the maintainer runs locally before tagging.
+- `--waive` stays on the CLI but is marked legacy and prints a warning; it
+  must not be used for releases.
+- Accepted exceptions are auditable: the report lists `waiver_usage`
+  (exception ids used) and each accepted finding carries `waiver_id` +
+  `waiver_reason`; status flips to PASS only when every finding was accepted
+  by a scoped exception.
+- Regression cases (Part 16) cover: known maintainer email passes, a new
+  email of the same kind fails, known historical bytecode fingerprint
+  passes, new bytecode fails, known maintainer identity passes, new
+  unrelated identity fails.
+
+### Eval privacy boundary unified (synthetic-only repository)
+
+- Repository benchmark is synthetic only: the default eval runner now
+  refuses `sanitized` cases alongside `production` (`ProductionDataError`),
+  so a locally sanitized replay cannot silently enter CI.
+- `docs/eval-privacy.md` and README (zh/en) now describe sanitized replay as
+  a local transformation boundary, not a committed fixture type.
+- `identity_markers()` extended (UUID, long numeric ids, labeled
+  token-like strings) as defense-in-depth; the sanitizer whitelist remains
+  the primary boundary.
+
+### Reasoning safety contract completed
+
+- `policy_state` (none / staged_required / cap_20pct / forbid_numeric) now
+  participates in expected behavior; the layer consumes simplified policy
+  state and never re-implements the UAC policy engine.
+- `permission_state` (recommend_only / read_only) forbids
+  `claim_execution`; a recommend-only operator's answer must never be
+  phrased as executed.
+- Measurement and maturity decision classes are fully split: each gate
+  forbids its own rules (`recommend_numeric_change_when_measurement_invalid`
+  vs `recommend_numeric_change_without_maturity`), so an eval failure names
+  exactly which gate was broken. Fixture `meas_cpa_spike_003` and the other
+  measurement-invalid fixtures now declare measurement-specific rules.
+- New tests: measurement/maturity/policy/permission gate behavior,
+  gate-distinctness, fixture compatibility, and state validation.
+
+### Release preflight
+
+- `release_check.py --full --allowlist privacy-allowlist.json` runs the
+  full reachable-history privacy scan before tagging (worktree scan remains
+  the default; `--full` adds history).
+
 ## 3.2.0 — 2026-08-11
 
 ### Release health (P0)

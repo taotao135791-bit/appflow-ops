@@ -14,6 +14,7 @@ import os
 import re
 import subprocess
 import sys
+from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -300,15 +301,35 @@ def _git(root: Path, *arguments: str, text: bool = False) -> bytes | str:
 
 
 def _finding(
-    scope: str, reference: str, path: str, kind: str, severity: str
+    scope: str,
+    reference: str,
+    path: str,
+    kind: str,
+    severity: str,
+    *,
+    value_digests: tuple[str, ...] = (),
 ) -> dict[str, str]:
-    return {
+    """One finding. Values are never included, only stable SHA-256 digests.
+
+    ``value_digests`` lets a scoped privacy allowlist accept the exact known
+    finding (for example one public maintainer email) without waiving the
+    whole finding kind. Digest prefixes are not reversible to the value.
+    """
+
+    finding: dict[str, str] = {
         "scope": scope,
         "reference": reference,
         "path": _reported_path(path),
         "kind": kind,
         "severity": severity,
     }
+    if value_digests:
+        finding["value_sha256s"] = sorted(value_digests)
+    return finding
+
+
+def _digest(values: str) -> str:
+    return hashlib.sha256(values.encode("utf-8", errors="replace")).hexdigest()[:16]
 
 
 def _line_has_identifier_allowlist(content: bytes, start: int, end: int) -> bool:
@@ -539,21 +560,30 @@ def _scan_content(
     }
     if unsafe_credential_hosts:
         findings.append(_finding(scope, reference, path, "credentialed-url", "HIGH"))
-    email_domains = {
-        match.group(1).decode("ascii", errors="ignore").lower()
+    unsafe_email_values = [
+        match.group(0)
         for match in _EMAIL.finditer(content)
-    }
-    unsafe_email_domains = {
-        domain
-        for domain in email_domains
         if not any(
-            domain == allowed or domain.endswith(f".{allowed}")
+            match.group(1)
+            .decode("ascii", errors="ignore")
+            .lower()
+            .endswith((f".{allowed}", allowed))
             for allowed in _SAFE_EMAIL_DOMAINS
         )
-    }
-    if unsafe_email_domains:
+    ]
+    if unsafe_email_values:
         findings.append(
-            _finding(scope, reference, path, "non-placeholder-email", "MEDIUM")
+            _finding(
+                scope,
+                reference,
+                path,
+                "non-placeholder-email",
+                "MEDIUM",
+                value_digests=tuple(
+                    _digest(v.decode("ascii", errors="ignore"))
+                    for v in unsafe_email_values
+                ),
+            )
         )
     findings.extend(
         _public_replay_marker_finding(
@@ -603,7 +633,14 @@ def audit_tree(root: Path) -> list[dict[str, str]]:
             continue
         if "__pycache__" in path.parts or path.suffix.lower() == ".pyc":
             findings.append(
-                _finding("tree", "WORKTREE", relative, "python-bytecode", "MEDIUM")
+                _finding(
+                    "tree",
+                    "WORKTREE",
+                    relative,
+                    "python-bytecode",
+                    "MEDIUM",
+                    value_digests=(_digest(relative.replace("\\", "/")),),
+                )
             )
             continue
         if path.suffix.lower() in _BINARY_SUFFIXES:
@@ -650,7 +687,8 @@ def _identity_findings(
     *, reference: str, path: str, identities: tuple[tuple[str, str], ...]
 ) -> list[dict[str, str]]:
     findings: list[dict[str, str]] = []
-    if any(_unsafe_identity(email) for _, email in identities):
+    unsafe_emails = [email for _, email in identities if _unsafe_identity(email)]
+    if unsafe_emails:
         findings.append(
             _finding(
                 "history",
@@ -658,12 +696,17 @@ def _identity_findings(
                 path,
                 "non-noreply-identity",
                 "HIGH",
+                value_digests=tuple(
+                    _digest(email) for email in sorted(set(unsafe_emails))
+                ),
             )
         )
-    if any(
-        not _unsafe_identity(email) and _unsafe_noreply_identity_name(name, email)
+    unsafe_names = [
+        name
         for name, email in identities
-    ):
+        if not _unsafe_identity(email) and _unsafe_noreply_identity_name(name, email)
+    ]
+    if unsafe_names:
         findings.append(
             _finding(
                 "history",
@@ -671,6 +714,9 @@ def _identity_findings(
                 path,
                 "non-pseudonymous-identity-name",
                 "HIGH",
+                value_digests=tuple(
+                    _digest(name) for name in sorted(set(unsafe_names))
+                ),
             )
         )
     return findings
@@ -818,7 +864,12 @@ def audit_history(root: Path) -> list[dict[str, str]]:
             if "__pycache__" in Path(relative).parts or relative.endswith(".pyc"):
                 findings.append(
                     _finding(
-                        "history", commit[:12], relative, "python-bytecode", "MEDIUM"
+                        "history",
+                        commit[:12],
+                        relative,
+                        "python-bytecode",
+                        "MEDIUM",
+                        value_digests=(_digest(relative.replace("\\", "/")),),
                     )
                 )
                 continue
@@ -866,6 +917,116 @@ def build_report(root: Path, *, history: bool) -> dict[str, Any]:
     }
 
 
+ALLOWLIST_SCHEMA_VERSION = "1.0"
+
+
+class AllowlistError(PrivacyAuditError):
+    """Raised when a scoped allowlist file is malformed or overly broad."""
+
+
+def load_allowlist(path: Path) -> dict[str, Any]:
+    """Load and validate the scoped privacy allowlist.
+
+    Every exception must constrain at least one of ``value_sha256s`` or
+    ``references``; a kind-only exception would silently become a kind-wide
+    waiver and is rejected.
+    """
+
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise AllowlistError(f"cannot read allowlist {path}: {exc}") from exc
+    if (
+        not isinstance(document, Mapping)
+        or document.get("schema_version") != ALLOWLIST_SCHEMA_VERSION
+    ):
+        raise AllowlistError(
+            f"allowlist schema_version must be {ALLOWLIST_SCHEMA_VERSION}"
+        )
+    exceptions = document.get("exceptions")
+    if not isinstance(exceptions, list) or not exceptions:
+        raise AllowlistError("allowlist must declare a non-empty exceptions list")
+    validated: list[dict[str, Any]] = []
+    for entry in exceptions:
+        if not isinstance(entry, Mapping):
+            raise AllowlistError("each allowlist exception must be an object")
+        exception_id = entry.get("id")
+        kind = entry.get("kind")
+        reason = entry.get("reason")
+        scope = entry.get("scope")
+        if not (isinstance(exception_id, str) and exception_id.strip()):
+            raise AllowlistError("allowlist exception needs a non-empty id")
+        if not (isinstance(kind, str) and kind.strip()):
+            raise AllowlistError(f"allowlist exception {exception_id} needs a kind")
+        if not (isinstance(reason, str) and reason.strip()):
+            raise AllowlistError(f"allowlist exception {exception_id} needs a reason")
+        if not isinstance(scope, Mapping):
+            raise AllowlistError(f"allowlist exception {exception_id} needs a scope")
+        values = scope.get("value_sha256s")
+        references = scope.get("references")
+        values_valid = values is None or (
+            isinstance(values, list) and all(isinstance(v, str) and v for v in values)
+        )
+        references_valid = references is None or (
+            isinstance(references, list)
+            and all(isinstance(ref, str) and ref for ref in references)
+        )
+        if not values_valid or not references_valid:
+            raise AllowlistError(
+                f"allowlist exception {exception_id} scope must be value_sha256s "
+                "and/or references lists"
+            )
+        if values is None and references is None:
+            raise AllowlistError(
+                f"allowlist exception {exception_id} is kind-only; scope must "
+                "pin value_sha256s and/or references to avoid a kind-wide waiver"
+            )
+        validated.append(
+            {"id": exception_id, "kind": kind, "reason": reason, "scope": dict(scope)}
+        )
+    return {"schema_version": ALLOWLIST_SCHEMA_VERSION, "exceptions": validated}
+
+
+def _apply_allowlist(
+    findings: list[dict[str, Any]], allowlist: dict[str, Any]
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Accept only exact known findings; never the whole finding kind.
+
+    A finding is waived only when every value digest it carries is covered by
+    an exception of the same kind, and (if the exception pins references) its
+    reference matches. A new email of the same kind therefore still fails.
+    Returns (findings, used_exception_ids) for audit output.
+    """
+
+    by_kind: dict[str, list[dict[str, Any]]] = {}
+    for entry in allowlist["exceptions"]:
+        by_kind.setdefault(entry["kind"], []).append(entry)
+    used: list[str] = []
+    for finding in findings:
+        candidates = by_kind.get(finding["kind"], [])
+        if not candidates:
+            continue
+        digests = set(finding.get("value_sha256s", ()))
+        for entry in candidates:
+            scope = entry["scope"]
+            allowed_values = scope.get("value_sha256s")
+            value_covered = allowed_values is None or (
+                bool(digests) and digests <= set(allowed_values)
+            )
+            references = scope.get("references")
+            reference_covered = references is None or any(
+                finding["reference"].startswith(ref) for ref in references
+            )
+            if value_covered and reference_covered:
+                finding["severity"] = "INFO"
+                finding["waived"] = True
+                finding["waiver_id"] = entry["id"]
+                finding["waiver_reason"] = entry["reason"]
+                used.append(entry["id"])
+                break
+    return findings, sorted(set(used))
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run a redacted repository privacy audit"
@@ -879,12 +1040,24 @@ def _parser() -> argparse.ArgumentParser:
         "--json", action="store_true", help="emit machine-readable JSON"
     )
     parser.add_argument(
+        "--allowlist",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help=(
+            "privacy-allowlist.json with scoped exceptions; each exception "
+            "accepts one exact known finding (value digests and/or commit "
+            "references), never a whole finding kind"
+        ),
+    )
+    parser.add_argument(
         "--waive",
         default="",
         metavar="KIND[,KIND...]",
         help=(
-            "finding kinds to report (marked waived, severity INFO) without "
-            "failing the audit — for exposure the repo owner has accepted"
+            "LEGACY kind-wide waiver: report the kind (severity INFO) without "
+            "failing. This accepts every future finding of that kind and must "
+            "not be used for releases; prefer --allowlist."
         ),
     )
     parser.add_argument(
@@ -902,16 +1075,34 @@ def main(argv: list[str] | None = None) -> int:
         report = build_report(
             args.repo_root.expanduser().resolve(), history=args.history
         )
+        used_exceptions: list[str] = []
+        if args.allowlist is not None:
+            allowlist = load_allowlist(args.allowlist.expanduser().resolve())
+            report["findings"], used_exceptions = _apply_allowlist(
+                report["findings"], allowlist
+            )
+        report["waiver_usage"] = used_exceptions
+        waived = {kind.strip() for kind in args.waive.split(",") if kind.strip()}
+        if waived:
+            print(
+                "warning: --waive is legacy and kind-wide; it must not be used "
+                "for releases (use --allowlist)",
+                file=sys.stderr,
+            )
+            for finding in report["findings"]:
+                if finding["kind"] in waived:
+                    finding["severity"] = "INFO"
+                    finding["waived"] = True
+                    finding["waiver_id"] = f"legacy-kind:{finding['kind']}"
+    except AllowlistError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     except PrivacyAuditError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
-    waived = {kind.strip() for kind in args.waive.split(",") if kind.strip()}
-    if waived:
-        for finding in report["findings"]:
-            if finding["kind"] in waived:
-                finding["severity"] = "INFO"
-                finding["waived"] = True
     active = [f for f in report["findings"] if not f.get("waived")]
+    if not active and report["status"] == "FAIL":
+        report["status"] = "PASS"  # every finding was accepted by a scoped exception
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
@@ -919,10 +1110,15 @@ def main(argv: list[str] | None = None) -> int:
             f"privacy audit: {report['status']} ({report['finding_count']} finding(s))"
         )
         for finding in report["findings"]:
-            print(
+            line = (
                 f"- {finding['severity']} {finding['kind']}: "
                 f"{finding['reference']} {finding['path']}"
             )
+            if finding.get("waiver_id"):
+                line += f" [accepted: {finding['waiver_id']}]"
+            print(line)
+        if report.get("waiver_usage"):
+            print("allowlist exceptions used: " + ", ".join(report["waiver_usage"]))
         print(report["redaction"])
         print(report["limitations"])
     return 1 if active else 0

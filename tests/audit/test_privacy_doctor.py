@@ -17,6 +17,251 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 import privacy_doctor
 from privacy_doctor import build_report
 
+# The six privacy regression cases (Part 16): a scoped allowlist accepts only
+# the exact known finding — never the whole finding kind. Synthetic values are
+# built at runtime so the worktree privacy scanner sees no literal
+# secret-shaped text (repository privacy convention).
+
+
+def _maintainer_email() -> str:
+    return "maintainer" + "@" + "public.example"
+
+
+def _client_email() -> str:
+    return "client" + "@" + "acme.example"
+
+
+def _write_allowlist(
+    tmp_path: Path,
+    kinds: list[str],
+    digests: list[str],
+    *,
+    references: list[str] | None = None,
+) -> Path:
+    allowlist = {
+        "schema_version": "1.0",
+        "exceptions": [
+            {
+                "id": f"test-exception-{index}",
+                "kind": kind,
+                "scope": {
+                    "value_sha256s": digests,
+                    **({"references": references} if references else {}),
+                },
+                "reason": "test fixture",
+            }
+            for index, kind in enumerate(kinds)
+        ],
+    }
+    path = tmp_path / "allowlist.json"
+    path.write_text(json.dumps(allowlist), encoding="utf-8")
+    return path
+
+
+def _run_allowlist_audit(
+    repo: Path, allowlist: Path, *, history: bool = False
+) -> subprocess.CompletedProcess[str]:
+    arguments = [
+        sys.executable,
+        str(SCRIPTS_DIR / "privacy_doctor.py"),
+        "--json",
+        "--allowlist",
+        str(allowlist),
+        "--repo-root",
+        str(repo),
+    ]
+    if history:
+        arguments.append("--history")
+    return subprocess.run(
+        arguments, text=True, capture_output=True, check=False, cwd=repo
+    )
+
+
+def _git_init_with_identity(
+    tmp_path: Path, email: str, name: str = "Test Maintainer"
+) -> Path:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", name)
+    _git(repo, "config", "user.email", email)
+    (repo / "a.txt").write_text("hello\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "fixture")
+    return repo
+
+
+def test_case_a_known_maintainer_email_passes(tmp_path: Path) -> None:
+    email = _maintainer_email()
+    repo = _git_init_with_identity(tmp_path, email)
+    digest = hashlib.sha256(email.encode("utf-8")).hexdigest()[:16]
+    # A commit under an unsafe personal email produces identity findings of
+    # both kinds; the allowlist covers exactly this value in both kinds.
+    allowlist = _write_allowlist(
+        tmp_path, ["non-placeholder-email", "non-noreply-identity"], [digest]
+    )
+
+    completed = _run_allowlist_audit(repo, allowlist, history=True)
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    report = json.loads(completed.stdout)
+    assert report["status"] == "PASS"
+    assert report["waiver_usage"]
+
+
+def test_case_b_new_email_of_same_kind_fails(tmp_path: Path) -> None:
+    # Allowlist accepts the maintainer email; a DIFFERENT email of the same
+    # kinds must still fail even though the kinds match.
+    repo = _git_init_with_identity(tmp_path, _client_email())
+    digest = hashlib.sha256(_maintainer_email().encode("utf-8")).hexdigest()[:16]
+    allowlist = _write_allowlist(
+        tmp_path, ["non-placeholder-email", "non-noreply-identity"], [digest]
+    )
+
+    completed = _run_allowlist_audit(repo, allowlist, history=True)
+
+    assert completed.returncode == 1
+    report = json.loads(completed.stdout)
+    assert report["status"] == "FAIL"
+    assert report["waiver_usage"] == []
+    active = [f for f in report["findings"] if not f.get("waived")]
+    assert any(f["kind"] == "non-noreply-identity" for f in active)
+
+
+def test_case_c_known_historical_bytecode_passes_by_fingerprint(tmp_path: Path) -> None:
+    # user.name matches the noreply handle so no extra identity finding is
+    # produced; the bytecode finding is what the allowlist targets.
+    repo = _git_init_with_identity(
+        tmp_path, "test" + "@users.noreply.github.com", name="test"
+    )
+    cache = repo / "scripts" / "__pycache__"
+    cache.mkdir(parents=True)
+    (cache / "known.pyc").write_bytes(b"compiled")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "bytecode fixture")
+    relative = "scripts/__pycache__/known.pyc"
+    digest = hashlib.sha256(relative.encode("utf-8")).hexdigest()[:16]
+    commit = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()[:12]
+    allowlist = _write_allowlist(
+        tmp_path, ["python-bytecode"], [digest], references=[commit]
+    )
+
+    completed = _run_allowlist_audit(repo, allowlist, history=True)
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+
+
+def test_case_d_new_bytecode_fails(tmp_path: Path) -> None:
+    repo = _git_init_with_identity(
+        tmp_path, "test" + "@users.noreply.github.com", name="test"
+    )
+    cache = repo / "scripts" / "__pycache__"
+    cache.mkdir(parents=True)
+    (cache / "new.pyc").write_bytes(b"compiled")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "bytecode fixture")
+    # Allowlist pins a different (known) path digest, not this one.
+    other = "scripts/__pycache__/other.pyc"
+    digest = hashlib.sha256(other.encode("utf-8")).hexdigest()[:16]
+    allowlist = _write_allowlist(tmp_path, ["python-bytecode"], [digest])
+
+    completed = _run_allowlist_audit(repo, allowlist, history=True)
+
+    assert completed.returncode == 1
+    report = json.loads(completed.stdout)
+    active = [f for f in report["findings"] if not f.get("waived")]
+    assert any(f["kind"] == "python-bytecode" for f in active)
+
+
+def test_case_e_known_maintainer_identity_passes(tmp_path: Path) -> None:
+    email = _maintainer_email()
+    repo = _git_init_with_identity(tmp_path, email)
+    digest = hashlib.sha256(email.encode("utf-8")).hexdigest()[:16]
+    allowlist = _write_allowlist(tmp_path, ["non-noreply-identity"], [digest])
+
+    completed = _run_allowlist_audit(repo, allowlist, history=True)
+
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    report = json.loads(completed.stdout)
+    assert report["status"] == "PASS"
+
+
+def test_case_f_new_unrelated_identity_fails(tmp_path: Path) -> None:
+    repo = _git_init_with_identity(tmp_path, _client_email())
+    digest = hashlib.sha256(_maintainer_email().encode("utf-8")).hexdigest()[:16]
+    allowlist = _write_allowlist(tmp_path, ["non-noreply-identity"], [digest])
+
+    completed = _run_allowlist_audit(repo, allowlist, history=True)
+
+    assert completed.returncode == 1
+    report = json.loads(completed.stdout)
+    active = [f for f in report["findings"] if not f.get("waived")]
+    assert any(f["kind"] == "non-noreply-identity" for f in active)
+
+
+def test_kind_only_allowlist_exception_is_rejected(tmp_path: Path) -> None:
+    """A scope-less exception would silently become a kind-wide waiver."""
+
+    allowlist = tmp_path / "bad-allowlist.json"
+    allowlist.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "exceptions": [
+                    {
+                        "id": "too-broad",
+                        "kind": "non-placeholder-email",
+                        "scope": {},
+                        "reason": "nope",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    repo = _git_init_with_identity(tmp_path, _client_email())
+
+    completed = _run_allowlist_audit(repo, allowlist, history=True)
+
+    assert completed.returncode == 2
+    assert "kind-only" in completed.stderr
+
+
+def test_legacy_waive_warns_and_is_kind_wide(tmp_path: Path) -> None:
+    """--waive stays supported but is explicitly legacy and accepts the kind."""
+
+    repo = _git_init_with_identity(tmp_path, _client_email())
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPTS_DIR / "privacy_doctor.py"),
+            "--json",
+            "--waive",
+            "non-noreply-identity",
+            "--repo-root",
+            str(repo),
+            "--history",
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+        cwd=repo,
+    )
+    assert completed.returncode == 0
+    assert "legacy" in completed.stderr
+    report = json.loads(completed.stdout)
+    waived = [f for f in report["findings"] if f.get("waived")]
+    assert any(
+        f["kind"] == "non-noreply-identity"
+        and f.get("waiver_id") == "legacy-kind:non-noreply-identity"
+        for f in waived
+    )
+
 
 def _git(root: Path, *args: str) -> None:
     subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True)

@@ -31,13 +31,14 @@ PLATFORMS = frozenset(
 SAFETY_GATES = frozenset({"none", "measurement_invalid", "maturity_pending"})
 MINIMUM_CASE_COUNT = 20
 
-# Data tiers (Part 8 of the privacy-safe eval design):
-# - synthetic: fully authored fixtures; allowed in CI and future external
-#   benchmarks.
-# - sanitized: derived from real replays through the local sanitizer;
-#   allowed in the repository only after the privacy check passes.
+# Data tiers (docs/eval-privacy.md):
+# - synthetic: fully authored fixtures; the ONLY data class allowed in the
+#   repository, CI, and future external benchmarks.
+# - sanitized: a local transformation boundary derived from real replays by
+#   the local sanitizer; generated locally for inspection and pattern
+#   extraction, NOT committed by default.
 # - production: real operator data; DENY BY DEFAULT for any evaluation
-#   runner.
+#   runner and never committed.
 DATA_CLASSES = frozenset({"synthetic", "sanitized", "production"})
 SOURCE_TYPES = frozenset({"authored", "replay"})
 
@@ -47,7 +48,10 @@ _KNOWN_MUST_NOT = frozenset(
         "recommend_new_campaign_immediately",
         "recommend_pause_immediately",
         "recommend_action_when_measurement_invalid",
+        "recommend_numeric_change_when_measurement_invalid",
         "recommend_numeric_change_without_maturity",
+        "recommend_numeric_change_when_policy_forbids",
+        "claim_execution_without_permission",
         "ask_for_full_metric_checklist",
     }
 )
@@ -315,17 +319,19 @@ def evaluate_fixture(
 ) -> tuple[tuple[EvalCase, ...], tuple[EvalResult, ...]]:
     """Run the offline fixture checks. Returns (cases, results).
 
-    Cases carrying ``data_class: production`` are rejected: production
-    advertising data must not leave the operator's environment and cannot be
-    used by the default evaluation runner.
+    ``production`` data is rejected: it must not leave the operator's
+    environment. ``sanitized`` cases are likewise not part of the repository
+    benchmark (synthetic-only); the runner rejects them too so a locally
+    sanitized fixture cannot silently enter CI.
     """
     cases = load_cases(path)
     results: list[EvalResult] = []
     for case in cases:
-        if case.data_class == "production":
+        if case.data_class in {"production", "sanitized"}:
             raise ProductionDataError(
-                "Production advertising data cannot be used by the default "
-                "evaluation runner; production data stays local by default."
+                f"{case.data_class} data cannot be used by the default "
+                "evaluation runner; repository evals are synthetic-only, "
+                f"and {case.data_class} data stays local by default."
             )
         checks: dict[str, bool] = {"fixture_schema_valid": True}
         if case.uac_fixture is not None:

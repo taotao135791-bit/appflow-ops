@@ -101,7 +101,7 @@ jobs:
       - name: Verify canonical router mirror
         run: |
           python scripts/sync_skill_layout.py --check
-          python scripts/privacy_doctor.py --json
+          python scripts/privacy_doctor.py --json --allowlist privacy-allowlist.json
 
       - name: Run eval schema, eval privacy, and release preflight checks
         run: |

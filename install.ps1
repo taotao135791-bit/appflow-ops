@@ -230,6 +230,13 @@ function Main {
         Copy-Item (Join-Path $MainSource "SKILL.md") -Destination (Join-Path $SkillDirResolved "SKILL.md") -Force
         Copy-Item (Join-Path $ReferencesSource "*.md") -Destination $ReferencesTarget -Force
         Copy-Item (Join-Path $SourceDir "VERSION") -Destination (Join-Path $SkillDirResolved "VERSION") -Force
+        # Scoped privacy exceptions ship with the bundle (when present) so an
+        # installed preflight (--full) can audit history against the same
+        # allowlist.
+        $AllowlistSource = Join-Path $SourceDir "privacy-allowlist.json"
+        if (Test-Path $AllowlistSource) {
+            Copy-Item $AllowlistSource -Destination (Join-Path $SkillDirResolved "privacy-allowlist.json") -Force
+        }
 
         # Copy sub-skills
         Write-Host "Installing sub-skills..."

@@ -273,7 +273,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.2.0/install.sh | bash -s -- --ref=v3.2.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.2.1/install.sh | bash -s -- --ref=v3.2.1
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -312,14 +312,21 @@ python3 scripts/uac_experiment.py funnel-dashboard --workspace "workspaces/acme/
 > AppFlow does not require production advertising data to leave the
 > operator's environment in order to evaluate its decision behavior.
 
-> Synthetic-first. Sanitized when useful. Production stays local.
+> Repository evals are synthetic by default.
+> Sanitized replay is a local transformation boundary.
+> Production data stays local.
 
 Evaluation defaults to fully synthetic fixtures (`evals/`, all marked
-`synthetic`); real data stays in the operator's environment and the default
-runner refuses `production` data loudly (`ProductionDataError`) instead of
-degrading silently. Sanitized replays keep only decision shape (metric
-indexes, time buckets, categorical states) and are one-way: no identity, no
-reversible mapping. See [docs/eval-privacy.md](docs/eval-privacy.md).
+`synthetic`); the default runner refuses `production` **and** `sanitized`
+data loudly (`ProductionDataError`) instead of degrading silently — a
+locally sanitized replay must not silently enter CI. Sanitized replays keep
+only decision shape (metric indexes, time buckets, categorical states) and
+are one-way: no identity, no reversible mapping; they are a local
+inspection tool, not a committed fixture type. Public maintainer contact
+information may be explicitly allowlisted (`privacy-allowlist.json`, scoped
+to exact values/commits) without relaxing protection for customer or
+production identities. See
+[docs/eval-privacy.md](docs/eval-privacy.md).
 
 ## Boundaries (What It Will Not Do)
 

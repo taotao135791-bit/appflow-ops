@@ -61,14 +61,15 @@ jobs:
         shell: bash
         run: test "$(git rev-parse --is-shallow-repository)" = "false"
 
-      - name: Run the redacted full-history privacy gate
-        # Identity findings in pre-migration history (personal email, local
-        # hostname) and committed .pyc files are accepted by the repo owner
-        # (2026-07-20); they stay visible in the report as waived INFO items.
-        # Annotated release tags v3.0.0/v3.1.0 carry the owner's personal
-        # email as tagger identity; the owner accepted this on 2026-08-11 and
-        # instructed that it may be used. Real secrets and private-data kinds
-        # still fail the gate.
+      - name: Run the scoped-allowlist full-history release gate
+        # Identity findings in pre-migration history (owner's personal email
+        # as commit/tag identity) and one historical commit of .pyc files are
+        # accepted ONLY as exact scoped exceptions in privacy-allowlist.json
+        # (value_sha256s and/or commit references). No kind-wide waiver is
+        # used: a new email, a new identity, or new bytecode of the same kind
+        # still fails the gate. This step runs the same release_check.py
+        # preflight the maintainer runs locally before tagging, so local
+        # preflight and the GitHub gate cannot drift.
         run: >-
-          python scripts/privacy_doctor.py --history --json
-          --waive non-noreply-identity,non-pseudonymous-identity-name,python-bytecode,non-placeholder-email
+          python scripts/release_check.py --full
+          --allowlist privacy-allowlist.json

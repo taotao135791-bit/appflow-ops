@@ -30,6 +30,7 @@ if hasattr(sys.stdout, "reconfigure"):
 REQUIRED_SKILL_FILES = [
     "appflow/SKILL.md",
     "appflow/VERSION",
+    "appflow/privacy-allowlist.json",
     "appflow/references/reasoning-contract.md",
     "appflow/scripts/uac_experiment.py",
     "appflow/scripts/appflow_ops/uac/engine.py",

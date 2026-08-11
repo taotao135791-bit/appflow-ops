@@ -56,7 +56,10 @@ def test_release_privacy_gate_requires_complete_history(repo_root: Path) -> None
         "workflow_dispatch:",
         "fetch-depth: 0",
         "git rev-parse --is-shallow-repository",
-        "privacy_doctor.py --history --json",
+        # The gate reuses the local preflight with the scoped allowlist; it
+        # must never fall back to a kind-wide --waive.
+        "release_check.py --full",
+        "--allowlist privacy-allowlist.json",
         "github.ref_type == 'tag'",
         'os.environ["GITHUB_REF_NAME"]',
         'manifest.get("version")',
@@ -65,6 +68,7 @@ def test_release_privacy_gate_requires_complete_history(repo_root: Path) -> None
         "git rev-parse FETCH_HEAD^{commit}",
     ]:
         assert contract in workflow
+    assert "--waive" not in workflow
 
 
 def test_subprocess_coverage_and_release_documentation_are_explicit(

@@ -553,7 +553,8 @@
         ],
         "must_not": [
           "recommend_action_when_measurement_invalid",
-          "claim_causality_without_evidence"
+          "claim_causality_without_evidence",
+          "recommend_numeric_change_when_measurement_invalid"
         ],
         "must_converge": true,
         "must_have_primary_action": true,
@@ -580,7 +581,8 @@
         ],
         "must_not": [
           "recommend_action_when_measurement_invalid",
-          "claim_causality_without_evidence"
+          "claim_causality_without_evidence",
+          "recommend_numeric_change_when_measurement_invalid"
         ],
         "must_converge": true,
         "must_have_primary_action": true,
@@ -607,8 +609,8 @@
           "maturity"
         ],
         "must_not": [
-          "recommend_numeric_change_without_maturity",
-          "recommend_action_when_measurement_invalid"
+          "recommend_action_when_measurement_invalid",
+          "recommend_numeric_change_when_measurement_invalid"
         ],
         "must_converge": true,
         "must_have_primary_action": true,
@@ -635,7 +637,8 @@
         ],
         "must_not": [
           "recommend_action_when_measurement_invalid",
-          "claim_causality_without_evidence"
+          "claim_causality_without_evidence",
+          "recommend_numeric_change_when_measurement_invalid"
         ],
         "must_converge": true,
         "must_have_primary_action": true,
@@ -662,7 +665,8 @@
         ],
         "must_not": [
           "recommend_action_when_measurement_invalid",
-          "claim_causality_without_evidence"
+          "claim_causality_without_evidence",
+          "recommend_numeric_change_when_measurement_invalid"
         ],
         "must_converge": true,
         "must_have_primary_action": true,

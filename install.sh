@@ -301,6 +301,11 @@ main() {
     cp "${TEMP_DIR}/appflow-ops/skills/appflow/SKILL.md" "${SKILL_DIR}/SKILL.md"
     cp "${TEMP_DIR}/appflow-ops/skills/appflow/references/"*.md "${SKILL_DIR}/references/"
     cp "${TEMP_DIR}/appflow-ops/VERSION" "${SKILL_DIR}/VERSION"
+    # Scoped privacy exceptions ship with the bundle so an installed
+    # preflight (--full) can audit history against the same allowlist.
+    if [ -f "${TEMP_DIR}/appflow-ops/privacy-allowlist.json" ]; then
+        cp "${TEMP_DIR}/appflow-ops/privacy-allowlist.json" "${SKILL_DIR}/privacy-allowlist.json"
+    fi
 
     # Copy sub-skills
     echo "→ Installing sub-skills..."

@@ -7,7 +7,8 @@ pushed, so an unhealthy version cannot be released normally:
 - version consistency across VERSION / manifest / README+QUICKSTART pins
 - reasoning contract present and referenced by the router
 - vague-query eval fixtures schema-valid, synthetic-only, privacy-clean
-- repository tree privacy scan (worktree, no history needed)
+- repository privacy scans: worktree by default, full reachable history with
+  ``--full`` (the same scoped-allowlist logic the GitHub release gate uses)
 
 Offline-safe: no API keys, no network, no production workspace access.
 Exit code 0 = healthy; 1 = fix before tagging.
@@ -15,6 +16,7 @@ Exit code 0 = healthy; 1 = fix before tagging.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import subprocess
@@ -140,45 +142,103 @@ def _is_git_repo() -> bool:
     return completed.returncode == 0
 
 
-def check_worktree_privacy() -> None:
-    if not _is_git_repo():
-        # Installed bundles are not git checkouts; the privacy scan runs on
-        # the source repository at release time.
-        _ok("worktree privacy scan skipped outside a git checkout")
-        return
-    doctor = _first_existing(
+def _privacy_doctor() -> Path | None:
+    return _first_existing(
         ROOT / "scripts" / "privacy_doctor.py",
         ROOT / "privacy_doctor.py",
     )
-    if doctor is None:
-        # Installed bundles do not ship the repository privacy scanner.
-        _ok("worktree privacy scan not available in installed bundle")
-        return
+
+
+def _run_privacy_scan(doctor: Path, *extra: str) -> dict | None:
     completed = subprocess.run(
-        [sys.executable, str(doctor), "--json"],
+        [sys.executable, str(doctor), "--json", *extra],
         capture_output=True,
         text=True,
         check=False,
     )
     if completed.returncode != 0:
-        _fail("privacy_doctor worktree scan failed")
-        return
-    report = json.loads(completed.stdout)
+        return None
+    return json.loads(completed.stdout)
+
+
+def _privacy_pass_or_fail(report: dict, label: str) -> None:
     active = [f for f in report.get("findings", []) if not f.get("waived")]
     if active:
         kinds = ", ".join(sorted({f.get("kind", "?") for f in active}))
-        _fail(f"worktree privacy findings: {kinds}")
-    else:
-        _ok("worktree privacy scan clean")
+        _fail(f"{label} privacy findings: {kinds}")
+        return
+    used = report.get("waiver_usage") or []
+    detail = f" (allowlist used: {', '.join(used)})" if used else ""
+    _ok(f"{label} privacy scan clean{detail}")
+
+
+def check_worktree_privacy(allowlist: Path | None) -> None:
+    if not _is_git_repo():
+        # Installed bundles are not git checkouts; the privacy scan runs on
+        # the source repository at release time.
+        _ok("worktree privacy scan skipped outside a git checkout")
+        return
+    doctor = _privacy_doctor()
+    if doctor is None:
+        # Installed bundles do not ship the repository privacy scanner.
+        _ok("worktree privacy scan not available in installed bundle")
+        return
+    extra = ("--allowlist", str(allowlist)) if allowlist is not None else ()
+    report = _run_privacy_scan(doctor, *extra)
+    if report is None:
+        _fail("privacy_doctor worktree scan failed")
+        return
+    _privacy_pass_or_fail(report, "worktree")
+
+
+def check_history_privacy(allowlist: Path | None) -> None:
+    """Full reachable-history scan; identical logic to the release gate."""
+
+    if not _is_git_repo():
+        _ok("full-history privacy scan skipped outside a git checkout")
+        return
+    doctor = _privacy_doctor()
+    if doctor is None:
+        _fail("full-history privacy scan unavailable (privacy_doctor missing)")
+        return
+    extra = ("--allowlist", str(allowlist)) if allowlist is not None else ()
+    report = _run_privacy_scan(doctor, "--history", *extra)
+    if report is None:
+        _fail("privacy_doctor full-history scan failed")
+        return
+    _privacy_pass_or_fail(report, "full-history")
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="AppFlow Ops release preflight: safe-to-tag check"
+    )
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="also run the full reachable-history privacy scan (same logic as "
+        "the GitHub release gate)",
+    )
+    parser.add_argument(
+        "--allowlist",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help="privacy-allowlist.json with scoped exceptions",
+    )
+    return parser
 
 
 def main() -> int:
+    args = _parser().parse_args()
     print("AppFlow Ops release preflight")
     check_version_consistency()
     check_reasoning_contract()
     check_eval_fixtures()
     check_eval_privacy()
-    check_worktree_privacy()
+    check_worktree_privacy(args.allowlist)
+    if args.full:
+        check_history_privacy(args.allowlist)
     if _FAILURES:
         print(f"\npreflight FAILED: {len(_FAILURES)} issue(s)")
         return 1

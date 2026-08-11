@@ -99,6 +99,19 @@ ABSOLUTE_PATH_RE = re.compile(
     r"(?<![A-Za-z0-9_])(?:" + _HOME_ROOTS + r")[A-Za-z0-9_\-./\\]+"
 )
 STABLE_ID_RE = re.compile(r"\b\d{10}\b")
+# Longer advertiser/account-style numeric identifiers (12-24 digits).
+LONG_ID_RE = re.compile(r"\b\d{12,24}\b")
+UUID_RE = re.compile(
+    r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"
+)
+# Token-like values behind an explicit key label (defense-in-depth only; the
+# sanitizer whitelist remains the primary boundary).
+TOKEN_LIKE_RE = re.compile(
+    r"\b(?:api[_-]?key|app[_-]?token|access[_-]?token|secret|token)"
+    r"[\"']?\s*[:=]\s*[\"']?[A-Za-z0-9._~+/=]{16,}",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -201,8 +214,9 @@ def sanitize_replay(raw: Mapping[str, Any]) -> SanitizationResult:
 def identity_markers(text: str) -> tuple[str, ...]:
     """Return which identity markers are present in ``text``.
 
-    Used by tests and the eval privacy check to refuse fixtures that would
-    re-identify a customer.
+    Defense-in-depth only: the sanitizer whitelist is the primary safety
+    boundary, and this detector can never prove the absence of every
+    sensitive value (see docs/eval-privacy.md).
     """
     markers: list[str] = []
     if EMAIL_RE.search(text):
@@ -213,6 +227,12 @@ def identity_markers(text: str) -> tuple[str, ...]:
         markers.append("absolute_path")
     if STABLE_ID_RE.search(text):
         markers.append("stable_id")
+    if LONG_ID_RE.search(text):
+        markers.append("long_id")
+    if UUID_RE.search(text):
+        markers.append("uuid")
+    if TOKEN_LIKE_RE.search(text):
+        markers.append("token_like")
     return tuple(markers)
 
 

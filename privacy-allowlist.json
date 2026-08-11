@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "exceptions": [
+    {
+      "id": "maintainer-public-email",
+      "kind": "non-placeholder-email",
+      "scope": {
+        "value_sha256s": ["7b82474c6877d16e"]
+      },
+      "reason": "Owner's public email used as annotated-tag tagger identity (v3.x release tags; owner accepted 2026-08-11). Exact-value scope: any other email of this kind still fails the gate."
+    },
+    {
+      "id": "maintainer-commit-and-tag-identity",
+      "kind": "non-noreply-identity",
+      "scope": {
+        "value_sha256s": ["7b82474c6877d16e", "cd82816556eaa415"]
+      },
+      "reason": "Pre-migration commits and release tags authored under the owner's public personal git identity (accepted 2026-07-20 and 2026-08-11). Exact-value scope: a new private or customer identity still fails the gate."
+    },
+    {
+      "id": "historical-noreply-name-mismatch",
+      "kind": "non-pseudonymous-identity-name",
+      "scope": {
+        "references": [
+          "33901b30f697",
+          "b63bb00a1c8f",
+          "c28858b9ca32",
+          "c2ec2328f7c3"
+        ],
+        "value_sha256s": ["216d482bcd95a348"]
+      },
+      "reason": "Four pre-migration commits whose noreply email display name did not match the GitHub handle; immutable history, accepted by exact commit fingerprint. Any future name mismatch still fails."
+    },
+    {
+      "id": "historical-pyc-c2ec2328",
+      "kind": "python-bytecode",
+      "scope": {
+        "references": ["c2ec2328f7c3"],
+        "value_sha256s": [
+          "27333cf84d1d0c92",
+          "2d8886980f94cd87",
+          "34b29934d325d630",
+          "69026614b6577e71",
+          "81108775f6bc07a9",
+          "88468b5d86c86b1d",
+          "8b64f650729277f7",
+          "bdc959cf8f0a621d",
+          "ee598b4a4f9bcd89",
+          "f1dc475c4230cf91"
+        ]
+      },
+      "reason": "Ten .pyc files committed in a single historical commit (c2ec2328); accepted as immutable history, waived only by exact commit+path fingerprint. Any new bytecode still fails."
+    }
+  ]
+}

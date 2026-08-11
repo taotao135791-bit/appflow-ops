@@ -62,6 +62,24 @@ def test_production_fixture_rejected_by_default_runner(repo_root: Path) -> None:
         path.unlink(missing_ok=True)
 
 
+def test_sanitized_fixture_rejected_by_default_runner(repo_root: Path) -> None:
+    """Repository benchmark is synthetic-only: sanitized never enters CI."""
+
+    raw = json.loads(_read(repo_root, EVAL_PATH))
+    sanitized = dict(raw)
+    sanitized["cases"] = [
+        {**dict(case), "data_class": "sanitized", "source_type": "replay"}
+        for case in raw["cases"]
+    ]
+    path = repo_root / "tmp-sanitized-evals.json"
+    path.write_text(json.dumps(sanitized), encoding="utf-8")
+    try:
+        with pytest.raises(ProductionDataError, match="synthetic-only"):
+            evaluate_fixture(path, repo_root)
+    finally:
+        path.unlink(missing_ok=True)
+
+
 def test_synthetic_cases_have_no_sensitive_fields(repo_root: Path) -> None:
     text = _read(repo_root, EVAL_PATH)
     assert identity_markers(text) == ()
@@ -159,7 +177,7 @@ def test_identity_markers_detect_common_leaks() -> None:
 # ── Safety gates ──────────────────────────────────────────────────────────
 
 
-def test_measurement_invalid_forbids_confident_deep_event_action() -> None:
+def test_invalid_measurement_blocks_confident_deep_event_action() -> None:
     scenario = ReasoningScenario(
         measurement_state="invalid", maturity_state="sufficient"
     )
@@ -168,21 +186,153 @@ def test_measurement_invalid_forbids_confident_deep_event_action() -> None:
     assert "confident_deep_event_diagnosis" in behavior.forbid
 
 
-def test_immature_case_forbids_premature_numeric_action() -> None:
+def test_invalid_measurement_uses_measurement_specific_constraint() -> None:
+    scenario = ReasoningScenario(
+        measurement_state="invalid", maturity_state="sufficient"
+    )
+    behavior = derive_expected_behavior(scenario)
+    assert "recommend_numeric_change_when_measurement_invalid" in behavior.forbid
+    assert "recommend_numeric_change_without_maturity" not in behavior.forbid
+    assert "premature_bid_change" not in behavior.forbid
+
+
+def test_insufficient_maturity_blocks_premature_numeric_action() -> None:
     scenario = ReasoningScenario(
         measurement_state="stable", maturity_state="insufficient"
     )
     behavior = derive_expected_behavior(scenario)
     assert "premature_bid_change" in behavior.forbid
+    assert "recommend_numeric_change_without_maturity" in behavior.forbid
 
 
-def test_policy_constraints_remain_authoritative() -> None:
+def test_maturity_constraint_is_distinct_from_measurement_constraint() -> None:
+    immature = derive_expected_behavior(
+        ReasoningScenario(measurement_state="stable", maturity_state="insufficient")
+    )
+    invalid = derive_expected_behavior(
+        ReasoningScenario(measurement_state="invalid", maturity_state="sufficient")
+    )
+    # Each gate forbids its own decision classes; a maturity rule must never
+    # be satisfied by a measurement rule and vice versa.
+    assert "premature_bid_change" in immature.forbid
+    assert "premature_bid_change" not in invalid.forbid
+    assert "aggressive_numeric_optimization" in invalid.forbid
+    assert "aggressive_numeric_optimization" not in immature.forbid
+
+
+def test_policy_forbidden_action_is_rejected() -> None:
     scenario = ReasoningScenario(
-        measurement_state="stable", maturity_state="sufficient"
+        measurement_state="stable",
+        maturity_state="sufficient",
+        policy_state="forbid_numeric",
     )
     behavior = derive_expected_behavior(scenario)
-    assert "premature_bid_change" not in behavior.forbid
-    assert "aggressive_numeric_optimization" not in behavior.forbid
+    assert "any_numeric_change" in behavior.forbid
+    assert "policy" in behavior.must_consider
+
+
+def test_policy_cap_remains_authoritative() -> None:
+    capped = derive_expected_behavior(
+        ReasoningScenario(
+            measurement_state="stable",
+            maturity_state="sufficient",
+            policy_state="cap_20pct",
+        )
+    )
+    staged = derive_expected_behavior(
+        ReasoningScenario(
+            measurement_state="stable",
+            maturity_state="sufficient",
+            policy_state="staged_required",
+        )
+    )
+    assert "over_cap_numeric_change" in capped.forbid
+    assert "single_step_numeric_change" in staged.forbid
+    assert "over_cap_numeric_change" not in staged.forbid
+
+
+def test_permission_recommend_only_cannot_claim_execution() -> None:
+    scenario = ReasoningScenario(
+        measurement_state="stable",
+        maturity_state="sufficient",
+        permission_state="recommend_only",
+    )
+    behavior = derive_expected_behavior(scenario)
+    assert "claim_execution" in behavior.forbid
+    assert "permission" in behavior.must_consider
+
+
+def test_full_permission_and_none_policy_add_no_forbid() -> None:
+    behavior = derive_expected_behavior(
+        ReasoningScenario(
+            measurement_state="stable",
+            maturity_state="sufficient",
+            policy_state="none",
+            permission_state="full",
+        )
+    )
+    assert "claim_execution" not in behavior.forbid
+    assert "any_numeric_change" not in behavior.forbid
+
+
+def test_policy_and_permission_states_are_validated() -> None:
+    with pytest.raises(ValueError, match="unknown policy_state"):
+        ReasoningScenario.from_mapping({"policy_state": "nonsense"})
+    with pytest.raises(ValueError, match="unknown permission_state"):
+        ReasoningScenario.from_mapping({"permission_state": "nonsense"})
+
+
+def test_fixture_cannot_satisfy_measurement_rule_with_maturity_rule() -> None:
+    scenario = ReasoningScenario(measurement_state="invalid", maturity_state="stable")
+
+    # The fixture only declares the maturity rule: measurement rules are
+    # unsatisfied, so the fixture is incompatible with the scenario.
+    class FakeExpectations:
+        must_not = ("recommend_numeric_change_without_maturity",)
+
+    assert not scenario_compatible_with_fixture(scenario, FakeExpectations())
+
+    # Declaring the measurement-specific rules makes it compatible.
+    class CompatibleExpectations:
+        must_not = (
+            "recommend_numeric_change_when_measurement_invalid",
+            "recommend_action_when_measurement_invalid",
+        )
+
+    assert scenario_compatible_with_fixture(scenario, CompatibleExpectations())
+
+
+def test_policy_and_permission_gates_require_their_own_rules() -> None:
+    policy_scenario = ReasoningScenario(
+        measurement_state="stable",
+        maturity_state="sufficient",
+        policy_state="forbid_numeric",
+    )
+
+    class PolicyExpectations:
+        must_not = ("recommend_numeric_change_when_policy_forbids",)
+
+    assert scenario_compatible_with_fixture(policy_scenario, PolicyExpectations())
+
+    permission_scenario = ReasoningScenario(
+        measurement_state="stable",
+        maturity_state="sufficient",
+        permission_state="recommend_only",
+    )
+
+    class PermissionExpectations:
+        must_not = ("claim_execution_without_permission",)
+
+    assert scenario_compatible_with_fixture(
+        permission_scenario, PermissionExpectations()
+    )
+
+    class WrongGateExpectations:
+        must_not = ("recommend_numeric_change_when_measurement_invalid",)
+
+    assert not scenario_compatible_with_fixture(
+        permission_scenario, WrongGateExpectations()
+    )
 
 
 def test_safety_gate_fixtures_are_compatible_with_derived_rules(
@@ -239,3 +389,24 @@ def test_preflight_rejects_version_drift(repo_root: Path, tmp_path: Path) -> Non
     )
     assert completed.returncode == 1
     assert "manifest version" in completed.stdout
+
+
+def test_preflight_full_history_mode_passes_with_allowlist(repo_root: Path) -> None:
+    """--full runs the same full-history gate as the release workflow."""
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(repo_root / "scripts" / "release_check.py"),
+            "--full",
+            "--allowlist",
+            "privacy-allowlist.json",
+        ],
+        cwd=repo_root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "full-history privacy scan clean" in completed.stdout
+    assert "preflight PASS" in completed.stdout
