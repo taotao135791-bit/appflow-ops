@@ -5,6 +5,10 @@ operations: paid media audits, UAC experiment loops, funnel diagnosis
 dashboards, creative review, PPC calculators, attribution checks, client
 reporting, and rapid response to urgent client demands.
 
+Its core reasoning principle is Diverge → Verify → Eliminate → Rank →
+Converge (see README): users state business problems, AppFlow decides how to
+investigate them; explore broadly internally, answer concisely externally.
+
 ## Layout
 
 - `skills/appflow/SKILL.md`: main `/appflow` router skill (question
