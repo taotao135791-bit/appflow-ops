@@ -14,9 +14,9 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from kimi_ads.uac.quick_ops import decide_case  # noqa: E402
-from kimi_ads.uac.quick_reporting import render_quick_card  # noqa: E402
-from kimi_ads.uac.types import ContractError  # noqa: E402
+from appflow_ops.uac.quick_ops import decide_case  # noqa: E402
+from appflow_ops.uac.quick_reporting import render_quick_card  # noqa: E402
+from appflow_ops.uac.types import ContractError  # noqa: E402
 
 
 def _numeric_case(repo_root: Path) -> dict:

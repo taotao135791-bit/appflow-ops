@@ -15,11 +15,11 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 Attribution decay is the silent revenue killer of 2026 — Consent Mode V2 EEA
 enforcement (Jul 21, 2025), iOS ATT, SKAdNetwork → AdAttributionKit migration,
@@ -33,7 +33,7 @@ attribution windows or unverified Consent Mode setups will mis-attribute
 1. Collect current attribution stack: GA4 property ID, Google Ads conversion
    actions, Meta CAPI config, Apple Ads / AdAttributionKit registration,
    MMP dashboard (AppsFlyer / Adjust / Branch / Singular), any sGTM container
-2. Read `ads/references/conversion-tracking.md` for the cross-platform
+2. Read `appflow/references/conversion-tracking.md` for the cross-platform
    tracking baseline
 3. Evaluate attribution health per surface (web, iOS app, Android app,
    server-side)

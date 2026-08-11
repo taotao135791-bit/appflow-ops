@@ -3,8 +3,8 @@ name: ads-create
 description: >-
   Campaign concept and copy brief generator for paid advertising. Reads brand-profile.json
   and optional audit results to produce structured campaign concepts, messaging pillars,
-  and copy briefs. Outputs campaign-brief.md to the current directory. Run after /ads dna
-  and before /ads generate. Triggers on: create campaign, campaign brief, ad concepts,
+  and copy briefs. Outputs campaign-brief.md to the current directory. Run after /appflow dna
+  and before /appflow generate. Triggers on: create campaign, campaign brief, ad concepts,
   write ad copy, campaign strategy, ad messaging, creative brief, generate concepts.
   中文触发: 写广告文案, 出创意方向, 广告策划 brief.
 ---
@@ -13,30 +13,30 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 Generates structured campaign concepts and platform-specific copy from your brand
-profile and optional audit data. Outputs `campaign-brief.md` for use by `/ads generate`.
+profile and optional audit data. Outputs `campaign-brief.md` for use by `/appflow generate`.
 
 Operates under the **10-Principle Thinking Framework** (see
-`ads/references/thinking-framework.md`). LISTEN to the brand voice before
+`appflow/references/thinking-framework.md`). LISTEN to the brand voice before
 typing; FEEL the emotional resonance of every headline and CTA; CREATE
 the deliverable — do not hedge concepts so heavily that the next person
 has to do the work. Spec compliance without emotional pull is a fail.
 
 ## Quick Reference
 
-These `/ads ...` entries are Kimi routing shorthand, not shell commands.
+These `/appflow ...` entries are AI 助手 routing shorthand, not shell commands.
 
 | Shorthand | What it does |
 |---------|-------------|
-| `/ads create` | Full campaign brief → `campaign-brief.md` |
-| `/ads create --platforms meta google` | Brief for specific platforms only |
-| `/ads create --objective leads` | Brief optimized for lead generation |
+| `/appflow create` | Full campaign brief → `campaign-brief.md` |
+| `/appflow create --platforms meta google` | Brief for specific platforms only |
+| `/appflow create --objective leads` | Brief optimized for lead generation |
 
 ## Process
 
@@ -47,7 +47,7 @@ Look for `brand-profile.json` in the current directory.
 - **Found**: Load and proceed.
 - **Not found**: Ask the user:
   > "I don't see a brand-profile.json in this directory. Would you like to:
-  > 1. Run `/ads dna <url>` first to extract brand DNA automatically
+  > 1. Provide an existing brand-profile.json path
   > 2. Describe your brand manually (I'll create a basic profile from your description)"
 
 If the user chooses manual, collect:
@@ -62,7 +62,7 @@ If the user chooses manual, collect:
 Look for `ADS-AUDIT-REPORT.md` or any `*-audit-results.md` in the current directory.
 
 - **Found**: Read them. Note the top 3 weaknesses (creative fatigue, tracking gaps, wasted spend) to address in concepts.
-- **Not found**: Continue without. Note in the brief: "No audit data found; concepts are generalized. Run `/ads audit` for weakness-targeted concepts."
+- **Not found**: Continue without. Note in the brief: "No audit data found; concepts are generalized. Run `/appflow audit` for weakness-targeted concepts."
 
 ### Step 3: Collect Campaign Parameters
 
@@ -77,7 +77,7 @@ Ask (combine into one message; omit any already provided via flags):
 
 ### Step 4: Select Copy Framework
 
-Read `ads/references/copy-frameworks.md` and recommend a framework based on
+Read `appflow/references/copy-frameworks.md` and recommend a framework based on
 campaign goal + platform + audience temperature:
 
 | Framework | Best For |
@@ -115,7 +115,7 @@ After `creative-strategist` completes, spawn `copy-writer`. It reads the existin
 headlines, primary text, and CTAs.
 
 Additional instructions for `copy-writer`:
-- Read `ads/references/copy-frameworks.md` and apply the selected framework
+- Read `appflow/references/copy-frameworks.md` and apply the selected framework
   structure to all ad copy
 - Generate 2 framework variants per platform: primary (recommended framework)
   + secondary (alternative for A/B testing)
@@ -138,7 +138,7 @@ Summary:
 
 Next steps:
   1. Review campaign-brief.md and adjust any messaging
-  2. Run `/ads generate` to produce AI images from the briefs
+  2. Run `/appflow generate` to produce AI images from the briefs
   3. Upload copy and assets to your ad platforms
 ```
 
@@ -159,7 +159,7 @@ The following section headings are a **parsing contract**; agents downstream dep
 
 ## Audit Context
 [If audit data found: top 3 weaknesses being addressed]
-[If no audit data: "No audit data; run /ads audit for weakness-targeted concepts"]
+[If no audit data: "No audit data; run /appflow audit for weakness-targeted concepts"]
 
 ## Campaign Concepts
 
@@ -196,7 +196,7 @@ The following section headings are a **parsing contract**; agents downstream dep
 
 ## Next Steps
 1. Review all concepts and select which to move forward with
-2. Run `/ads generate` to produce images from the briefs above
+2. Run `/appflow generate` to produce images from the briefs above
 3. Adjust CTAs and offers in the copy deck for your specific promotion
 4. Upload final assets to your ad platform managers
 ```

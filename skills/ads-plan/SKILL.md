@@ -1,7 +1,7 @@
 ---
 name: ads-plan
 description: >-
-  Strategic paid advertising planning with industry-specific templates. Covers platform
+  Strategic paid advertising planning for overseas app promotion. Covers platform
   selection, campaign architecture, budget planning, creative strategy, and phased
   implementation roadmap. Use when user says ad plan, ad strategy, campaign planning,
   media plan, PPC strategy, or advertising plan. 中文触发: 投放方案, 广告策划案, 媒体计划.
@@ -11,14 +11,14 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 Strategic planning is where the **10-Principle Thinking Framework** (see
-`ads/references/thinking-framework.md`) earns its weight. THINK and
+`appflow/references/thinking-framework.md`) earns its weight. THINK and
 CONNECT (Lateral) dominate — first-principles unit economics combined
 with cross-platform leverage are what make a plan strategic rather than
 prescriptive. FEEL gates the messaging and audience choices; ACCEPT
@@ -44,8 +44,8 @@ gates the constraints (budget, timeline, team capacity).
 ### 3. Platform Selection
 - Load industry template from `assets/` directory
 - Match business type to recommended platform mix
-- Read `ads/references/budget-allocation.md` for platform selection matrix
-- Read `ads/references/conversion-tracking.md` for tracking setup requirements
+- Read `appflow/references/budget-allocation.md` for platform selection matrix
+- Read `appflow/references/conversion-tracking.md` for tracking setup requirements
 - Assess platform fit based on:
   - Target audience demographics per platform
   - Product/service type suitability
@@ -86,7 +86,7 @@ Account
 ### 5. Budget Planning
 
 #### Monthly Budget Distribution
-Read `ads/references/budget-allocation.md` for the 70/20/10 framework.
+Read `appflow/references/budget-allocation.md` for the 70/20/10 framework.
 
 | Tier | Allocation | Purpose |
 |------|-----------|---------|
@@ -160,18 +160,10 @@ Before launching any ads, ensure tracking is configured:
 
 ## Industry Templates
 
-Load from `assets/` directory based on detected or specified business type:
-- `saas.md`: SaaS companies
-- `ecommerce.md`: E-commerce stores
-- `local-service.md`: Local service businesses
-- `b2b-enterprise.md`: B2B enterprise
-- `info-products.md`: Info products and courses
-- `mobile-app.md`: Mobile app companies
-- `real-estate.md`: Real estate
-- `healthcare.md`: Healthcare
-- `finance.md`: Financial services
-- `agency.md`: Marketing agencies
-- `generic.md`: General business template
+AppFlow Ops plans overseas app promotion. Load from `assets/`:
+- `mobile-app.md`: default template for app installs, in-app events, and
+  payment/ROAS KPIs (iOS + Android, store pages, MMP attribution)
+- `generic.md`: fallback structure when a request is not app-specific
 
 ## Output
 

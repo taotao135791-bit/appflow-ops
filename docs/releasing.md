@@ -1,4 +1,4 @@
-# Releasing Kimi Ads
+# Releasing AppFlow Ops
 
 This checklist is the release contract for maintainers. A version is not a
 release until its commit, annotated tag, and GitHub Release are all visible on
@@ -38,9 +38,9 @@ Run from the repository root:
 python3 -m pytest -q
 ruff check .
 ruff format --check .
-python3 -m mypy scripts/kimi_ads/uac
+python3 -m mypy scripts/appflow_ops/uac
 python3 -m pytest -q \
-  --cov=kimi_ads.uac \
+  --cov=appflow_ops.uac \
   --cov-report=term-missing \
   --cov-report=xml:coverage.xml \
   --cov-fail-under=80
@@ -105,13 +105,13 @@ with the exact value in `VERSION`:
 ```bash
 git switch main
 git pull --ff-only origin main
-git tag -s vX.Y.Z -m "kimi-ads vX.Y.Z"
+git tag -s vX.Y.Z -m "appflow-ops vX.Y.Z"
 ```
 
 If signed tags are unavailable, use an annotated tag and document that choice:
 
 ```bash
-git tag -a vX.Y.Z -m "kimi-ads vX.Y.Z"
+git tag -a vX.Y.Z -m "appflow-ops vX.Y.Z"
 ```
 
 Before the local tag leaves the machine, scan reachable commits, tree paths,
@@ -139,7 +139,7 @@ release.
 On a clean temporary directory, install the tag rather than `main`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/vX.Y.Z/install.sh \
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/vX.Y.Z/install.sh \
   | bash -s -- --ref=vX.Y.Z
 ```
 
@@ -150,7 +150,7 @@ On Windows PowerShell, download the installer from the same tag and pass the
 matching validated release ref:
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/vX.Y.Z/install.ps1 `
+irm https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/vX.Y.Z/install.ps1 `
   -OutFile install.ps1
 .\install.ps1 -Ref vX.Y.Z
 ```

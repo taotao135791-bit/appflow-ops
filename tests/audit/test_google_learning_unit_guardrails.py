@@ -30,7 +30,7 @@ def test_google_skill_requires_learning_unit_before_geo_decisions(repo_root):
 
 
 def test_gaql_notes_preserve_grain_before_country_rollup(repo_root):
-    text = _read(repo_root, "ads/references/gaql-notes.md")
+    text = _read(repo_root, "appflow/references/gaql-notes.md")
 
     required_phrases = [
         "learning-unit aggregation guardrail",

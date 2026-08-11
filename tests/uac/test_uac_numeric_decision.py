@@ -17,8 +17,8 @@ import pytest
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from kimi_ads.uac.numeric_decision import recommend_numeric  # noqa: E402
-from kimi_ads.uac.policy_loader import load_policy  # noqa: E402
+from appflow_ops.uac.numeric_decision import recommend_numeric  # noqa: E402
+from appflow_ops.uac.policy_loader import load_policy  # noqa: E402
 
 
 ALLOWED_EVIDENCE_TYPES = {

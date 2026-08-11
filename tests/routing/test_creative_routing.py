@@ -4,7 +4,7 @@ These tests load the existing ``evals/creative-evals.json`` and assert that
 each positive-trigger prompt contains lexical signals that match the target
 skill's description. Negative cases assert the prompt does NOT trigger a
 listed creative skill (audit / performance prompts should not invoke
-ads-dna / ads-create / ads-generate / ads-photoshoot).
+ads-create / ads-generate).
 
 This is a regression guard, not a full router simulation — the real model-
 side dispatch happens at runtime. The point is to catch:

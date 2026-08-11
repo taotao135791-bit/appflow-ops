@@ -13,19 +13,19 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 ## Process
 
 1. Collect TikTok Ads data (Ads Manager export, Pixel/Events API status)
-2. Read `ads/references/tiktok-audit.md` for full 28-check audit
-3. Read `ads/references/benchmarks.md` for TikTok-specific benchmarks
-4. Read `ads/references/platform-specs.md` for creative specifications
-5. Read `ads/references/scoring-system.md` for weighted scoring algorithm
+2. Read `appflow/references/tiktok-audit.md` for full 28-check audit
+3. Read `appflow/references/benchmarks.md` for TikTok-specific benchmarks
+4. Read `appflow/references/platform-specs.md` for creative specifications
+5. Read `appflow/references/scoring-system.md` for weighted scoring algorithm
 6. Evaluate all applicable checks as PASS, WARNING, or FAIL
 7. Calculate TikTok Ads Health Score (0-100)
 8. Generate findings report with action plan

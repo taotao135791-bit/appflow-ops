@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Check or synchronize the canonical Ads router into its legacy mirror.
+"""Check or synchronize the canonical AppFlow router into its legacy mirror.
 
-``skills/ads`` is the canonical plugin layout. ``ads`` remains available for
-legacy/raw installs and must be a byte-for-byte mirror. The writer refuses to
-operate when either tree contains symbolic links or special filesystem
-entries, so a synchronization cannot escape the two repository directories.
+``skills/appflow`` is the canonical plugin layout. ``appflow`` remains
+available for legacy/raw installs and must be a byte-for-byte mirror. The
+writer refuses to operate when either tree contains symbolic links or special
+filesystem entries, so a synchronization cannot escape the two repository
+directories.
 """
 
 from __future__ import annotations
@@ -187,7 +188,7 @@ def _format_state(state: LayoutState) -> str:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Check or update the legacy ads/ mirror from skills/ads/"
+        description="Check or update the legacy appflow/ mirror from skills/appflow/"
     )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument(
@@ -208,8 +209,8 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     root = args.repo_root.expanduser().resolve()
-    canonical = root / "skills" / "ads"
-    mirror = root / "ads"
+    canonical = root / "skills" / "appflow"
+    mirror = root / "appflow"
     try:
         state = inspect_layout(canonical, mirror)
         if args.check:
@@ -219,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
             print("skill layout is already synchronized")
             return 0
         synchronize_layout(canonical, mirror)
-        print("skill layout synchronized from skills/ads to ads")
+        print("skill layout synchronized from skills/appflow to appflow")
         return 0
     except (LayoutError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)

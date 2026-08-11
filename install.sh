@@ -1,35 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Kimi Ads Installer
+# AppFlow Ops Installer
 # Wraps everything in main() to prevent partial execution on network failure.
 #
-# Default target is Kimi Code CLI. Cross-host targets are EXPERIMENTAL — they
-# install the same skill artifacts under each host's expected directory, but
-# the host's own runtime conventions may differ. Pin path overrides via
-# --skill-dir / --agent-dir if the auto-detected paths are wrong for your
-# install.
+# Default target is a local, host-agnostic install under ~/.appflow/skills.
+# Cross-host targets are EXPERIMENTAL — they install the same skill artifacts
+# under each host's expected directory, but the host's own runtime conventions
+# may differ. Pin path overrides via --skill-dir / --agent-dir if the
+# auto-detected paths are wrong for your install.
 #
 # Usage:
-#   bash install.sh                              # default: --target=kimi
-#   bash install.sh --target=kimi
+#   bash install.sh                              # default: --target=local
+#   bash install.sh --target=local
 #   bash install.sh --target=codex
 #   bash install.sh --target=cursor
 #   bash install.sh --target=windsurf
 #   bash install.sh --target=gemini
 #   bash install.sh --target=goose
 #   bash install.sh --skill-dir=/custom/path     # override the target's default path
-#   bash install.sh --ref=v2.0.0                 # install an exact release tag
+#   bash install.sh --ref=v3.0.0                 # install an exact release tag
 #
 # All target keys are validated against a strict whitelist (no shell injection
 # possible via --target=...). Custom --skill-dir paths are validated against
 # `;&|$()<>`, backslashes, leading dashes, `..` path segments, and UNC-style
 # paths. Directory names that merely contain two dots are allowed.
 
-# KIMI_ADS_REPO_URL is intentionally undocumented end-user plumbing used by
+# APPFLOW_OPS_REPO_URL is intentionally undocumented end-user plumbing used by
 # packaging smoke tests and downstream mirrors. Normal installs keep using the
 # canonical repository.
-REPO_URL="${KIMI_ADS_REPO_URL:-https://github.com/taotao135791-bit/kimi-ads.git}"
+REPO_URL="${APPFLOW_OPS_REPO_URL:-https://github.com/taotao135791-bit/appflow-ops.git}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Target whitelist + path mapping
@@ -38,28 +38,21 @@ REPO_URL="${KIMI_ADS_REPO_URL:-https://github.com/taotao135791-bit/kimi-ads.git}
 # Keep this table the SINGLE source of truth. When a new host CLI is added,
 # update only this case statement plus the help text.
 #
-# kimi      — Kimi Code CLI (agents install into <skill-base>/ads/agents)
-# kimi-work — Kimi Work desktop app (daimon skills dir; agents into ads/agents)
-# codex     — OpenAI Codex CLI
-# cursor    — Cursor IDE (EXPERIMENTAL, extension model differs)
-# windsurf  — Windsurf IDE (EXPERIMENTAL)
-# gemini    — Gemini CLI (EXPERIMENTAL)
-# goose     — Goose CLI (EXPERIMENTAL)
+# local    — host-agnostic install (agents live in <skill-base>/appflow/agents)
+# codex    — OpenAI Codex CLI
+# cursor   — Cursor IDE (EXPERIMENTAL, extension model differs)
+# windsurf — Windsurf IDE (EXPERIMENTAL)
+# gemini   — Gemini CLI (EXPERIMENTAL)
+# goose    — Goose CLI (EXPERIMENTAL)
 
 resolve_target_paths() {
     local target="$1"
     case "$target" in
-        kimi)
-            SKILL_BASE="${KIMI_CODE_HOME:-${HOME}/.kimi-code}/skills"
+        local)
+            SKILL_BASE="${APPFLOW_HOME:-${HOME}/.appflow}/skills"
             AGENT_DIR=""
             ALLOW_PIP=1
-            HOST_LABEL="Kimi Code CLI"
-            ;;
-        kimi-work)
-            SKILL_BASE="${KIMI_WORK_HOME:-${HOME}/Library/Application Support/kimi-desktop/daimon-share/daimon}/skills"
-            AGENT_DIR=""
-            ALLOW_PIP=1
-            HOST_LABEL="Kimi Work (desktop)"
+            HOST_LABEL="Local (~/.appflow)"
             ;;
         codex)
             SKILL_BASE="${HOME}/.codex/skills"
@@ -68,8 +61,8 @@ resolve_target_paths() {
             HOST_LABEL="OpenAI Codex CLI"
             ;;
         cursor)
-            SKILL_BASE="${HOME}/.cursor/extensions/kimi-ads/skills"
-            AGENT_DIR="${HOME}/.cursor/extensions/kimi-ads/agents"
+            SKILL_BASE="${HOME}/.cursor/extensions/appflow-ops/skills"
+            AGENT_DIR="${HOME}/.cursor/extensions/appflow-ops/agents"
             ALLOW_PIP=0
             HOST_LABEL="Cursor IDE"
             ;;
@@ -80,8 +73,8 @@ resolve_target_paths() {
             HOST_LABEL="Windsurf IDE"
             ;;
         gemini)
-            SKILL_BASE="${HOME}/.gemini/extensions/kimi-ads/skills"
-            AGENT_DIR="${HOME}/.gemini/extensions/kimi-ads/agents"
+            SKILL_BASE="${HOME}/.gemini/extensions/appflow-ops/skills"
+            AGENT_DIR="${HOME}/.gemini/extensions/appflow-ops/agents"
             ALLOW_PIP=0
             HOST_LABEL="Gemini CLI"
             ;;
@@ -125,14 +118,13 @@ validate_repo_ref() {
 
 print_help() {
     cat <<EOF
-Kimi Ads Installer
+AppFlow Ops Installer
 
 Usage:
   bash install.sh [--target=<host>] [--skill-dir=<path>] [--agent-dir=<path>] [--ref=vX.Y.Z]
 
-Targets (default: kimi):
-  kimi       Kimi Code CLI (default)
-  kimi-work  Kimi Work desktop app
+Targets (default: local):
+  local      Host-agnostic install under ~/.appflow/skills (default)
   codex      OpenAI Codex CLI
   cursor     Cursor IDE (experimental)
   windsurf   Windsurf IDE (experimental)
@@ -144,22 +136,22 @@ Overrides:
   --agent-dir=<path>   Override the target's default agent install root
   --ref=vX.Y.Z         Install one exact final release tag
 
-For Kimi Code CLI, Python report/screenshot dependencies are installed into a
-local skill venv at <skill-dir>/ads/.venv. The installer never modifies system
-Python packages.
+For the local target, Python report/screenshot dependencies are installed into
+a local skill venv at <skill-dir>/appflow/.venv. The installer never modifies
+system Python packages.
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/kimi-ads/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/main/install.sh | bash
   bash install.sh
-  bash install.sh --ref=v2.0.0
-  bash install.sh --target=kimi --skill-dir="\$HOME/custom/skills"
+  bash install.sh --ref=v3.0.0
+  bash install.sh --target=local --skill-dir="\$HOME/custom/skills"
 
 EOF
 }
 
 main() {
     # Defaults
-    local TARGET="kimi"
+    local TARGET="local"
     local SKILL_DIR_OVERRIDE=""
     local AGENT_DIR_OVERRIDE=""
     local REPO_REF=""
@@ -216,14 +208,14 @@ main() {
     done
 
     if [ "${REF_WAS_SET}" -eq 1 ] && ! validate_repo_ref "${REPO_REF}"; then
-        echo "✗ Invalid --ref: expected an exact tag such as v2.0.0" >&2
+        echo "✗ Invalid --ref: expected an exact tag such as v3.0.0" >&2
         exit 1
     fi
 
     # Resolve target paths (rejects unknown targets via whitelist)
     if ! resolve_target_paths "$TARGET"; then
         echo "✗ Unknown target: $TARGET" >&2
-        echo "  Valid targets: kimi, kimi-work, codex, cursor, windsurf, gemini, goose" >&2
+        echo "  Valid targets: local, codex, cursor, windsurf, gemini, goose" >&2
         echo "  Run: bash install.sh --help" >&2
         exit 1
     fi
@@ -244,10 +236,10 @@ main() {
         AGENT_DIR="$AGENT_DIR_OVERRIDE"
     fi
 
-    local SKILL_DIR="${SKILL_BASE}/ads"
+    local SKILL_DIR="${SKILL_BASE}/appflow"
 
     echo "════════════════════════════════════════"
-    echo "║   Kimi Ads - Installer              ║"
+    echo "║   AppFlow Ops - Installer            ║"
     echo "║   Target: ${HOST_LABEL}"
     echo "════════════════════════════════════════"
     echo ""
@@ -256,7 +248,7 @@ main() {
     command -v git >/dev/null 2>&1 || { echo "✗ Git is required but not installed."; exit 1; }
     echo "✓ Git detected"
 
-    # Create directories. Kimi Code CLI has no separate agents directory
+    # Create directories. The local target has no separate agents directory
     # (AGENT_DIR is empty) — its persona briefs live inside the main skill.
     mkdir -p "${SKILL_DIR}/references"
     if [ -n "${AGENT_DIR}" ]; then
@@ -267,9 +259,9 @@ main() {
     TEMP_DIR=$(mktemp -d)
     trap 'rm -rf "${TEMP_DIR}"' EXIT
 
-    local SOURCE_DIR="${TEMP_DIR}/kimi-ads"
+    local SOURCE_DIR="${TEMP_DIR}/appflow-ops"
     if [ "${REF_WAS_SET}" -eq 1 ]; then
-        echo "↓ Downloading Kimi Ads ${REPO_REF} from ${REPO_URL}..."
+        echo "↓ Downloading AppFlow Ops ${REPO_REF} from ${REPO_URL}..."
         mkdir -p "${SOURCE_DIR}"
         git -C "${SOURCE_DIR}" init --quiet
         if ! git -C "${SOURCE_DIR}" fetch --depth 1 --no-tags -- \
@@ -296,9 +288,9 @@ main() {
             exit 1
         fi
     else
-        echo "↓ Downloading Kimi Ads from ${REPO_URL}..."
+        echo "↓ Downloading AppFlow Ops from ${REPO_URL}..."
         if ! git clone --depth 1 -- "${REPO_URL}" "${SOURCE_DIR}"; then
-            echo "✗ Failed to clone Kimi Ads from ${REPO_URL}" >&2
+            echo "✗ Failed to clone AppFlow Ops from ${REPO_URL}" >&2
             echo "  Check that the repository exists and that you have access." >&2
             exit 1
         fi
@@ -306,15 +298,15 @@ main() {
 
     # Copy main skill + references from the plugin-compatible skill tree.
     echo "→ Installing skill files..."
-    cp "${TEMP_DIR}/kimi-ads/skills/ads/SKILL.md" "${SKILL_DIR}/SKILL.md"
-    cp "${TEMP_DIR}/kimi-ads/skills/ads/references/"*.md "${SKILL_DIR}/references/"
-    cp "${TEMP_DIR}/kimi-ads/VERSION" "${SKILL_DIR}/VERSION"
+    cp "${TEMP_DIR}/appflow-ops/skills/appflow/SKILL.md" "${SKILL_DIR}/SKILL.md"
+    cp "${TEMP_DIR}/appflow-ops/skills/appflow/references/"*.md "${SKILL_DIR}/references/"
+    cp "${TEMP_DIR}/appflow-ops/VERSION" "${SKILL_DIR}/VERSION"
 
     # Copy sub-skills
     echo "→ Installing sub-skills..."
-    for skill_dir in "${TEMP_DIR}/kimi-ads/skills"/*/; do
+    for skill_dir in "${TEMP_DIR}/appflow-ops/skills"/*/; do
         skill_name=$(basename "${skill_dir}")
-        if [ "${skill_name}" = "ads" ]; then
+        if [ "${skill_name}" = "appflow" ]; then
             continue
         fi
         target="${SKILL_BASE}/${skill_name}"
@@ -352,10 +344,10 @@ main() {
     done
 
     # Copy agents. Hosts with a separate agents directory (codex etc.) receive
-    # the persona briefs there; for Kimi Code CLI they are installed into the
-    # main skill at <skill-base>/ads/agents instead. The source glob is tested
-    # first so a missing source tree only warns, while a real copy failure
-    # (permissions, full disk, ...) aborts loudly under `set -e`.
+    # the persona briefs there; for the local target they are installed into
+    # the main skill at <skill-base>/appflow/agents instead. The source glob
+    # is tested first so a missing source tree only warns, while a real copy
+    # failure (permissions, full disk, ...) aborts loudly under `set -e`.
     echo "→ Installing subagents..."
     local AGENTS_TARGET
     if [ -n "${AGENT_DIR}" ]; then
@@ -365,24 +357,24 @@ main() {
         mkdir -p "${AGENTS_TARGET}"
     fi
     shopt -s nullglob
-    local agent_briefs=("${TEMP_DIR}/kimi-ads/agents/"*.md)
+    local agent_briefs=("${TEMP_DIR}/appflow-ops/agents/"*.md)
     shopt -u nullglob
     if [ "${#agent_briefs[@]}" -gt 0 ]; then
         cp "${agent_briefs[@]}" "${AGENTS_TARGET}/"
     else
-        echo "  ⚠ No agent briefs found under ${TEMP_DIR}/kimi-ads/agents — skipping." >&2
+        echo "  ⚠ No agent briefs found under ${TEMP_DIR}/appflow-ops/agents — skipping." >&2
     fi
 
     # Copy scripts (optional Python tools)
     SCRIPTS_DIR="${SKILL_DIR}/scripts"
-    if [ -d "${TEMP_DIR}/kimi-ads/scripts" ]; then
+    if [ -d "${TEMP_DIR}/appflow-ops/scripts" ]; then
         echo "→ Installing Python scripts..."
         mkdir -p "${SCRIPTS_DIR}"
-        cp "${TEMP_DIR}/kimi-ads/scripts/"*.py "${SCRIPTS_DIR}/"
-        if [ -d "${TEMP_DIR}/kimi-ads/scripts/kimi_ads" ]; then
-            cp -R "${TEMP_DIR}/kimi-ads/scripts/kimi_ads" "${SCRIPTS_DIR}/"
+        cp "${TEMP_DIR}/appflow-ops/scripts/"*.py "${SCRIPTS_DIR}/"
+        if [ -d "${TEMP_DIR}/appflow-ops/scripts/appflow_ops" ]; then
+            cp -R "${TEMP_DIR}/appflow-ops/scripts/appflow_ops" "${SCRIPTS_DIR}/"
         fi
-        cp "${TEMP_DIR}/kimi-ads/requirements.txt" "${SKILL_DIR}/requirements.txt"
+        cp "${TEMP_DIR}/appflow-ops/requirements.txt" "${SKILL_DIR}/requirements.txt"
     fi
 
     # Install Python dependencies only for hosts that explicitly support
@@ -411,7 +403,7 @@ main() {
         fi
     else
         echo "ℹ Skipping Python dependencies — ${HOST_LABEL} host runtime may not execute Python skills directly."
-        echo "  If you need PDF reports / landing-page analysis / screenshots, install manually:"
+        echo "  If you need PDF reports / funnel dashboards / screenshots, install manually:"
         echo "    pip3 install -r ${SKILL_DIR}/requirements.txt"
     fi
 
@@ -428,7 +420,7 @@ main() {
     TEMPLATE_COUNT=$(find "${SKILL_BASE}" -type f -path '*/assets/*.md' | wc -l | tr -d '[:space:]')
 
     echo ""
-    echo "✓ Kimi Ads installed successfully for ${HOST_LABEL}!"
+    echo "✓ AppFlow Ops installed successfully for ${HOST_LABEL}!"
     echo ""
     echo "  Installed to:"
     echo "    Skills: ${SKILL_BASE}"
@@ -439,17 +431,17 @@ main() {
     fi
     echo ""
     echo "  Bundled:"
-    echo "    • 1 main skill (ads orchestrator)"
+    echo "    • 1 main skill (appflow router)"
     echo "    • ${SUB_SKILL_COUNT} sub-skills (platform + functional + creative + agency ops)"
     echo "    • ${AGENT_COUNT} agents (audit + creative personas)"
     echo "    • ${REFERENCE_COUNT} reference files (main skill)"
     echo "    • ${TEMPLATE_COUNT} templates (sub-skill Markdown assets)"
     echo ""
     echo "Usage:"
-    echo "  1. Start Kimi Code CLI"
+    echo "  1. Start your AI coding assistant"
     echo "  2. Ask naturally, e.g.:"
     echo "       只读审查这个广告账户，先看 KPI、预算消耗、转化目标和今天要处理的事项。"
-    echo "       或使用 /skill:ads，或路由 shorthand: /ads audit, /ads plan saas, /ads google"
+    echo "       或使用 /skill:appflow，或路由 shorthand: /appflow audit, /appflow uac, /appflow google"
     echo ""
     echo "To uninstall: bash uninstall.sh --target=${TARGET}"
 }

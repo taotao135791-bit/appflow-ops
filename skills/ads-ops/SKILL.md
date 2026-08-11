@@ -4,11 +4,13 @@ description: >-
   Daily agency advertising operations skill. Use for repetitive media-buying work such as
   daily account patrols, anomaly triage, client-safe replies, creative request briefs,
   report cleanup from CSV/XLSX exports, optimization changelogs, weekly/monthly meeting
-  summaries, action tracking, and junior operator checklists. Triggers on patrol, daily
+  summaries, action tracking, urgent client rapid-response plans, and junior
+  operator checklists. Triggers on patrol, daily
   check, anomaly, sudden drop, sudden spike, client reply, client explanation, creative
   request, design brief, material request, clean report, report cleanup, changelog,
-  change history, weekly meeting, monthly review, and agency operations. 中文触发: 每日巡检,
-  突然掉量, 怎么跟甲方说, 素材需求单.
+  change history, weekly meeting, monthly review, urgent client demand, rapid
+  response, and agency operations. 中文触发: 每日巡检,
+  突然掉量, 怎么跟甲方说, 素材需求单, 客户急了今天就要降指标.
 ---
 
 # Ads Ops: Daily Agency Operations
@@ -18,12 +20,13 @@ audit but too important to improvise: checking accounts, explaining changes,
 turning problems into creative requests, cleaning exports, and preparing
 meeting notes. Default to read-only account inspection and local file outputs.
 
-## WebBridge First
+## Data Access (Browser Bridge Optional)
 
 For daily patrols, anomaly triage, creative performance review, changelog
 review, template inspection, and any task that depends on the current ad
-dashboard state, default to Kimi WebBridge-assisted read-only inspection when
-the user is logged in or has opened the relevant page.
+dashboard state, prefer exports, screenshots, pasted tables, or local files.
+If the user is logged in and has a browser bridge available, use it for
+read-only inspection instead.
 
 Before inspection:
 - Ask the user to open the correct account, date range, and relevant table or
@@ -32,9 +35,9 @@ Before inspection:
 - Do not click save, apply, pause, enable, edit, export, send, or write back
   unless the user confirms the exact action.
 
-If WebBridge is unavailable or the user has not opened the dashboard, fall
-back to exports, screenshots, pasted tables, local files, or read-only cloud
-document inspection.
+If a browser bridge is unavailable or the user has not opened the dashboard,
+fall back to exports, screenshots, pasted tables, local files, or read-only
+cloud document inspection. Never block a task on missing tooling.
 
 ## Route by Intent
 
@@ -43,6 +46,7 @@ document inspection.
 | "每日巡检", "daily check", "patrol" | Daily Patrol |
 | "突然掉量", "支付突然少了", "CPA 飙升", "anomaly" | Anomaly Triage |
 | "怎么跟甲方说", "client reply", "客户解释" | Client Reply |
+| "客户急了", "今天就要降 CPA", "urgent", "rapid response" | Rapid Response (`references/rapid-response.md`) |
 | "给设计提需求", "素材需求单", "creative request" | Creative Request |
 | "清洗报表", "合并导出表", "clean CSV/XLSX" | Report Cleanup |
 | "适配甲方模板", "template mapping", "adapt template" | Hand off to `ads-report` |
@@ -69,8 +73,8 @@ repo:
    fields, formulas, data sources, and narrative rules.
 
 Use templates from the `assets/` directory next to this `SKILL.md` when
-creating new files. In a manual Kimi install this is also
-`~/.kimi-code/skills/ads-ops/assets/`:
+creating new files. In a manual AI 助手 install this is also
+`~/.appflow/skills/ads-ops/assets/`:
 
 - `project-context-template.md`
 - `ops-log-template.md`

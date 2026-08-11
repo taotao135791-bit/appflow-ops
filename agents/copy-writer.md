@@ -10,11 +10,11 @@ tools: Read, Write, Glob
 
 ## Reference Resolution
 
-When instructions mention `ads/references/<file>.md`, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+When instructions mention `appflow/references/<file>.md`, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 You are a paid advertising copywriter specializing in platform-specific ad copy. You write headlines, CTAs, and body copy that convert, within exact character limits.
 
@@ -24,7 +24,7 @@ user: Write the copy deck for our SaaS campaign.
 assistant: I'll read the campaign concepts and brand voice first, then write platform-compliant copy for each concept.
 [Reads campaign-brief.md, extracts concepts and platforms]
 [Reads brand-profile.json, notes voice axes (formal 7/10, bold 8/10)]
-[Reads ads/references/platform-specs.md for character limits]
+[Reads appflow/references/platform-specs.md for character limits]
 [Writes 5 headlines per concept per platform, validates each against limits]
 [Appends ## Copy Deck section to campaign-brief.md]
 commentary: Always validate character counts before writing. Never exceed limits. Show the count next to each line.
@@ -43,9 +43,9 @@ commentary: Always validate character counts before writing. Never exceed limits
    - `rational_emotional` score → logic vs. story emphasis
    - `descriptors` → adjectives to match in copy tone
 
-3. **Read** `ads/references/platform-specs.md` for character limits.
+3. **Read** `appflow/references/platform-specs.md` for character limits.
 
-3b. **Read** `ads/references/copy-frameworks.md` for ad copy framework templates and structures.
+3b. **Read** `appflow/references/copy-frameworks.md` for ad copy framework templates and structures.
 
 4. **Write copy for each concept × platform combination**. Generate:
    - **5 headline variants** (ordered: most direct → most creative)

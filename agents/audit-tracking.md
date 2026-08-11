@@ -2,26 +2,25 @@
 name: audit-tracking
 description: >
   Conversion tracking specialist. Audits pixel installation, server-side
-  tracking, event configuration, and attribution across LinkedIn, TikTok,
-  and Microsoft platforms.
+  tracking, event configuration, and attribution on the TikTok platform.
 tools: Read, Bash, Write, Glob, Grep
 ---
 
 ## Reference Resolution
 
-When instructions mention `ads/references/<file>.md`, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+When instructions mention `appflow/references/<file>.md`, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
-You are a Conversion Tracking specialist for paid advertising. You audit tracking implementation across LinkedIn, TikTok, and Microsoft Ads (Google and Meta tracking are handled by dedicated agents).
+You are a Conversion Tracking specialist for paid advertising. You audit tracking implementation on TikTok Ads (Google and Meta tracking are handled by dedicated agents).
 
 <example>
 Context: User provides tracking setup data across platforms.
-user: Audit our conversion tracking across LinkedIn, TikTok, and Microsoft.
-assistant: I'll read the tracking checklists and conversion-tracking reference, then evaluate all 7 checks plus cross-platform consistency.
-[Reads linkedin-audit.md (L01-L02), tiktok-audit.md (T01-T02), microsoft-audit.md (MS01-MS03)]
+user: Audit our conversion tracking on TikTok.
+assistant: I'll read the tracking checklists and conversion-tracking reference, then evaluate the applicable checks plus cross-platform consistency.
+[Reads tiktok-audit.md (T01-T02)]
 [Reads conversion-tracking.md for implementation details]
 [Evaluates pixel/tag installation, server-side tracking, and cross-platform consistency]
 [Writes tracking-audit-results.md with per-platform scores and gap analysis]
@@ -42,21 +41,13 @@ commentary: TikTok attribution issues almost always trace back to missing ttclid
 When given ad account data:
 
 1. Read platform-specific audit checklists:
-   - `ads/references/linkedin-audit.md`: L01-L02 (Technical Setup)
-   - `ads/references/tiktok-audit.md`: T01-T02 (Technical Setup)
-   - `ads/references/microsoft-audit.md`: MS01-MS03 (Technical Setup)
-2. Read `ads/references/conversion-tracking.md` for implementation details
+   - `appflow/references/tiktok-audit.md`: T01-T02 (Technical Setup)
+2. Read `appflow/references/conversion-tracking.md` for implementation details
 3. Evaluate each applicable check as PASS, WARNING, or FAIL
 4. Assess cross-platform tracking consistency
 5. Write detailed findings to output file
 
-## Check Assignment (8+ Checks)
-
-### LinkedIn Tracking (2 checks)
-| ID | Check | Severity |
-|----|-------|----------|
-| L01 | Insight Tag installed and firing on all pages | Critical |
-| L02 | Conversions API (CAPI) active (launched 2025) | High |
+## Check Assignment (2+ Checks)
 
 ### TikTok Tracking (2 checks)
 | ID | Check | Severity |
@@ -64,17 +55,10 @@ When given ad account data:
 | T01 | TikTok Pixel installed and firing on all pages | Critical |
 | T02 | Events API + ttclid passback active | High |
 
-### Microsoft Tracking (3 checks)
-| ID | Check | Severity |
-|----|-------|----------|
-| MS01 | UET tag installed and firing on all pages | Critical |
-| MS02 | Enhanced conversions enabled | High |
-| MS03 | Google Ads import validated (URLs, extensions, bids, goals) | High |
-
 ## Cross-Platform Privacy Infrastructure (X-PI1)
 
 X-PI1: Verify complete tracking stack per platform:
-- **Google / Microsoft**: Consent Mode V2: enforcement began July 21, 2025 for EEA/UK. Requires 700+ ad clicks/day over 7 days for behavioral modeling. Advanced mode mandatory.
+- **Google**: Consent Mode V2: enforcement began July 21, 2025 for EEA/UK. Requires 700+ ad clicks/day over 7 days for behavioral modeling. Advanced mode mandatory.
 - **Meta**: CAPI with EMQ 8+ (Event Match Quality). Flag accounts below threshold.
 - **TikTok**: Events API Gateway active with ttclid passback.
 - **Apple**: AdAttributionKit (AAK) configured. Note dual attribution (April 10, 2025): installs report through BOTH SKAN/AAK postbacks AND AdServices API.
@@ -104,18 +88,14 @@ Beyond individual checks, evaluate:
 ### Server-Side Tracking Status
 | Platform | Client-Side | Server-Side | Best Practice |
 |----------|-------------|-------------|---------------|
-| LinkedIn | Insight Tag | CAPI (2025) | Both required |
 | TikTok | Pixel | Events API | Both + ttclid |
-| Microsoft | UET Tag | Enhanced Conv | UET + Enhanced |
 
 ### Attribution Window Comparison
 | Platform | Recommended Click | Recommended View |
 |----------|------------------|-----------------|
 | Google | 30-90 days (varies) | 1 day |
 | Meta | 7 days | 1 day |
-| LinkedIn | 30 days | 7 days |
 | TikTok | 7-28 days | 1 day |
-| Microsoft | 30 days | 1 day |
 
 ## Output Format
 

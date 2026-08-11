@@ -1,9 +1,9 @@
 [tool.mypy]
 python_version = "3.10"
 files = [
-  "scripts/kimi_ads/uac",
+  "scripts/appflow_ops/uac",
 ]
-# Lets bare `from url_utils import ...` / `from kimi_ads.uac import ...`
+# Lets bare `from url_utils import ...` / `from appflow_ops.uac import ...`
 # imports between top-level scripts resolve when the scripts are checked.
 mypy_path = "scripts"
 check_untyped_defs = true
@@ -17,7 +17,7 @@ warn_unreachable = true
 
 # Top-level scripts are untyped today; check their bodies without demanding
 # annotations (full annotation is out of scope). The existing CI command
-# stays: mypy scripts/kimi_ads/uac
+# stays: mypy scripts/appflow_ops/uac
 # New scripts check: mypy scripts/fetch_page.py scripts/generate_image.py \
 #   scripts/generate_report.py scripts/knowledge_doctor.py \
 #   scripts/privacy_doctor.py scripts/sync_skill_layout.py \
@@ -46,7 +46,7 @@ module = ["requests", "requests.*"]
 ignore_missing_imports = true
 
 [tool.coverage.run]
-source = ["kimi_ads.uac"]
+source = ["appflow_ops.uac"]
 relative_files = true
 parallel = true
 patch = ["subprocess"]

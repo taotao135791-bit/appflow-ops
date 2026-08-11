@@ -11,7 +11,7 @@ def _read(repo_root, relative_path: str) -> str:
 
 
 def test_runtime_version_strings_stay_in_sync(repo_root):
-    manifest = json.loads(_read(repo_root, "kimi.plugin.json"))
+    manifest = json.loads(_read(repo_root, "appflow.plugin.json"))
     version = _read(repo_root, "VERSION").strip()
 
     report = _read(repo_root, "scripts/generate_report.py")
@@ -19,9 +19,9 @@ def test_runtime_version_strings_stay_in_sync(repo_root):
 
     assert manifest["version"] == version
     assert f'__version__ = "{version}"' in report
-    assert f"KimiAds/{version}" in fetch_page
-    assert "github.com/taotao135791-bit/kimi-ads" in fetch_page
-    assert "github.com/taotao135791-bit/kimi-ads" in report
+    assert f"AppFlowOps/{version}" in fetch_page
+    assert "github.com/taotao135791-bit/appflow-ops" in fetch_page
+    assert "github.com/taotao135791-bit/appflow-ops" in report
 
 
 def test_installer_uses_local_venv_without_breaking_system_packages(repo_root):
@@ -36,15 +36,11 @@ def test_installer_uses_local_venv_without_breaking_system_packages(repo_root):
     assert ".venv" in install_ps1
 
 
-def test_docs_describe_ads_slash_entries_as_routing_shorthand(repo_root):
-    readme = _read(repo_root, "README.md")
-    readme_en = _read(repo_root, "README.en.md")
+def test_docs_describe_slash_entries_as_routing_shorthand(repo_root):
+    router = _read(repo_root, "skills/appflow/SKILL.md")
     install_sh = _read(repo_root, "install.sh")
 
-    assert "路由 shorthand" in readme
-    assert "不是安装到系统里的 shell 命令" in readme
-    assert "Routing Shorthand" in readme_en
-    assert "not shell commands" in readme_en
+    assert "Users do not need slash commands" in router
     assert "Ask naturally" in install_sh
     assert "Run commands" not in install_sh
 
@@ -56,14 +52,14 @@ def test_reference_paths_have_installed_fallbacks(repo_root):
 
     for path in skill_files + agent_files:
         text = path.read_text(encoding="utf-8")
-        if "ads/references/" not in text:
+        if "appflow/references/" not in text:
             continue
         required = [
             "## Reference Resolution",
-            "${KIMI_SKILL_DIR}/../ads/references/<file>.md",
-            "~/.kimi-code/skills/ads/references/<file>.md",
-            "~/.agents/skills/ads/references/<file>.md",
-            "ads/references/<file>.md",
+            "${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md",
+            "~/.appflow/skills/appflow/references/<file>.md",
+            "~/.agents/skills/appflow/references/<file>.md",
+            "appflow/references/<file>.md",
         ]
         missing = [phrase for phrase in required if phrase not in text]
         if missing:
@@ -80,23 +76,19 @@ def test_gitignore_blocks_generated_python_cache(repo_root):
     assert re.search(r"^\*\.py\[cod\]$", gitignore, re.MULTILINE)
 
 
-def test_private_dashboard_tool_gate_requires_webbridge(repo_root):
+def test_private_dashboard_tool_gate_keeps_safety_rules(repo_root):
     files = [
-        "ads/SKILL.md",
-        "skills/ads/SKILL.md",
-        "ads/references/webbridge-live-audit.md",
-        "skills/ads/references/webbridge-live-audit.md",
-        "ads/references/orchestrator.md",
-        "skills/ads/references/orchestrator.md",
+        "appflow/SKILL.md",
+        "skills/appflow/SKILL.md",
+        "appflow/references/orchestrator.md",
+        "skills/appflow/references/orchestrator.md",
     ]
     required = [
-        "MUST use Kimi WebBridge",
         "MUST NOT use any headless or scripted browser automation",
         "screenshot scripts",
         "page HTML extraction",
         "network scraping",
         "against logged-in dashboards",
-        "ships no headless browser tooling",
         "scripts/fetch_page.py",
     ]
 

@@ -1,0 +1,14 @@
+{
+  "name": "appflow-ops",
+  "version": "3.0.0",
+  "description": "Overseas app-promotion agency operations: audits, UAC experiment loops, funnel diagnosis dashboards, client-safe reporting, and PPC math for agent skills",
+  "license": "MIT",
+  "repository": "https://github.com/taotao135791-bit/appflow-ops",
+  "keywords": ["ads", "app-promotion", "google-ads", "meta-ads", "tiktok-ads", "agency-ops", "audit", "agent-skills"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "AppFlow Ops",
+    "shortDescription": "Overseas app ad-buying agency operations workflows",
+    "longDescription": "AppFlow Ops routes overseas app-promotion agency work into focused sub-skills: audits, UAC Quick Decisions and experiment loops, funnel diagnosis dashboards, client/account isolation, rapid-response plans, daily ops, reports, creative review, tracking checks, and KPI diagnosis."
+  }
+}

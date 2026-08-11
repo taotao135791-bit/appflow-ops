@@ -1,17 +1,61 @@
 # Changelog
 
-All notable changes to Kimi Ads are documented here.
+All notable changes to AppFlow Ops are documented here.
+
+## 3.0.0 — 2026-08-11 (breaking)
+
+### Rebrand and repositioning
+
+- Renamed the product from Kimi Ads to **AppFlow Ops**; repository, plugin
+  manifest (`appflow.plugin.json`), installers, Python package
+  (`scripts/appflow_ops/`), and docs follow.
+- Repositioned to overseas **app-promotion agency operations** (乙方视角).
+  Removed non-app or non-core skills: `ads-amazon`, `ads-linkedin`,
+  `ads-microsoft`, `ads-landing`, `ads-dna`, `ads-photoshoot`, their audit
+  references, and non-app plan templates.
+- Main router renamed `skills/ads/` -> `skills/appflow/` (mirror `ads/` ->
+  `appflow/`); routing shorthand is now `/appflow ...`.
+
+### Agency workflows
+
+- New question discipline (`client-questions-policy.md`): ask only
+  decision-changing questions, batched; infer and mark the rest.
+- New rapid-response workflow for urgent client demands
+  (`ads-ops/references/rapid-response.md`): bounded quick levers, rollback
+  values, dual output (client explanation + internal action ticket), audit
+  trail; numeric safety caps are never waived.
+- Client/account/business isolation: `init-workspace --client <label>`
+  creates `workspaces/<client>/<project>/`; project context records
+  `client_label` and `business_line`; workspaces reject cross-workspace
+  references and keep client deliverables under `reports/client/`.
+
+### Funnel diagnosis dashboard
+
+- New `funnel-dashboard` CLI subcommand (and `scripts/funnel_dashboard.py`):
+  renders a self-contained HTML funnel (spend -> installs -> registrations ->
+  payments), highlights the bottleneck layer, separates observed /
+  calculated / inferred, and reports missing layers as data gaps.
+
+### Install changes
+
+- Default install target is now host-agnostic `~/.appflow/skills`
+  (overridable via `APPFLOW_HOME`); removed vendor-specific desktop targets.
+  Repo URL plumbing env var renamed to `APPFLOW_OPS_REPO_URL`.
+- Browser-bridge live inspection is now optional; exports/pasted tables/
+  screenshots are the default data path.
+- Optimizer profile file renamed to `APPFLOW_OPTIMIZER.md` (legacy
+  `KIMI_ADS_OPTIMIZER.md` still read for backward compatibility).
 
 ## 2.2.0 — 2026-07-20
 
-### Kimi Work install target
+### Desktop install target
 
-- Added a `kimi-work` target to `install.sh` / `install.ps1` (and the
-  uninstallers): installs the bundle into the Kimi Work desktop app's skill
+- Added a desktop-app target to `install.sh` / `install.ps1` (and the
+  uninstallers): installs the bundle into the desktop app's skill
   directory (`~/Library/Application Support/kimi-desktop/daimon-share/daimon/skills`
   on macOS, `%APPDATA%\kimi-desktop\daimon-share\daimon\skills` on Windows,
   overridable via `KIMI_WORK_HOME` or `--skill-dir`). Previously only
-  Kimi Code CLI (`~/.kimi-code/skills`) was covered, so Kimi Work never saw
+  the agent CLI (`~/.appflow/skills`) was covered, so the desktop app never saw
   the skills.
 
 ### Release plumbing
@@ -33,10 +77,10 @@ All notable changes to Kimi Ads are documented here.
 ### Playwright removal and WebBridge-only browser work
 
 - Removed Playwright entirely: deleted `scripts/capture_screenshot.py` and
-  `scripts/analyze_landing.py`. All browser work now goes through Kimi
+  `scripts/analyze_landing.py`. All browser work now goes through the assistant
   WebBridge in the user's real, fully visible logged-in browser; the bundle
   ships no headless browser tooling.
-- Reworded the Live Dashboard Tool Gate in `skills/ads/SKILL.md` and the
+- Reworded the Live Dashboard Tool Gate in `skills/appflow/SKILL.md` and the
   `webbridge-live-audit.md` / `orchestrator.md` references (plus the `ads/`
   mirror) to state the WebBridge-only rule without referencing the deleted
   scripts.
@@ -70,32 +114,32 @@ All notable changes to Kimi Ads are documented here.
 
 ## 2.0.0 — 2026-07-20
 
-### Migration to Kimi Code CLI
+### Migration to the agent CLI
 
-- Migrated the skill bundle from OpenAI Codex CLI to Kimi Code CLI; the product
-  is now Kimi Ads and the new repository home is
-  `github.com/taotao135791-bit/kimi-ads`.
+- Migrated the skill bundle from OpenAI Codex CLI to the agent CLI; the product
+  is now AppFlow Ops and the new repository home is
+  `github.com/taotao135791-bit/appflow-ops`.
 - Changed the default install target to `kimi`: skills now install to
-  `~/.kimi-code/skills` (honoring `$KIMI_CODE_HOME`), and the agent persona
-  briefs ship inside the main skill at `~/.kimi-code/skills/ads/agents`,
-  dispatched to Kimi's built-in `coder` subagent.
-- Replaced Computer Use with Kimi WebBridge (Chrome/Edge extension plus local
+  `~/.appflow/skills` (honoring `$KIMI_CODE_HOME`), and the agent persona
+  briefs ship inside the main skill at `~/.appflow/skills/appflow/agents`,
+  dispatched to the assistant's built-in `coder` subagent.
+- Replaced Computer Use with WebBridge (Chrome/Edge extension plus local
   daemon driving the user's real logged-in browser) for logged-in ad-dashboard
   inspection; public landing-page fetches still use `scripts/fetch_page.py`
   and `scripts/capture_screenshot.py`.
 - Renamed the Python package `codex_ads` to `kimi_ads`, the repository URL
   environment variable to `KIMI_ADS_REPO_URL`, and the optimizer profile files
-  to `KIMI_ADS_OPTIMIZER.md` / `.kimi-ads-optimizer.md`.
+  to `APPFLOW_OPTIMIZER.md` / `.appflow-ops-optimizer.md`.
 - Replaced `.codex-plugin/plugin.json` with the root `kimi.plugin.json`
   (`"skills": "./skills/"`), installable via
-  `/plugins install https://github.com/taotao135791-bit/kimi-ads`.
-- Renamed the project instruction file `CODEX.md` to `AGENTS.md`, which Kimi
+  `/plugins install https://github.com/taotao135791-bit/appflow-ops`.
+- Renamed the project instruction file `CODEX.md` to `AGENTS.md`, which the assistant
   reads as the project instruction file.
 
 ### Compatibility and release status
 
-- Routing shorthand (`/ads audit`, `/ads uac`, ...) is unchanged and can also
-  be reached through the `/skill:ads` invocation; all skill, ledger, replay,
+- Routing shorthand (`/appflow audit`, `/appflow uac`, ...) is unchanged and can also
+  be reached through the `/skill:appflow` invocation; all skill, ledger, replay,
   and workspace contracts from 1.9.x remain readable.
 - The `v2.0.0` tag and GitHub Release were published together with this
   entry; 2.1.0 is now the current stable pin.

@@ -8,8 +8,8 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from kimi_ads.uac.normalization import normalize_uac_input  # noqa: E402
-from kimi_ads.uac.terminology import (  # noqa: E402
+from appflow_ops.uac.normalization import normalize_uac_input  # noqa: E402
+from appflow_ops.uac.terminology import (  # noqa: E402
     canonical_campaign_level,
     extract_campaign_levels,
     resolve_campaign_level,

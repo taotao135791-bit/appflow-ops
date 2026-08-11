@@ -20,8 +20,8 @@ from sync_skill_layout import (  # noqa: E402
 
 
 def _layout(root: Path) -> tuple[Path, Path]:
-    canonical = root / "skills" / "ads"
-    mirror = root / "ads"
+    canonical = root / "skills" / "appflow"
+    mirror = root / "appflow"
     (canonical / "references").mkdir(parents=True)
     (canonical / "SKILL.md").write_text("canonical router\n", encoding="utf-8")
     (canonical / "references" / "one.md").write_text("one\n", encoding="utf-8")

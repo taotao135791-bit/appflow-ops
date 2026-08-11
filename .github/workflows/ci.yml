@@ -75,7 +75,7 @@ jobs:
         run: |
           ruff check .
           ruff format --check .
-          python -m mypy scripts/kimi_ads/uac
+          python -m mypy scripts/appflow_ops/uac
 
       - name: Type-check top-level scripts
         run: >-
@@ -205,7 +205,7 @@ jobs:
       - name: Measure the real UAC package and enforce the floor
         run: >-
           python -m pytest -q
-          --cov=kimi_ads.uac
+          --cov=appflow_ops.uac
           --cov-report=term-missing
           --cov-report=xml:coverage.xml
           --cov-fail-under=80
@@ -241,30 +241,30 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         env:
-          KIMI_ADS_REPO_URL: ${{ github.workspace }}
+          APPFLOW_OPS_REPO_URL: ${{ github.workspace }}
         run: |
           bash -n install.sh
           bash install.sh \
             --target=cursor \
-            --skill-dir="${RUNNER_TEMP}/kimi-ads-skills" \
-            --agent-dir="${RUNNER_TEMP}/kimi-ads-agents"
+            --skill-dir="${RUNNER_TEMP}/appflow-ops-skills" \
+            --agent-dir="${RUNNER_TEMP}/appflow-ops-agents"
           python scripts/ci/check_install_layout.py \
-            --skill-dir "${RUNNER_TEMP}/kimi-ads-skills" \
-            --agents-dir "${RUNNER_TEMP}/kimi-ads-agents"
+            --skill-dir "${RUNNER_TEMP}/appflow-ops-skills" \
+            --agents-dir "${RUNNER_TEMP}/appflow-ops-agents"
           mkdir -p "${RUNNER_TEMP}/installed-uac-project"
-          cp "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-INPUT.example.yaml" \
+          cp "${RUNNER_TEMP}/appflow-ops-skills/ads-google-app/assets/UAC-INPUT.example.yaml" \
             "${RUNNER_TEMP}/installed-uac-project/UAC-INPUT.yaml"
-          cp "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/ADS-EXPERIMENTS.minimal.yaml" \
+          cp "${RUNNER_TEMP}/appflow-ops-skills/ads-google-app/assets/ADS-EXPERIMENTS.minimal.yaml" \
             "${RUNNER_TEMP}/installed-uac-project/ADS-EXPERIMENTS.yaml"
-          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" --help
-          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" doctor \
+          python "${RUNNER_TEMP}/appflow-ops-skills/appflow/scripts/uac_experiment.py" --help
+          python "${RUNNER_TEMP}/appflow-ops-skills/appflow/scripts/uac_experiment.py" doctor \
             "${RUNNER_TEMP}/installed-uac-project" --json
-          python "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" decide \
-            "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-OPS.example.yaml" \
+          python "${RUNNER_TEMP}/appflow-ops-skills/appflow/scripts/uac_experiment.py" decide \
+            "${RUNNER_TEMP}/appflow-ops-skills/ads-google-app/assets/UAC-QUICK-OPS.example.yaml" \
             --json
           python scripts/ci/check_uac_decide_output.py \
-            --script "${RUNNER_TEMP}/kimi-ads-skills/ads/scripts/uac_experiment.py" \
-            "${RUNNER_TEMP}/kimi-ads-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml" \
+            --script "${RUNNER_TEMP}/appflow-ops-skills/appflow/scripts/uac_experiment.py" \
+            "${RUNNER_TEMP}/appflow-ops-skills/ads-google-app/assets/UAC-QUICK-NUMERIC.example.yaml" \
             --profile numeric \
             --determinism \
             --json-output "${RUNNER_TEMP}/installed-uac-numeric-a.json" \
@@ -274,10 +274,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         env:
-          KIMI_ADS_REPO_URL: ${{ github.workspace }}
+          APPFLOW_OPS_REPO_URL: ${{ github.workspace }}
         run: |
-          $skillDir = Join-Path $env:RUNNER_TEMP "kimi-ads-skills"
-          $agentDir = Join-Path $env:RUNNER_TEMP "kimi-ads-agents"
+          $skillDir = Join-Path $env:RUNNER_TEMP "appflow-ops-skills"
+          $agentDir = Join-Path $env:RUNNER_TEMP "appflow-ops-agents"
           ./install.ps1 -Target cursor -SkillDir $skillDir -AgentDir $agentDir
           python scripts/ci/check_install_layout.py `
             --skill-dir $skillDir `
@@ -288,7 +288,7 @@ jobs:
             -Destination (Join-Path $projectDir "UAC-INPUT.yaml")
           Copy-Item (Join-Path $skillDir "ads-google-app/assets/ADS-EXPERIMENTS.minimal.yaml") `
             -Destination (Join-Path $projectDir "ADS-EXPERIMENTS.yaml")
-          $installedScript = Join-Path $skillDir "ads/scripts/uac_experiment.py"
+          $installedScript = Join-Path $skillDir "appflow/scripts/uac_experiment.py"
           $quickInput = Join-Path $skillDir "ads-google-app/assets/UAC-QUICK-OPS.example.yaml"
           python $installedScript --help
           python $installedScript doctor $projectDir --json

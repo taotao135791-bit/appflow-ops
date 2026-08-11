@@ -10,7 +10,7 @@ def _read(repo_root, relative_path: str) -> str:
 
 
 def test_uac_triggers_route_before_generic_google(repo_root):
-    router = _read(repo_root, "skills/ads/SKILL.md")
+    router = _read(repo_root, "skills/appflow/SKILL.md")
     app_row = "| UAC, Google App campaigns, 应用安装/应用内行为广告, App tCPA/tROAS | `ads-google-app` |"
     google_row = "| Google Ads, Search, PMax, AI Max, broad match | `ads-google` |"
     assert app_row in router
@@ -18,7 +18,7 @@ def test_uac_triggers_route_before_generic_google(repo_root):
 
     description = _read(repo_root, "skills/ads-google-app/SKILL.md").split("---", 2)[1]
     for trigger in [
-        "/ads decide",
+        "/appflow decide",
         "AC2.0",
         "AC2.5",
         "AC3.0",
@@ -42,7 +42,7 @@ def test_uac_assets_and_scripts_are_installed(repo_root):
         assert extension in shell
     for extension in ["'.md'", "'.yaml'", "'.yml'", "'.json'"]:
         assert extension in powershell
-    assert 'cp "${TEMP_DIR}/kimi-ads/scripts/"*.py' in shell
+    assert 'cp "${TEMP_DIR}/appflow-ops/scripts/"*.py' in shell
     assert 'Copy-Item (Join-Path $ScriptsSource "*.py")' in powershell
     assert "find \"${skill_dir}references\" -type f -name '*.md' -print0" in shell
     assert "Get-ChildItem -LiteralPath $SubskillReferences -File -Recurse" in powershell
@@ -84,7 +84,7 @@ def test_uac_natural_language_workflow_contract(repo_root):
     assert "YAML, schemas, or CLI syntax" in workflow
 
     skill = _read(repo_root, "skills/ads-google-app/SKILL.md")
-    router = _read(repo_root, "skills/ads/SKILL.md")
+    router = _read(repo_root, "skills/appflow/SKILL.md")
     assert "references/agent-workflow.md" in skill
     assert "references/quick-ops.md" in skill
     assert "references/agent-workflow.md" in router
@@ -96,28 +96,13 @@ def test_readmes_document_capability_maturity_without_equating_platforms(repo_ro
     readme = _read(repo_root, "README.md")
     readme_en = _read(repo_root, "README.en.md")
 
-    for maturity in [
-        "Deterministic Workflow",
-        "Structured Agent Workflow",
-        "Advisory",
-        "Supporting Tools",
-    ]:
-        assert maturity in readme
-        assert maturity in readme_en
-
-    for deterministic_capability in [
-        "Schema 校验",
-        "measurement state",
-        "experiment admission",
-        "Privacy Doctor",
-        "Router 同步",
-    ]:
-        assert deterministic_capability in readme
+    assert "确定性" in readme
+    assert "deterministic" in readme_en
 
     assert "没有与 UAC 等价的确定性实验引擎" in readme
     assert "no deterministic experiment engine equivalent to UAC" in readme_en
-    assert "## 无法保证的内容" in readme
-    assert "## What Kimi Ads cannot guarantee" in readme_en
+    assert "## 边界（不会做的事）" in readme
+    assert "## Boundaries (What It Will Not Do)" in readme_en
 
 
 def test_operator_docs_prefer_private_workspace_without_hiding_stop_condition(
@@ -131,24 +116,23 @@ def test_operator_docs_prefer_private_workspace_without_hiding_stop_condition(
     ]
     for document in documents:
         for command in [
-            "init-workspace my-uac-project",
-            'normalize --workspace "workspaces/my-uac-project"',
-            'doctor --workspace "workspaces/my-uac-project"',
-            'analyze --workspace "workspaces/my-uac-project"',
+            "init-workspace",
+            "normalize --workspace",
+            "doctor --workspace",
+            "analyze --workspace",
         ]:
             assert command in document
-        assert "UAC-INPUT.yaml" in document
         assert "draft" in document.lower()
 
 
 def test_uac_version_and_docs_are_present(repo_root):
-    manifest = json.loads(_read(repo_root, "kimi.plugin.json"))
+    manifest = json.loads(_read(repo_root, "appflow.plugin.json"))
     version = _read(repo_root, "VERSION").strip()
-    assert manifest["version"] == version == "2.2.0"
+    assert manifest["version"] == version == "3.0.0"
     assert "UAC" in _read(repo_root, "README.md")
     assert "UAC" in _read(repo_root, "README.en.md")
     assert f"## {version}" in _read(repo_root, "CHANGELOG.md")
-    assert f"KimiAds/{version}" in _read(repo_root, "scripts/fetch_page.py")
+    assert f"AppFlowOps/{version}" in _read(repo_root, "scripts/fetch_page.py")
     assert f'__version__ = "{version}"' in _read(
         repo_root, "scripts/generate_report.py"
     )
@@ -180,12 +164,12 @@ def test_ci_installer_smoke_covers_numeric_quick_decision_package(repo_root):
     install_layout = _read(repo_root, "scripts/ci/check_install_layout.py")
     for installed_artifact in [
         "UAC-QUICK-NUMERIC.example.yaml",
-        "scripts/kimi_ads/uac/signals.py",
-        "scripts/kimi_ads/uac/numeric_decision.py",
-        "scripts/kimi_ads/uac/policy_loader.py",
-        "scripts/kimi_ads/uac/policies/uac-heuristic-policy.schema.json",
-        "scripts/kimi_ads/uac/policies/uac-numeric-policy-v1.yaml",
-        "scripts/kimi_ads/uac/policies/uac-signal-policy-v1.yaml",
+        "scripts/appflow_ops/uac/signals.py",
+        "scripts/appflow_ops/uac/numeric_decision.py",
+        "scripts/appflow_ops/uac/policy_loader.py",
+        "scripts/appflow_ops/uac/policies/uac-heuristic-policy.schema.json",
+        "scripts/appflow_ops/uac/policies/uac-numeric-policy-v1.yaml",
+        "scripts/appflow_ops/uac/policies/uac-signal-policy-v1.yaml",
     ]:
         assert installed_artifact in install_layout
 

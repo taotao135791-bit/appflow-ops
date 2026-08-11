@@ -21,20 +21,20 @@ the non-App campaign types after the UAC analysis is complete.
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 ## Process
 
 1. Detect campaign type and hand App campaigns to `ads-google-app`.
-2. Collect Google Ads account data. Default to Kimi WebBridge read-only
+2. Collect Google Ads account data. Default to WebBridge read-only
    inspection of the live Google Ads UI when the user is logged in or asks you
    to look directly; otherwise use exports, screenshots, MCP/API data, Change
    History, and Search Terms Report.
-3. If using WebBridge, read `ads/references/webbridge-live-audit.md`
+3. If using WebBridge, read `appflow/references/webbridge-live-audit.md`
    first. Inspect overview, campaign table, recommendations/diagnostics,
    conversion goals/actions, and relevant segments before drawing conclusions.
 4. **Validate**: confirm data covers ≥30 days when possible and includes either
@@ -43,9 +43,9 @@ For any `ads/references/<file>.md` path below, read the first existing path:
 5. **Validate learning-unit grain**: identify the optimization and learning
    unit before judging performance. Do not use country/geo totals as the
    decision unit.
-6. Read `ads/references/google-audit.md` for full 80-check audit
-7. Read `ads/references/benchmarks.md` for Google-specific benchmarks
-8. Read `ads/references/scoring-system.md` for weighted scoring
+6. Read `appflow/references/google-audit.md` for full 80-check audit
+7. Read `appflow/references/benchmarks.md` for Google-specific benchmarks
+8. Read `appflow/references/scoring-system.md` for weighted scoring
 9. Evaluate all applicable checks as PASS, WARNING, or FAIL
 10. **Validate**: confirm all 80 checks evaluated before calculating score
 11. Calculate Google Ads Health Score (0-100)
@@ -153,7 +153,7 @@ Required wording in reports:
 
 ## GAQL & Data Accuracy
 
-Before analyzing data, read `ads/references/gaql-notes.md` for known GAQL field incompatibilities,
+Before analyzing data, read `appflow/references/gaql-notes.md` for known GAQL field incompatibilities,
 deduplication patterns, and filter scope best practices. Key rules:
 
 - Deduplicate keywords by `(ad_group_id + keyword_text + match_type)` before any analysis
@@ -170,7 +170,7 @@ deduplication patterns, and filter scope best practices. Key rules:
 For automated data collection, connect the [Google Ads MCP server](https://github.com/googleads/google-ads-mcp):
 
 - **Tools available**: `search` (GAQL queries), `list_accessible_customers`
-- **Setup**: Configure in `.mcp.json` or Kimi Code CLI MCP settings
+- **Setup**: Configure in `.mcp.json` or the agent CLI MCP settings
 - **Customer ID**: Use a user-provided ID or a local project config if present;
   if no account mapping exists, ask the user instead of assuming a fixed
   `AGENTS.md` structure.
@@ -181,7 +181,7 @@ and campaign structure automatically instead of requiring manual exports.
 
 ## WebBridge Live UI Integration (Default When Available)
 
-When Kimi WebBridge is available and the user is logged into Google Ads, prefer
+When WebBridge is available and the user is logged into Google Ads, prefer
 live read-only UI inspection over asking for manual exports. Use it to inspect:
 
 - Overview cards: date range, timezone, spend, clicks, conversions, value, major changes

@@ -1,21 +1,21 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Kimi Ads Uninstaller for Windows (multi-host).
+    AppFlow Ops Uninstaller for Windows (multi-host).
 .DESCRIPTION
-    Removes every ads-* sub-skill directory plus the orchestrator from the
-    chosen host's install root. For Kimi Code CLI the bundled agents live
-    inside <skill-base>\ads\agents and are removed together with the
-    orchestrator; for hosts with a separate agents directory the bundled
+    Removes every ads-* sub-skill directory plus the router from the
+    chosen host's install root. For the local target the bundled agents live
+    inside <skill-base>\appflow\agents and are removed together with the
+    router; for hosts with a separate agents directory the bundled
     agents are removed from there. Uses glob discovery so new sub-skills
     don't require uninstaller updates.
 .PARAMETER Target
-    Which host CLI to uninstall from. Default: kimi.
+    Which host CLI to uninstall from. Default: local.
 #>
 
 param(
-    [ValidateSet('kimi','kimi-work','codex','cursor','windsurf','gemini','goose')]
-    [string]$Target = 'kimi'
+    [ValidateSet('local','codex','cursor','windsurf','gemini','goose')]
+    [string]$Target = 'local'
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,19 +23,15 @@ $ErrorActionPreference = "Stop"
 function Resolve-TargetPaths {
     param([string]$T)
     switch ($T) {
-        'kimi' {
-            $KimiHome = if ($env:KIMI_CODE_HOME) { $env:KIMI_CODE_HOME } else { Join-Path $HOME ".kimi-code" }
-            return @{ SkillBase = Join-Path $KimiHome "skills";                                            AgentDir = '' }
+        'local' {
+            $AppFlowHome = if ($env:APPFLOW_HOME) { $env:APPFLOW_HOME } else { Join-Path $HOME ".appflow" }
+            return @{ SkillBase = Join-Path $AppFlowHome "skills";                                        AgentDir = '' }
         }
-        'kimi-work' {
-            $KimiWorkHome = if ($env:KIMI_WORK_HOME) { $env:KIMI_WORK_HOME } else { Join-Path $env:APPDATA "kimi-desktop\daimon-share\daimon" }
-            return @{ SkillBase = Join-Path $KimiWorkHome "skills";                                        AgentDir = '' }
-        }
-        'codex'    { return @{ SkillBase = Join-Path $env:USERPROFILE ".codex\skills";                                 AgentDir = Join-Path $env:USERPROFILE ".codex\agents" } }
-        'cursor'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\skills";          AgentDir = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\agents" } }
-        'windsurf' { return @{ SkillBase = Join-Path $env:USERPROFILE ".windsurf\skills";                              AgentDir = Join-Path $env:USERPROFILE ".windsurf\agents" } }
-        'gemini'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".gemini\extensions\kimi-ads\skills";          AgentDir = Join-Path $env:USERPROFILE ".gemini\extensions\kimi-ads\agents" } }
-        'goose'    { return @{ SkillBase = Join-Path $env:USERPROFILE ".config\goose\skills";                          AgentDir = Join-Path $env:USERPROFILE ".config\goose\agents" } }
+        'codex'    { return @{ SkillBase = Join-Path $env:USERPROFILE ".codex\skills";                              AgentDir = Join-Path $env:USERPROFILE ".codex\agents" } }
+        'cursor'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\appflow-ops\skills";     AgentDir = Join-Path $env:USERPROFILE ".cursor\extensions\appflow-ops\agents" } }
+        'windsurf' { return @{ SkillBase = Join-Path $env:USERPROFILE ".windsurf\skills";                           AgentDir = Join-Path $env:USERPROFILE ".windsurf\agents" } }
+        'gemini'   { return @{ SkillBase = Join-Path $env:USERPROFILE ".gemini\extensions\appflow-ops\skills";     AgentDir = Join-Path $env:USERPROFILE ".gemini\extensions\appflow-ops\agents" } }
+        'goose'    { return @{ SkillBase = Join-Path $env:USERPROFILE ".config\goose\skills";                       AgentDir = Join-Path $env:USERPROFILE ".config\goose\agents" } }
         default    { throw "Unknown target: $T" }
     }
 }
@@ -46,14 +42,14 @@ function Main {
     $AgentDir = $paths.AgentDir
 
     if ($AgentDir) {
-        Write-Host "Uninstalling Kimi Ads from $SkillBase and $AgentDir..."
+        Write-Host "Uninstalling AppFlow Ops from $SkillBase and $AgentDir..."
     } else {
-        Write-Host "Uninstalling Kimi Ads from $SkillBase..."
+        Write-Host "Uninstalling AppFlow Ops from $SkillBase..."
     }
 
-    # Remove orchestrator (for Kimi Code CLI this also removes the bundled
-    # agents under <skill-base>\ads\agents)
-    $MainSkill = Join-Path $SkillBase "ads"
+    # Remove router (for the local target this also removes the bundled
+    # agents under <skill-base>\appflow\agents)
+    $MainSkill = Join-Path $SkillBase "appflow"
     if (Test-Path $MainSkill) {
         Remove-Item -Path $MainSkill -Recurse -Force
     }
@@ -66,13 +62,12 @@ function Main {
     }
 
     # Remove bundled audit + creative agents from hosts that have a separate
-    # agents directory. Skipped for Kimi Code CLI — there the persona briefs
-    # live inside <skill-base>\ads\agents and are already removed above.
+    # agents directory. Skipped for the local target — there the persona
+    # briefs live inside <skill-base>\appflow\agents and are already removed
+    # above.
     # NOTE: Keep this list in sync with the contents of `agents/` in the repo.
     # install.ps1 uses `Copy-Item agents\*.md` so any new agent file added
-    # there must also be appended below. Pre-v1.7.1 the list contained
-    # non-existent entries (audit-amazon, audit-attribution, audit-server-side)
-    # and missed the actual shipped agents.
+    # there must also be appended below.
     if ($AgentDir) {
         $Agents = @(
             "audit-budget", "audit-compliance", "audit-creative",
@@ -87,7 +82,7 @@ function Main {
         }
     }
 
-    Write-Host "[OK] Kimi Ads uninstalled." -ForegroundColor Green
+    Write-Host "[OK] AppFlow Ops uninstalled." -ForegroundColor Green
 }
 
 Main

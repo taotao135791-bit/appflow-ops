@@ -23,7 +23,7 @@ python3 scripts/uac_experiment.py decide \
 
 `normalize` 只做字段映射、单位转换和缺口记录，输出的是 normalization envelope，
 不是决策。`decide` 接收完成 UAC 合同的结构化 YAML/JSON；在 Workspace 中，先由
-Kimi 补齐 envelope 中会改变结论的缺口，再使用通过校验的
+AI 助手 补齐 envelope 中会改变结论的缺口，再使用通过校验的
 `normalized/UAC-INPUT.yaml`。
 
 该示例的安全结果是：保持 AC2.5，只把 tCPA 从 `5.0` 调到 `5.5`，日预算保持

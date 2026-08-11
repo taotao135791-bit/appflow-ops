@@ -3,7 +3,7 @@ name: ads-report
 description: >-
   Guided reporting workflow for paid advertising. Exports daily performance reports,
   weekly creative reports, client-ready summaries, and adapts arbitrary client report
-  templates using Kimi WebBridge read-only dashboard/template inspection plus user-provided
+  templates using WebBridge read-only dashboard/template inspection plus user-provided
   files. Use when user says daily report, export daily report, 日报, weekly creative report,
   素材周报, client template, report template, 甲方模板, adapt template, template mapping,
   client-report-map, or reporting.
@@ -13,14 +13,14 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 Creates repeatable client-facing reports from live ad platform data, exports,
-screenshots, pasted metrics, or templates. Default mode is Kimi
+screenshots, pasted metrics, or templates. Default mode is AI 助手
 WebBridge-assisted read-only inspection when the user is logged in.
 
 For UAC/App campaigns, load `ads-google-app`. Use `UAC-ANALYSIS.json` as the
@@ -30,18 +30,18 @@ document independently.
 
 ## Routing Shorthand
 
-These `/ads ...` entries are Kimi routing shorthand, not shell commands.
+These `/appflow ...` entries are AI 助手 routing shorthand, not shell commands.
 
 | Shorthand | What it does |
 | --- | --- |
-| `/ads report` | General report or PDF audit report |
-| `/ads daily` | Daily performance report/export |
-| `/ads creative-weekly` | Weekly creative performance report |
-| `/ads adapt-template` | Read a client template and generate a field mapping before filling |
+| `/appflow report` | General report or PDF audit report |
+| `/appflow daily` | Daily performance report/export |
+| `/appflow creative-weekly` | Weekly creative performance report |
+| `/appflow adapt-template` | Read a client template and generate a field mapping before filling |
 
 ## Guided Access First
 
-Before live collection, read `ads/references/webbridge-live-audit.md` and
+Before live collection, read `appflow/references/webbridge-live-audit.md` and
 use this short guided access prompt:
 
 ```text
@@ -323,4 +323,4 @@ Offer the user one of these outputs:
 - PDF via `scripts/generate_report.py` for audit-style reports
 
 When generating a PDF, follow the Quality Gates in
-`ads/references/orchestrator.md`.
+`appflow/references/orchestrator.md`.

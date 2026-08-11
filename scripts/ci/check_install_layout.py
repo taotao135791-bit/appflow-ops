@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Verify the installed Kimi Ads layout after install.sh / install.ps1.
+"""Verify the installed AppFlow Ops layout after install.sh / install.ps1.
 
 This is the single source of truth for the installer-smoke required-file
 list, shared by the Unix and Windows CI steps. It checks that the main
-skill, sub-skills, scripts (including the ``kimi_ads`` package), references,
+skill, sub-skills, scripts (including the ``appflow_ops`` package), references,
 and agent persona briefs all landed where the installers promise to put them.
 
 Usage:
     python scripts/ci/check_install_layout.py \
-        --skill-dir "${RUNNER_TEMP}/kimi-ads-skills" \
-        --agents-dir "${RUNNER_TEMP}/kimi-ads-agents"
+        --skill-dir "${RUNNER_TEMP}/appflow-ops-skills" \
+        --agents-dir "${RUNNER_TEMP}/appflow-ops-agents"
 
 ``--agents-dir`` is the separate agent install root used by hosts such as
-cursor/codex. Omit it for the Kimi Code CLI layout, where persona briefs live
+cursor/codex. Omit it for the local layout, where persona briefs live
 inside the main skill at ``<skill-dir>/ads/agents``.
 """
 
@@ -31,14 +31,14 @@ REQUIRED_SKILL_FILES = [
     "ads/SKILL.md",
     "ads/VERSION",
     "ads/scripts/uac_experiment.py",
-    "ads/scripts/kimi_ads/uac/engine.py",
-    "ads/scripts/kimi_ads/uac/quick_ops.py",
-    "ads/scripts/kimi_ads/uac/signals.py",
-    "ads/scripts/kimi_ads/uac/numeric_decision.py",
-    "ads/scripts/kimi_ads/uac/policy_loader.py",
-    "ads/scripts/kimi_ads/uac/policies/uac-heuristic-policy.schema.json",
-    "ads/scripts/kimi_ads/uac/policies/uac-numeric-policy-v1.yaml",
-    "ads/scripts/kimi_ads/uac/policies/uac-signal-policy-v1.yaml",
+    "ads/scripts/appflow_ops/uac/engine.py",
+    "ads/scripts/appflow_ops/uac/quick_ops.py",
+    "ads/scripts/appflow_ops/uac/signals.py",
+    "ads/scripts/appflow_ops/uac/numeric_decision.py",
+    "ads/scripts/appflow_ops/uac/policy_loader.py",
+    "ads/scripts/appflow_ops/uac/policies/uac-heuristic-policy.schema.json",
+    "ads/scripts/appflow_ops/uac/policies/uac-numeric-policy-v1.yaml",
+    "ads/scripts/appflow_ops/uac/policies/uac-signal-policy-v1.yaml",
     "ads-google-app/SKILL.md",
     "ads-google-app/assets/UAC-INPUT.example.yaml",
     "ads-google-app/assets/UAC-QUICK-OPS.example.yaml",

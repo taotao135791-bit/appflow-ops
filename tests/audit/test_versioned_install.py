@@ -26,14 +26,14 @@ def _git(repo: Path, *args: str) -> None:
 
 def _installer_fixture(tmp_path: Path) -> Path:
     repository = tmp_path / "fixture-repository"
-    (repository / "skills" / "ads" / "references").mkdir(parents=True)
+    (repository / "skills" / "appflow" / "references").mkdir(parents=True)
     (repository / "skills" / "ads-google-app" / "references").mkdir(parents=True)
     (repository / "agents").mkdir()
     (repository / "scripts").mkdir()
-    (repository / "skills" / "ads" / "SKILL.md").write_text(
-        "---\nname: ads\ndescription: fixture\n---\n", encoding="utf-8"
+    (repository / "skills" / "appflow" / "SKILL.md").write_text(
+        "---\nname: appflow\ndescription: fixture\n---\n", encoding="utf-8"
     )
-    (repository / "skills" / "ads" / "references" / "fixture.md").write_text(
+    (repository / "skills" / "appflow" / "references" / "fixture.md").write_text(
         "fixture\n", encoding="utf-8"
     )
     (repository / "skills" / "ads-google-app" / "SKILL.md").write_text(
@@ -73,7 +73,7 @@ def _run_unix_installer(
     environment.update(
         {
             "HOME": str(destination / "home"),
-            "KIMI_ADS_REPO_URL": str(fixture_repository),
+            "APPFLOW_OPS_REPO_URL": str(fixture_repository),
         }
     )
     skill_dir = destination / "skills with spaces"
@@ -106,7 +106,7 @@ def _run_windows_installer(
     environment = os.environ.copy()
     environment.update(
         {
-            "KIMI_ADS_REPO_URL": str(fixture_repository),
+            "APPFLOW_OPS_REPO_URL": str(fixture_repository),
             "TEMP": str(temporary),
             "USERPROFILE": str(destination / "home"),
         }
@@ -155,11 +155,11 @@ def test_unix_installer_pins_a_tag_and_preserves_default_clone_behavior(
 
     assert pinned.returncode == 0, pinned.stdout + pinned.stderr
     assert development.returncode == 0, development.stdout + development.stderr
-    assert (tmp_path / "pinned" / "skills with spaces" / "ads" / "VERSION").read_text(
+    assert (tmp_path / "pinned" / "skills with spaces" / "appflow" / "VERSION").read_text(
         encoding="utf-8"
     ) == "1.2.3\n"
     assert (
-        tmp_path / "development" / "skills with spaces" / "ads" / "VERSION"
+        tmp_path / "development" / "skills with spaces" / "appflow" / "VERSION"
     ).read_text(encoding="utf-8") == "9.9.9\n"
     for channel in ["pinned", "development"]:
         installed_reference = (
@@ -192,7 +192,7 @@ def test_unix_installer_uses_the_tag_when_a_branch_has_the_same_name(
 
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert (
-        tmp_path / "ambiguous" / "skills with spaces" / "ads" / "VERSION"
+        tmp_path / "ambiguous" / "skills with spaces" / "appflow" / "VERSION"
     ).read_text(encoding="utf-8") == "1.2.3\n"
 
 
@@ -249,7 +249,7 @@ def test_windows_installer_accepts_an_exact_release_ref(
     )
 
     assert completed.returncode == 0, completed.stdout + completed.stderr
-    assert (skill_dir / "ads" / "VERSION").read_text(encoding="utf-8") == "1.2.3\n"
+    assert (skill_dir / "appflow" / "VERSION").read_text(encoding="utf-8") == "1.2.3\n"
     installed_reference = (
         skill_dir / "ads-google-app" / "references" / "agent-workflow.md"
     )
@@ -315,7 +315,7 @@ def test_unix_and_windows_installers_share_the_release_ref_contract(
     assert "show-ref --verify --quiet" in shell
     assert '"refs/tags/${REPO_REF}"' in shell
     assert 'show-ref --verify --quiet "refs/tags/$Ref"' in powershell
-    assert 'cp "${TEMP_DIR}/kimi-ads/VERSION" "${SKILL_DIR}/VERSION"' in shell
+    assert 'cp "${TEMP_DIR}/appflow-ops/VERSION" "${SKILL_DIR}/VERSION"' in shell
     assert 'Copy-Item (Join-Path $SourceDir "VERSION")' in powershell
     assert "--ref=vX.Y.Z" in release_docs
     assert "-Ref vX.Y.Z" in release_docs

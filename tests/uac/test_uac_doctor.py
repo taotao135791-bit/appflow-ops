@@ -14,7 +14,7 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from kimi_ads.uac.doctor import doctor_exit_code, run_doctor  # noqa: E402
+from appflow_ops.uac.doctor import doctor_exit_code, run_doctor  # noqa: E402
 
 
 def _assets(repo_root: Path) -> Path:

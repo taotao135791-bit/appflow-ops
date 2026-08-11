@@ -2,7 +2,7 @@
 #
 # This file is the single source of truth the eval harness uses to enforce:
 #   1. Every check ID listed here MUST have a row in its platform's audit
-#      reference file under ads/references/ (no orphan catalog entries).
+#      reference file under appflow/references/ (no orphan catalog entries).
 #   2. Every check ID with a row in those reference files MUST appear here
 #      (no untracked checks).
 #
@@ -10,16 +10,16 @@
 # pytest in tests/audit/test_check_coverage.py will fail on drift.
 #
 # ID convention (from ads/references/scoring-system.md):
-#   - Sequential IDs (G01, M01, L01, T01, MS01): original v1.0 checks
-#   - Hyphenated IDs (G-AI1, M-AN1, L-CRM1, T-SR1, MS-SI1): v1.5+ additions
-#   - Prefixes: G=Google, M=Meta, L=LinkedIn, T=TikTok, MS=Microsoft
+#   - Sequential IDs (G01, M01, T01): original v1.0 checks
+#   - Hyphenated IDs (G-AI1, M-AN1, T-SR1): v1.5+ additions
+#   - Prefixes: G=Google, M=Meta, T=TikTok
 
 version: "1.0"
 last_updated: "2026-05-17"
 
 platforms:
   google:
-    reference: ads/references/google-audit.md
+    reference: appflow/references/google-audit.md
     total_checks: 80
     skill: ads-google
     audit_agent: audit-google
@@ -106,7 +106,7 @@ platforms:
       - G-WS1
 
   meta:
-    reference: ads/references/meta-audit.md
+    reference: appflow/references/meta-audit.md
     total_checks: 50
     skill: ads-meta
     audit_agent: audit-meta
@@ -162,42 +162,8 @@ platforms:
       - M-ST2
       - M-TH1
 
-  linkedin:
-    reference: ads/references/linkedin-audit.md
-    total_checks: 27
-    skill: ads-linkedin
-    audit_agent: null
-    check_ids:
-      - L01
-      - L02
-      - L03
-      - L04
-      - L05
-      - L06
-      - L07
-      - L08
-      - L09
-      - L10
-      - L11
-      - L12
-      - L13
-      - L14
-      - L15
-      - L16
-      - L17
-      - L18
-      - L19
-      - L20
-      - L21
-      - L22
-      - L23
-      - L24
-      - L25
-      - L-CRM1
-      - L-EU1
-
   tiktok:
-    reference: ads/references/tiktok-audit.md
+    reference: appflow/references/tiktok-audit.md
     total_checks: 28
     skill: ads-tiktok
     audit_agent: null
@@ -230,37 +196,6 @@ platforms:
       - T-EA1
       - T-GM1
       - T-SR1
-
-  microsoft:
-    reference: ads/references/microsoft-audit.md
-    total_checks: 24
-    skill: ads-microsoft
-    audit_agent: null
-    check_ids:
-      - MS01
-      - MS02
-      - MS03
-      - MS04
-      - MS05
-      - MS06
-      - MS07
-      - MS08
-      - MS09
-      - MS10
-      - MS11
-      - MS12
-      - MS13
-      - MS14
-      - MS15
-      - MS16
-      - MS17
-      - MS18
-      - MS19
-      - MS20
-      - MS-CM1
-      - MS-CT1
-      - MS-SI1
-      - MS-VD1
 
 # Severity multipliers (from ads/references/scoring-system.md)
 severity_multipliers:

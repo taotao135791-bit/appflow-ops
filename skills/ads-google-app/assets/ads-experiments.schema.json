@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/taotao135791-bit/kimi-ads/schemas/ads-experiments.schema.json",
-  "title": "Kimi Ads Experiment Ledger",
+  "$id": "https://github.com/taotao135791-bit/appflow-ops/schemas/ads-experiments.schema.json",
+  "title": "AppFlow Ops Experiment Ledger",
   "type": "object",
   "required": ["schema_version", "experiments"],
   "properties": {

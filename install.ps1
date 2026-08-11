@@ -1,40 +1,41 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Kimi Ads Installer for Windows (multi-host).
+    AppFlow Ops Installer for Windows (multi-host).
 .DESCRIPTION
-    Installs the Kimi Ads skill, sub-skills, agents, and reference files
-    for Kimi Code CLI (default) or any of the supported experimental host CLIs.
+    Installs the AppFlow Ops skill, sub-skills, agents, and reference files
+    for a local host-agnostic install (default) or any of the supported
+    experimental host CLIs.
 
     Targets:
-      kimi       Kimi Code CLI (default; agents install under <skill-base>\ads\agents)
-      kimi-work  Kimi Work desktop app
+      local      Host-agnostic install under %USERPROFILE%\.appflow\skills
+                 (default; agents install under <skill-base>\appflow\agents)
       codex      OpenAI Codex CLI
       cursor     Cursor IDE (experimental)
       windsurf   Windsurf IDE (experimental)
       gemini     Gemini CLI (experimental)
       goose      Goose CLI (experimental)
 .PARAMETER Target
-    Which host CLI to install for. Default: kimi.
+    Which host CLI to install for. Default: local.
 .PARAMETER SkillDir
     Override the target's default skill install root.
 .PARAMETER AgentDir
     Override the target's default agent install root.
 .PARAMETER Ref
-    Install one exact final release tag, for example v2.0.0.
+    Install one exact final release tag, for example v3.0.0.
 .EXAMPLE
     .\install.ps1
 .EXAMPLE
-    .\install.ps1 -Target kimi
+    .\install.ps1 -Target local
 .EXAMPLE
     .\install.ps1 -SkillDir C:\Custom\Skills
 .EXAMPLE
-    .\install.ps1 -Ref v2.0.0
+    .\install.ps1 -Ref v3.0.0
 #>
 
 param(
-    [ValidateSet('kimi','kimi-work','codex','cursor','windsurf','gemini','goose')]
-    [string]$Target = 'kimi',
+    [ValidateSet('local','codex','cursor','windsurf','gemini','goose')]
+    [string]$Target = 'local',
     [string]$SkillDir = '',
     [string]$AgentDir = '',
     [ValidatePattern('^v[0-9]+\.[0-9]+\.[0-9]+$')]
@@ -46,22 +47,13 @@ $ErrorActionPreference = "Stop"
 function Resolve-TargetPaths {
     param([string]$T)
     switch ($T) {
-        'kimi' {
-            $KimiHome = if ($env:KIMI_CODE_HOME) { $env:KIMI_CODE_HOME } else { Join-Path $HOME ".kimi-code" }
+        'local' {
+            $AppFlowHome = if ($env:APPFLOW_HOME) { $env:APPFLOW_HOME } else { Join-Path $HOME ".appflow" }
             return @{
-                SkillBase = Join-Path $KimiHome "skills"
+                SkillBase = Join-Path $AppFlowHome "skills"
                 AgentDir  = ''
                 AllowPip  = $true
-                Label     = "Kimi Code CLI"
-            }
-        }
-        'kimi-work' {
-            $KimiWorkHome = if ($env:KIMI_WORK_HOME) { $env:KIMI_WORK_HOME } else { Join-Path $env:APPDATA "kimi-desktop\daimon-share\daimon" }
-            return @{
-                SkillBase = Join-Path $KimiWorkHome "skills"
-                AgentDir  = ''
-                AllowPip  = $true
-                Label     = "Kimi Work (desktop)"
+                Label     = "Local (~/.appflow)"
             }
         }
         'codex' {
@@ -74,8 +66,8 @@ function Resolve-TargetPaths {
         }
         'cursor' {
             return @{
-                SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\skills"
-                AgentDir  = Join-Path $env:USERPROFILE ".cursor\extensions\kimi-ads\agents"
+                SkillBase = Join-Path $env:USERPROFILE ".cursor\extensions\appflow-ops\skills"
+                AgentDir  = Join-Path $env:USERPROFILE ".cursor\extensions\appflow-ops\agents"
                 AllowPip  = $false
                 Label     = "Cursor IDE"
             }
@@ -90,8 +82,8 @@ function Resolve-TargetPaths {
         }
         'gemini' {
             return @{
-                SkillBase = Join-Path $env:USERPROFILE ".gemini\extensions\kimi-ads\skills"
-                AgentDir  = Join-Path $env:USERPROFILE ".gemini\extensions\kimi-ads\agents"
+                SkillBase = Join-Path $env:USERPROFILE ".gemini\extensions\appflow-ops\skills"
+                AgentDir  = Join-Path $env:USERPROFILE ".gemini\extensions\appflow-ops\agents"
                 AllowPip  = $false
                 Label     = "Gemini CLI"
             }
@@ -142,17 +134,17 @@ function Main {
         $AgentDirResolved = $AgentDir
     }
 
-    $SkillDirResolved = Join-Path $SkillBase "ads"
+    $SkillDirResolved = Join-Path $SkillBase "appflow"
     # The environment override supports packaging smoke tests and downstream
     # mirrors. Normal installs keep using the canonical repository.
-    $RepoUrl = if ($env:KIMI_ADS_REPO_URL) {
-        $env:KIMI_ADS_REPO_URL
+    $RepoUrl = if ($env:APPFLOW_OPS_REPO_URL) {
+        $env:APPFLOW_OPS_REPO_URL
     } else {
-        "https://github.com/taotao135791-bit/kimi-ads.git"
+        "https://github.com/taotao135791-bit/appflow-ops.git"
     }
 
     Write-Host "=================================="
-    Write-Host "   Kimi Ads - Installer"
+    Write-Host "   AppFlow Ops - Installer"
     Write-Host "   Target: $HostLabel"
     Write-Host "=================================="
     Write-Host ""
@@ -164,7 +156,7 @@ function Main {
     }
     Write-Host "OK Git detected" -ForegroundColor Green
 
-    # Create directories. Kimi Code CLI has no separate agents directory
+    # Create directories. The local target has no separate agents directory
     # (AgentDir is empty) — its persona briefs live inside the main skill.
     New-Item -ItemType Directory -Path (Join-Path $SkillDirResolved "references") -Force | Out-Null
     if ($AgentDirResolved) {
@@ -172,17 +164,17 @@ function Main {
     }
 
     # Clone to temp directory
-    $TempDir = Join-Path $env:TEMP "kimi-ads-install-$(Get-Random)"
+    $TempDir = Join-Path $env:TEMP "appflow-ops-install-$(Get-Random)"
     if ($Ref) {
-        Write-Host "Downloading Kimi Ads $Ref..."
+        Write-Host "Downloading AppFlow Ops $Ref..."
     } else {
-        Write-Host "Downloading Kimi Ads..."
+        Write-Host "Downloading AppFlow Ops..."
     }
 
     try {
         # Temporarily allow stderr (git writes progress to stderr — treated as error in PS 5.1)
         $ErrorActionPreference = "Continue"
-        $SourceDir = Join-Path $TempDir "kimi-ads"
+        $SourceDir = Join-Path $TempDir "appflow-ops"
         if ($Ref) {
             New-Item -ItemType Directory -Path $SourceDir -Force | Out-Null
             git -C $SourceDir init --quiet 2>&1 | Out-Null
@@ -222,7 +214,7 @@ function Main {
             $CloneExitCode = $LASTEXITCODE
             $ErrorActionPreference = "Stop"
             if ($CloneExitCode -ne 0) {
-                Write-Host "X Failed to clone Kimi Ads from $RepoUrl" -ForegroundColor Red
+                Write-Host "X Failed to clone AppFlow Ops from $RepoUrl" -ForegroundColor Red
                 Write-Host "  Check that the repository exists and that you have access." -ForegroundColor Yellow
                 $CloneOutput | ForEach-Object { Write-Host "  $_" }
                 exit 1
@@ -232,17 +224,17 @@ function Main {
         # Copy main skill + references from the plugin-compatible skill tree.
         Write-Host "Installing skill files..."
         $SkillsSource = Join-Path $SourceDir "skills"
-        $AdsSource = Join-Path $SkillsSource "ads"
-        $ReferencesSource = Join-Path $AdsSource "references"
+        $MainSource = Join-Path $SkillsSource "appflow"
+        $ReferencesSource = Join-Path $MainSource "references"
         $ReferencesTarget = Join-Path $SkillDirResolved "references"
-        Copy-Item (Join-Path $AdsSource "SKILL.md") -Destination (Join-Path $SkillDirResolved "SKILL.md") -Force
+        Copy-Item (Join-Path $MainSource "SKILL.md") -Destination (Join-Path $SkillDirResolved "SKILL.md") -Force
         Copy-Item (Join-Path $ReferencesSource "*.md") -Destination $ReferencesTarget -Force
         Copy-Item (Join-Path $SourceDir "VERSION") -Destination (Join-Path $SkillDirResolved "VERSION") -Force
 
         # Copy sub-skills
         Write-Host "Installing sub-skills..."
         Get-ChildItem $SkillsSource -Directory | ForEach-Object {
-            if ($_.Name -eq "ads") {
+            if ($_.Name -eq "appflow") {
                 return
             }
             $TargetDir = Join-Path $SkillBase $_.Name
@@ -282,10 +274,11 @@ function Main {
         }
 
         # Copy agents. Hosts with a separate agents directory (codex etc.)
-        # receive the persona briefs there; for Kimi Code CLI they are
-        # installed into the main skill at <skill-base>\ads\agents instead.
-        # The source listing is tested first so a missing source tree only
-        # warns, while a real copy failure still throws under ErrorAction Stop.
+        # receive the persona briefs there; for the local target they are
+        # installed into the main skill at <skill-base>\appflow\agents
+        # instead. The source listing is tested first so a missing source tree
+        # only warns, while a real copy failure still throws under
+        # ErrorAction Stop.
         Write-Host "Installing subagents..."
         $AgentsSource = Join-Path $SourceDir "agents"
         $AgentsTarget = $AgentDirResolved
@@ -307,7 +300,7 @@ function Main {
             $ScriptsDir = Join-Path $SkillDirResolved "scripts"
             New-Item -ItemType Directory -Path $ScriptsDir -Force | Out-Null
             Copy-Item (Join-Path $ScriptsSource "*.py") -Destination $ScriptsDir -Force
-            $InternalPackage = Join-Path $ScriptsSource "kimi_ads"
+            $InternalPackage = Join-Path $ScriptsSource "appflow_ops"
             if (Test-Path $InternalPackage) {
                 Copy-Item $InternalPackage -Destination $ScriptsDir -Recurse -Force
             }
@@ -347,7 +340,7 @@ function Main {
             }
         } else {
             Write-Host "i  Skipping Python dependencies - $HostLabel host runtime may not execute Python skills directly." -ForegroundColor Yellow
-            Write-Host "   If you need PDF reports / landing-page analysis / screenshots, install manually:"
+            Write-Host "   If you need PDF reports / funnel dashboards / screenshots, install manually:"
             Write-Host "     pip install -r $SkillDirResolved\requirements.txt"
         }
 
@@ -370,7 +363,7 @@ function Main {
         ).Count
 
         Write-Host ""
-        Write-Host "Kimi Ads installed successfully for $HostLabel!" -ForegroundColor Green
+        Write-Host "AppFlow Ops installed successfully for $HostLabel!" -ForegroundColor Green
         Write-Host ""
         Write-Host "  Installed to:"
         Write-Host "    Skills: $SkillBase"
@@ -381,17 +374,17 @@ function Main {
         }
         Write-Host ""
         Write-Host "  Bundled:"
-        Write-Host "    - 1 main skill (ads orchestrator)"
+        Write-Host "    - 1 main skill (appflow router)"
         Write-Host "    - $SubSkillCount sub-skills (platform + functional + creative + agency ops)"
         Write-Host "    - $AgentCount agents (audit + creative personas)"
         Write-Host "    - $ReferenceCount reference files (main skill)"
         Write-Host "    - $TemplateCount templates (sub-skill Markdown assets)"
         Write-Host ""
         Write-Host "Usage:"
-        Write-Host "  1. Start Kimi Code CLI"
+        Write-Host "  1. Start your AI coding assistant"
         Write-Host "  2. Ask naturally, for example:"
         Write-Host "       Read-only review this ad account. Check KPI, spend pacing, conversion goals, and today's actions."
-        Write-Host "       Or use /skill:ads or routing shorthand: /ads audit, /ads plan saas, /ads google"
+        Write-Host "       Or use /skill:appflow or routing shorthand: /appflow audit, /appflow uac, /appflow google"
         Write-Host ""
         Write-Host "To uninstall: .\uninstall.ps1 -Target $Target"
     }

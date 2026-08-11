@@ -1,10 +1,10 @@
 ---
 name: ads-audit
 description: >-
-  Full multi-platform paid advertising audit with parallel subagent delegation. Analyzes
-  Google Ads, Meta Ads, LinkedIn Ads, TikTok Ads, Microsoft Ads, and Apple Ads accounts
-  via 6 parallel audit agents. Amazon Ads, cross-platform attribution, and server-side
-  tracking are covered by their standalone sub-skills (ads-amazon, ads-attribution,
+  Full multi-platform paid advertising audit for overseas app promotion, with parallel
+  subagent delegation. Analyzes Google Ads, Meta Ads, TikTok Ads, and Apple Ads
+  accounts via parallel audit agents. Cross-platform attribution and server-side
+  tracking are covered by their standalone sub-skills (ads-attribution,
   ads-server-side-tracking). Generates health score per platform and aggregate score
   (0-100). Use when user says audit, full ad check, analyze my ads, account health check,
   paid media audit, paid advertising audit, ad spend audit, advertising audit, or PPC
@@ -15,21 +15,21 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 This audit operates under the **10-Principle Thinking Framework** (see
-`ads/references/thinking-framework.md`). OBSERVE (External + Internal)
+`appflow/references/thinking-framework.md`). OBSERVE (External + Internal)
 dominates data collection, THINK + CONNECT (Lateral) dominate analysis,
 CONNECT (System) + ACCEPT dominate synthesis and prioritization. If the
 audit feels mechanical, you are skipping a principle.
 
 ## Process
 
-1. **Collect account data**: prefer Kimi WebBridge read-only inspection of
+1. **Collect account data**: prefer WebBridge read-only inspection of
    live ad dashboards when the user is logged in or asks you to look directly.
    If WebBridge is unavailable, request exports, screenshots, pasted metrics,
    or API/MCP access.
@@ -37,20 +37,20 @@ audit feels mechanical, you are skipping a principle.
 3. **Detect business type**: analyze account signals per ads orchestrator
 4. **Identify active platforms**: determine which platforms are in use
 5. **Delegate to subagents** (if delegation is available, otherwise run inline
-   sequentially). Kimi Code CLI has no custom subagent registry: dispatch the
+   sequentially). the agent CLI has no custom subagent registry: dispatch the
    built-in `coder` subagent for each specialist. The persona briefs ship
    inside the installed ads skill — read the persona file first (resolve
-   `agents/<name>.md` as `${KIMI_SKILL_DIR}/agents/<name>.md` when running as
-   the ads skill, then `${KIMI_SKILL_DIR}/../../agents/<name>.md` in a plugin
-   install, then `~/.kimi-code/skills/ads/agents/<name>.md`, or the repo
+   `agents/<name>.md` as `${APPFLOW_SKILL_DIR}/agents/<name>.md` when running as
+   the ads skill, then `${APPFLOW_SKILL_DIR}/../../agents/<name>.md` in a plugin
+   install, then `~/.appflow/skills/appflow/agents/<name>.md`, or the repo
    `agents/<name>.md`) and pass its full content as the subagent's brief:
    - `ads-google-app` sub-skill: UAC measurement, learning eligibility,
      optimization feasibility, permission boundary, and one experiment loop
    - `agents/audit-google.md`: Conversion tracking, wasted spend, structure, keywords, ads, settings (80 checks; G01-G61 + 19 hyphenated v1.5+ IDs incl. AI Max)
    - `agents/audit-meta.md`: Pixel/CAPI health, creative fatigue, structure, audience (50 checks; M01-M40 + 10 hyphenated v1.5+ IDs incl. Andromeda)
-   - `agents/audit-creative.md`: LinkedIn, TikTok, Microsoft creative checks + cross-platform synthesis
-   - `agents/audit-tracking.md`: LinkedIn, TikTok, Microsoft tracking + cross-platform tracking health
-   - `agents/audit-budget.md`: LinkedIn, TikTok, Microsoft budget/bidding + cross-platform allocation
+   - `agents/audit-creative.md`: TikTok creative checks + cross-platform synthesis
+   - `agents/audit-tracking.md`: TikTok tracking + cross-platform tracking health
+   - `agents/audit-budget.md`: TikTok budget/bidding + cross-platform allocation
    - `agents/audit-compliance.md`: All-platform compliance, settings, performance benchmarks
 6. **Validate**: verify each subagent returned valid scores with required fields before aggregating
 7. **Score**: calculate per-platform and aggregate Ads Health Score (0-100)
@@ -65,17 +65,16 @@ Do not let the generic health score override a `TRACKING_BLOCKED`,
 Ask the user for available data. Accept any combination:
 - Google Ads: account export, Change History, Search Terms Report
 - Meta Ads: Ads Manager export, Events Manager screenshot, EMQ scores
-- LinkedIn Ads: Campaign Manager export, Insight Tag status
 - TikTok Ads: Ads Manager export, Pixel/Events API status
-- Microsoft Ads: account export, UET tag status, import validation results
+- Apple Ads: Campaign Manager export, attribution (SKAN/AdAttributionKit) status
 
-If live dashboard access is available through Kimi WebBridge, inspect it first
-using `ads/references/webbridge-live-audit.md`. If no live access or exports
+If live dashboard access is available through WebBridge, inspect it first
+using `appflow/references/webbridge-live-audit.md`. If no live access or exports
 are available, audit from screenshots or manual data entry.
 
 ## Scoring
 
-Read `ads/references/scoring-system.md` for full algorithm.
+Read `appflow/references/scoring-system.md` for full algorithm.
 
 ### Per-Platform Weights
 
@@ -83,9 +82,7 @@ Read `ads/references/scoring-system.md` for full algorithm.
 |----------|-----------------|
 | Google | Conversion 25%, Waste 20%, Structure 15%, Keywords 15%, Ads 15%, Settings 10% |
 | Meta | Pixel/CAPI 30%, Creative 30%, Structure 20%, Audience 20% |
-| LinkedIn | Tech 25%, Audience 25%, Creative 20%, Lead Gen 15%, Budget 15% |
 | TikTok | Creative 30%, Tech 25%, Bidding 20%, Structure 15%, Performance 10% |
-| Microsoft | Tech 25%, Syndication 20%, Structure 20%, Creative 20%, Settings 15% |
 
 ### Aggregate Score
 

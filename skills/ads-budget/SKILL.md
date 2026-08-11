@@ -14,19 +14,19 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 ## Process
 
 1. Collect budget and performance data across all active platforms
-2. Read `ads/references/budget-allocation.md` for allocation framework
-3. Read `ads/references/bidding-strategies.md` for strategy decision trees
-4. Read `ads/references/benchmarks.md` for CPC/CPA benchmarks
-5. Read `ads/references/scoring-system.md` for health score algorithm
+2. Read `appflow/references/budget-allocation.md` for allocation framework
+3. Read `appflow/references/bidding-strategies.md` for strategy decision trees
+4. Read `appflow/references/benchmarks.md` for CPC/CPA benchmarks
+5. Read `appflow/references/scoring-system.md` for health score algorithm
 6. **Validate**: confirm spend data covers ≥14 days before evaluating kill/scale decisions
 7. Evaluate budget allocation, bidding strategy, and scaling readiness
 8. **Validate**: verify kill list candidates have sufficient data (≥20 clicks or ≥$100 spend) before recommending pause

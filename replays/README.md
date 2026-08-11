@@ -22,7 +22,7 @@ workspaces/<project>/replays/<replay-id>/
 The six stages have separate ownership:
 
 1. `snapshot-before.yaml` freezes only information available before action.
-2. `system-recommendation.yaml` freezes the exact kimi-ads version,
+2. `system-recommendation.yaml` freezes the exact appflow-ops version,
    feasibility, data gaps, proposed variable, and protected variables.
 3. `human-decision.yaml` records the human judgment and whether the system
    recommendation was accepted.

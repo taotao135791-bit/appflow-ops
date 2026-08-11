@@ -4,7 +4,7 @@ Two invariants:
 
 1. **No orphans in the catalog** — every check ID in
    ``tests/fixtures/check-catalog.yaml`` must appear in its platform's
-   audit reference file under ``ads/references/``.
+   audit reference file under ``appflow/references/``.
 
 2. **No untracked rows in the references** — every check ID with a table
    row in those reference files must appear in the catalog.
@@ -74,10 +74,10 @@ def test_every_reference_row_appears_in_catalog(check_catalog, repo_root):
     assert not failures, "Untracked reference rows:\n  " + "\n  ".join(failures)
 
 
-def test_total_check_count_is_at_least_209(check_catalog):
-    """Sanity: kimi-ads's README headline is '250+ checks'. The 5 platform
-    catalogs alone account for 209; cross-platform (creative, landing, budget,
-    compliance) make up the rest. This test pins the baseline so a future
-    regression that drops checks fires immediately."""
+def test_total_check_count_is_at_least_158(check_catalog):
+    """Sanity: the app-platform catalogs (Google 80 + Meta 50 + TikTok 28)
+    account for 158 checks; cross-platform checks live in the reference
+    files. This test pins the baseline so a future regression that drops
+    checks fires immediately."""
     total = sum(len(p["check_ids"]) for p in check_catalog["platforms"].values())
-    assert total >= 209, f"Platform catalogs total {total}; baseline is 209"
+    assert total >= 158, f"Platform catalogs total {total}; baseline is 158"

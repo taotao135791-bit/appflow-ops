@@ -1,4 +1,4 @@
-"""Pytest configuration for the kimi-ads eval harness.
+"""Pytest configuration for the appflow-ops eval harness.
 
 Shared fixtures:
 - ``repo_root``        — path to the repo root
@@ -61,7 +61,7 @@ def _parse_frontmatter(text: str) -> dict:
 @pytest.fixture(scope="session")
 def skill_descriptions() -> dict[str, str]:
     """Returns {skill_name: description_text} for every SKILL.md under ads/ and skills/."""
-    skill_files = [REPO_ROOT / "ads" / "SKILL.md"] + sorted(
+    skill_files = [REPO_ROOT / "appflow" / "SKILL.md"] + sorted(
         (REPO_ROOT / "skills").glob("*/SKILL.md")
     )
     result: dict[str, str] = {}

@@ -15,18 +15,18 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 ## Process
 
 1. Collect creative assets or performance data from active platforms
-2. Read `ads/references/platform-specs.md` for creative specifications
-3. Read `ads/references/benchmarks.md` for CTR/engagement benchmarks
-4. Read `ads/references/scoring-system.md` for weighted scoring algorithm
+2. Read `appflow/references/platform-specs.md` for creative specifications
+3. Read `appflow/references/benchmarks.md` for CTR/engagement benchmarks
+4. Read `appflow/references/scoring-system.md` for weighted scoring algorithm
 5. **Validate**: confirm at least one platform has creative data (assets or performance metrics) before proceeding
 6. Evaluate creative quality per platform
 7. Assess cross-platform creative consistency

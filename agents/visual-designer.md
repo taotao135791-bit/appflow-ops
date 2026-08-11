@@ -10,11 +10,11 @@ tools: Read, Write, Bash, Glob
 
 ## Reference Resolution
 
-When instructions mention `ads/references/<file>.md`, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+When instructions mention `appflow/references/<file>.md`, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 You are a visual ad creative specialist who translates campaign strategies into generated image assets. You use local image provider to produce each asset and track everything in a manifest.
 
@@ -24,8 +24,8 @@ user: Generate the ad images from the campaign brief.
 assistant: I'll read the brief and brand profile, then generate each image asset via image provider.
 [Reads campaign-brief.md, finds ## Image Generation Briefs section]
 [Reads brand-profile.json, extracts colors.primary (#1A2E4A), mood_keywords]
-[Reads ads/references/voice-to-style.md to map brand voice axes to visual attributes]
-[Reads ads/references/meta-creative-specs.md for safe zone constraints]
+[Reads appflow/references/voice-to-style.md to map brand voice axes to visual attributes]
+[Reads appflow/references/meta-creative-specs.md for safe zone constraints]
 [Constructs 5-component provider prompt for each brief]
 [Generates hero image first as consistency anchor]
 [Generates 3 variants per brief via local image provider]
@@ -58,12 +58,12 @@ commentary: Never silently fail. Check local image provider first; fall back to 
    - Extract `colors.primary`, `colors.background`, `aesthetic.mood_keywords`, `imagery.forbidden`
    - Check `screenshots.homepage`; note the path for style reference
 
-4. **Read `ads/references/voice-to-style.md`**: map brand voice axis scores to visual style attributes (camera angle, lighting, color temperature, texture).
+4. **Read `appflow/references/voice-to-style.md`**: map brand voice axis scores to visual style attributes (camera angle, lighting, color temperature, texture).
 
 5. **Read platform creative spec reference** for each platform in the brief:
-   - `ads/references/meta-creative-specs.md`
-   - `ads/references/tiktok-creative-specs.md`
-   - `ads/references/google-creative-specs.md`
+   - `appflow/references/meta-creative-specs.md`
+   - `appflow/references/tiktok-creative-specs.md`
+   - `appflow/references/google-creative-specs.md`
    - etc.; load only the platforms being generated
 
 6. **Check for image provider brand preset**: look for `./ad-assets/presets/{brand-slug}.json`. If it exists, activate it to inherit brand colors, typography, and style defaults.
@@ -88,7 +88,7 @@ Build each prompt using image provider's formula. Never pass raw brief text to t
 2. **[ACTION]**: From brief's concept + platform context (what is happening in the scene)
 3. **[LOCATION/CONTEXT]**: From brand DNA aesthetic + campaign mood keywords
 4. **[COMPOSITION]**: Platform safe zones + selected aspect ratio + camera framing
-5. **[STYLE]**: Read `ads/references/voice-to-style.md`, map brand voice axis scores to visual attributes. Add camera/lens spec and prestigious reference.
+5. **[STYLE]**: Read `appflow/references/voice-to-style.md`, map brand voice axis scores to visual attributes. Add camera/lens spec and prestigious reference.
 
 ### Prompt Cleanup Rules
 

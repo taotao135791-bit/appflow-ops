@@ -16,7 +16,7 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from kimi_ads.uac.workspace import (  # noqa: E402
+from appflow_ops.uac.workspace import (  # noqa: E402
     WORKSPACE_DIRECTORY_NAMES,
     Workspace,
     initialize_workspace,
@@ -412,7 +412,7 @@ def test_root_and_workspace_gitignore_protect_private_data_but_not_public_exampl
 
 
 def test_workspace_api_doctor_discovers_nested_files(repo_root, tmp_path):
-    from kimi_ads.uac.doctor import run_doctor
+    from appflow_ops.uac.doctor import run_doctor
 
     workspace = initialize_workspace("api", base_dir=tmp_path)
     shutil.copyfile(

@@ -15,7 +15,7 @@ entries:
     topic: google_uac
     paths:
       - skills/ads-google-app/SKILL.md
-      - skills/ads/references/google-audit.md
+      - skills/appflow/references/google-audit.md
     source_type: official_platform_documentation
     source_reference: Google Ads official documentation for App campaigns
     rule_type: platform_guidance
@@ -28,7 +28,7 @@ entries:
     topic: meta
     paths:
       - skills/ads-meta/SKILL.md
-      - skills/ads/references/meta-audit.md
+      - skills/appflow/references/meta-audit.md
     source_type: official_platform_documentation
     source_reference: Meta official business and advertising documentation
     rule_type: platform_guidance
@@ -41,7 +41,7 @@ entries:
     topic: tiktok
     paths:
       - skills/ads-tiktok/SKILL.md
-      - skills/ads/references/tiktok-audit.md
+      - skills/appflow/references/tiktok-audit.md
     source_type: official_platform_documentation
     source_reference: TikTok for Business official documentation
     rule_type: platform_guidance
@@ -53,7 +53,7 @@ entries:
   - id: advertising-policy-guidance
     topic: policy
     paths:
-      - skills/ads/references/compliance.md
+      - skills/appflow/references/compliance.md
     source_type: official_policy_documentation
     source_reference: Official advertising platform policy centers
     rule_type: policy
@@ -65,10 +65,10 @@ entries:
   - id: platform-specifications
     topic: platform_specs
     paths:
-      - skills/ads/references/platform-specs.md
-      - skills/ads/references/google-creative-specs.md
-      - skills/ads/references/meta-creative-specs.md
-      - skills/ads/references/tiktok-creative-specs.md
+      - skills/appflow/references/platform-specs.md
+      - skills/appflow/references/google-creative-specs.md
+      - skills/appflow/references/meta-creative-specs.md
+      - skills/appflow/references/tiktok-creative-specs.md
     source_type: official_platform_documentation
     source_reference: Official campaign and creative specification documentation
     rule_type: platform_guidance
@@ -81,7 +81,7 @@ entries:
     topic: attribution
     paths:
       - skills/ads-attribution/SKILL.md
-      - skills/ads/references/conversion-tracking.md
+      - skills/appflow/references/conversion-tracking.md
     source_type: official_measurement_documentation
     source_reference: Official platform and measurement-provider documentation
     rule_type: platform_guidance
@@ -94,7 +94,7 @@ entries:
     topic: budget
     paths:
       - skills/ads-budget/SKILL.md
-      - skills/ads/references/budget-allocation.md
+      - skills/appflow/references/budget-allocation.md
     source_type: maintainer_experience_pending_source_review
     source_reference: Project heuristics awaiting per-rule source classification
     rule_type: heuristic
@@ -106,7 +106,7 @@ entries:
   - id: bidding-guidance
     topic: budget
     paths:
-      - skills/ads/references/bidding-strategies.md
+      - skills/appflow/references/bidding-strategies.md
     source_type: official_platform_documentation
     source_reference: Official platform budget and bidding documentation
     rule_type: platform_guidance

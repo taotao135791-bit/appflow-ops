@@ -15,14 +15,14 @@ import yaml
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from kimi_ads.uac.policy_loader import (  # noqa: E402
+from appflow_ops.uac.policy_loader import (  # noqa: E402
     POLICY_DIRECTORY,
     POLICY_SCHEMA_PATH,
     load_policy,
     load_policy_set,
 )
-from kimi_ads.uac.types import ContractError  # noqa: E402
-from kimi_ads.uac.workspace import initialize_workspace  # noqa: E402
+from appflow_ops.uac.types import ContractError  # noqa: E402
+from appflow_ops.uac.workspace import initialize_workspace  # noqa: E402
 
 
 _NUMERIC_OVERRIDE_NAME = "uac-numeric-policy.yaml"

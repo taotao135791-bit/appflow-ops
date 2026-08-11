@@ -17,8 +17,8 @@ def test_ordinary_ci_enforces_quality_coverage_and_operator_smokes(
     for contract in [
         "ruff check .",
         "ruff format --check .",
-        "python -m mypy scripts/kimi_ads/uac",
-        "--cov=kimi_ads.uac",
+        "python -m mypy scripts/appflow_ops/uac",
+        "--cov=appflow_ops.uac",
         "--cov-report=xml:coverage.xml",
         "--cov-fail-under=80",
         "scripts/privacy_doctor.py --json",

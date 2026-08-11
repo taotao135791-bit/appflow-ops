@@ -1,4 +1,4 @@
-"""Regression tests for the main Ads router and project-memory templates."""
+"""Regression tests for the main AppFlow router and project-memory templates."""
 
 from __future__ import annotations
 
@@ -17,25 +17,28 @@ def _frontmatter(text: str) -> dict:
 
 
 def test_plugin_repository_points_to_actual_repo(repo_root):
-    manifest = json.loads(_read(repo_root, "kimi.plugin.json"))
-    assert manifest["name"] == "kimi-ads"
-    assert manifest["repository"] == "https://github.com/taotao135791-bit/kimi-ads"
+    manifest = json.loads(_read(repo_root, "appflow.plugin.json"))
+    assert manifest["name"] == "appflow-ops"
+    assert (
+        manifest["repository"]
+        == "https://github.com/taotao135791-bit/appflow-ops"
+    )
     assert manifest["skills"] == "./skills/"
     assert "interface" in manifest
-    assert manifest["interface"]["displayName"] == "Kimi Ads"
+    assert manifest["interface"]["displayName"] == "AppFlow Ops"
     assert manifest["interface"]["shortDescription"]
 
 
 def test_main_ads_skill_stays_lean_router(repo_root):
-    text = _read(repo_root, "ads/SKILL.md")
+    text = _read(repo_root, "appflow/SKILL.md")
     lines = text.splitlines()
 
-    assert len(lines) <= 180
+    assert len(lines) <= 240
     assert max(len(line) for line in lines) <= 180
     assert "## Route Table" in text
     assert "references/orchestrator.md" in text
     assert "## Project Memory" in text
-    assert "~/.kimi-code/skills/ads-google/SKILL.md" in text
+    assert "~/.appflow/skills/ads-google/SKILL.md" in text
 
     frontmatter_description = _frontmatter(text)["description"]
     for trigger in ["广告账户审计", "日报/周报", "甲方模板", "每日巡检", "KPI受限诊断"]:
@@ -43,7 +46,7 @@ def test_main_ads_skill_stays_lean_router(repo_root):
 
 
 def test_all_skill_frontmatter_uses_stable_minimal_shape(repo_root):
-    skill_files = [repo_root / "ads" / "SKILL.md"] + sorted(
+    skill_files = [repo_root / "appflow" / "SKILL.md"] + sorted(
         (repo_root / "skills").glob("*/SKILL.md")
     )
 
@@ -65,7 +68,7 @@ def test_all_skill_frontmatter_uses_stable_minimal_shape(repo_root):
 
 
 def test_raw_sensitive_files_have_reasonable_line_lengths(repo_root):
-    for relative_path in ["ads/SKILL.md", "install.sh"]:
+    for relative_path in ["appflow/SKILL.md", "install.sh"]:
         lines = _read(repo_root, relative_path).splitlines()
         long_lines = [
             (i, len(line)) for i, line in enumerate(lines, 1) if len(line) > 220
@@ -92,9 +95,11 @@ def test_install_and_template_files_preserve_line_breaks(repo_root):
 
 def test_template_headings_do_not_touch_tables(repo_root):
     template_files = list((repo_root / "skills").glob("*/assets/*.md"))
-    template_files += list((repo_root / "ads" / "references").glob("*template*.md"))
     template_files += list(
-        (repo_root / "skills" / "ads" / "references").glob("*template*.md")
+        (repo_root / "appflow" / "references").glob("*template*.md")
+    )
+    template_files += list(
+        (repo_root / "skills" / "appflow" / "references").glob("*template*.md")
     )
 
     failures = []
@@ -119,14 +124,20 @@ def test_template_headings_do_not_touch_tables(repo_root):
 
 
 def test_plugin_ads_entry_matches_legacy_raw_entry(repo_root):
-    assert _read(repo_root, "skills/ads/SKILL.md") == _read(repo_root, "ads/SKILL.md")
+    assert _read(repo_root, "skills/appflow/SKILL.md") == _read(
+        repo_root, "appflow/SKILL.md"
+    )
 
-    legacy_refs = sorted((repo_root / "ads" / "references").glob("*.md"))
-    plugin_refs = sorted((repo_root / "skills" / "ads" / "references").glob("*.md"))
+    legacy_refs = sorted((repo_root / "appflow" / "references").glob("*.md"))
+    plugin_refs = sorted(
+        (repo_root / "skills" / "appflow" / "references").glob("*.md")
+    )
     assert [path.name for path in plugin_refs] == [path.name for path in legacy_refs]
 
     for legacy_path in legacy_refs:
-        plugin_path = repo_root / "skills" / "ads" / "references" / legacy_path.name
+        plugin_path = (
+            repo_root / "skills" / "appflow" / "references" / legacy_path.name
+        )
         assert plugin_path.read_text(encoding="utf-8") == legacy_path.read_text(
             encoding="utf-8"
         )

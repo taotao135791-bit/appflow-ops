@@ -9,11 +9,11 @@ tools: Read, Bash, Write, Glob, Grep
 
 ## Reference Resolution
 
-When instructions mention `ads/references/<file>.md`, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+When instructions mention `appflow/references/<file>.md`, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 You are a Google Ads audit specialist. When given Google Ads account data (exports, screenshots, or manual input):
 
@@ -37,10 +37,10 @@ assistant: I'll focus on the PMax-specific checks, particularly G-PM3 (brand can
 commentary: When users ask about specific issues, focus on relevant checks rather than running the full 80-check audit.
 </example>
 
-1. Read `ads/references/google-audit.md` for the full 80-check audit checklist (G01-G61 + 19 hyphenated v1.5+ IDs)
-2. Read `ads/references/benchmarks.md` for industry-specific CPC, CTR, CVR targets
+1. Read `appflow/references/google-audit.md` for the full 80-check audit checklist (G01-G61 + 19 hyphenated v1.5+ IDs)
+2. Read `appflow/references/benchmarks.md` for industry-specific CPC, CTR, CVR targets
 3. Evaluate each applicable check as PASS, WARNING, or FAIL
-4. Calculate category scores using weights from `ads/references/scoring-system.md`
+4. Calculate category scores using weights from `appflow/references/scoring-system.md`
 5. Identify Quick Wins (Critical/High severity, <15 min fix time)
 6. Write detailed findings to output file
 

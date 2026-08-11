@@ -17,7 +17,7 @@ import pytest
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from kimi_ads.uac.signals import derive_signals  # noqa: E402
+from appflow_ops.uac.signals import derive_signals  # noqa: E402
 
 
 def _daily_series(

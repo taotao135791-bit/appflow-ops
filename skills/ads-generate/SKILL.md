@@ -13,24 +13,24 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 Generates platform-sized ad creative images from your campaign brief and brand
 profile. Uses image provider as the image generation provider.
 
 ## Quick Reference
 
-These `/ads ...` entries are Kimi routing shorthand, not shell commands.
+These `/appflow ...` entries are AI 助手 routing shorthand, not shell commands.
 
 | Shorthand | What it does |
 |---------|-------------|
-| `/ads generate` | Generate all images from campaign-brief.md |
-| `/ads generate --platform meta` | Generate Meta assets only |
-| `/ads generate --prompt "text" --ratio 9:16` | Standalone generation without brief |
+| `/appflow generate` | Generate all images from campaign-brief.md |
+| `/appflow generate --platform meta` | Generate Meta assets only |
+| `/appflow generate --prompt "text" --ratio 9:16` | Standalone generation without brief |
 
 ## Environment Setup
 
@@ -75,7 +75,7 @@ Then skip to Step 5.
 
 ### Step 3: Read Provider Config
 
-Load `ads/references/image-providers.md` to confirm:
+Load `appflow/references/image-providers.md` to confirm:
 - Active provider pricing (show user the cost estimate)
 - Rate limits for current tier
 - Batch API availability
@@ -83,12 +83,12 @@ Load `ads/references/image-providers.md` to confirm:
 ### Step 4: Read Platform Specs
 
 For each platform in the campaign brief, load the relevant spec reference:
-- `ads/references/meta-creative-specs.md`
-- `ads/references/google-creative-specs.md`
-- `ads/references/tiktok-creative-specs.md`
-- `ads/references/linkedin-creative-specs.md`
-- `ads/references/youtube-creative-specs.md`
-- `ads/references/microsoft-creative-specs.md`
+- `appflow/references/meta-creative-specs.md`
+- `appflow/references/google-creative-specs.md`
+- `appflow/references/tiktok-creative-specs.md`
+- `appflow/references/linkedin-creative-specs.md`
+- `appflow/references/youtube-creative-specs.md`
+- `appflow/references/microsoft-creative-specs.md`
 
 ### Step 5: Prepare image provider Configuration
 
@@ -183,6 +183,5 @@ Use `python scripts/generate_image.py` directly with the specified prompt and as
 
 ## Reference Files
 
-- `ads/references/image-providers.md`: provider config, pricing, limits
-- `ads/references/[platform]-creative-specs.md`: per-platform specs
-- `ads/references/brand-dna-template.md`: brand injection schema
+- `appflow/references/image-providers.md`: provider config, pricing, limits
+- `appflow/references/[platform]-creative-specs.md`: per-platform specs

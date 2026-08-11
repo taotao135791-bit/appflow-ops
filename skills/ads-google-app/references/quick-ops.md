@@ -19,7 +19,7 @@ report. Keep the live account read-only until the user confirms one exact edit.
 
 ## 1. Entry and output contract
 
-Route `/ads decide` and questions such as these to Quick Decision:
+Route `/appflow decide` and questions such as these to Quick Decision:
 
 - 这素材还能跑吗？
 - 新素材放现有 campaign 还是新开？

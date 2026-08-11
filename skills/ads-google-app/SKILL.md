@@ -2,7 +2,7 @@
 name: ads-google-app
 description: >-
   Google App campaigns (UAC) Quick Decisions, diagnosis, experiments, and reports for
-  app-install and in-app action/value campaigns. Use for /ads decide, AC2.0/AC2.5/AC3.0,
+  app-install and in-app action/value campaigns. Use for /appflow decide, AC2.0/AC2.5/AC3.0,
   广告 2.0/2.5/3.0, UAC, Google UAC, App campaign, Google App campaigns, 应用安装广告,
   应用内行为广告, tCPA App campaign, tROAS App campaign, or Google 应用广告.
 ---
@@ -20,34 +20,34 @@ platform limits.
 
 Read resources from the first existing location:
 
-- Skill assets: `${KIMI_SKILL_DIR}/assets/`,
-  `~/.kimi-code/skills/ads-google-app/assets/`, `assets/`, or
+- Skill assets: `${APPFLOW_SKILL_DIR}/assets/`,
+  `~/.appflow/skills/ads-google-app/assets/`, `assets/`, or
   `../skills/ads-google-app/assets/`
-- Deterministic helper: `${KIMI_SKILL_DIR}/../ads/scripts/uac_experiment.py`,
-  `${KIMI_SKILL_DIR}/../../scripts/uac_experiment.py` (plugin install),
-  `~/.kimi-code/skills/ads/scripts/uac_experiment.py`,
+- Deterministic helper: `${APPFLOW_SKILL_DIR}/../ads/scripts/uac_experiment.py`,
+  `${APPFLOW_SKILL_DIR}/../../scripts/uac_experiment.py` (plugin install),
+  `~/.appflow/skills/appflow/scripts/uac_experiment.py`,
   `../../scripts/uac_experiment.py`, or `scripts/uac_experiment.py`
-- Versioned policy defaults: `${KIMI_SKILL_DIR}/../ads/scripts/kimi_ads/uac/policies/`,
-  `${KIMI_SKILL_DIR}/../../scripts/kimi_ads/uac/policies/` (plugin install),
-  `~/.kimi-code/skills/ads/scripts/kimi_ads/uac/policies/`,
-  or `../../scripts/kimi_ads/uac/policies/`
-- Natural-language workflow: `${KIMI_SKILL_DIR}/references/agent-workflow.md`,
-  `~/.kimi-code/skills/ads-google-app/references/agent-workflow.md`,
+- Versioned policy defaults: `${APPFLOW_SKILL_DIR}/../ads/scripts/appflow_ops/uac/policies/`,
+  `${APPFLOW_SKILL_DIR}/../../scripts/appflow_ops/uac/policies/` (plugin install),
+  `~/.appflow/skills/appflow/scripts/appflow_ops/uac/policies/`,
+  or `../../scripts/appflow_ops/uac/policies/`
+- Natural-language workflow: `${APPFLOW_SKILL_DIR}/references/agent-workflow.md`,
+  `~/.appflow/skills/ads-google-app/references/agent-workflow.md`,
   `references/agent-workflow.md`, or
   `skills/ads-google-app/references/agent-workflow.md`
-- Quick Ops rules: `${KIMI_SKILL_DIR}/references/quick-ops.md`,
-  `~/.kimi-code/skills/ads-google-app/references/quick-ops.md`,
+- Quick Ops rules: `${APPFLOW_SKILL_DIR}/references/quick-ops.md`,
+  `~/.appflow/skills/ads-google-app/references/quick-ops.md`,
   `references/quick-ops.md`, or
   `skills/ads-google-app/references/quick-ops.md`
-- Global safety: `${KIMI_SKILL_DIR}/../ads/references/orchestrator.md`,
-  `~/.kimi-code/skills/ads/references/orchestrator.md`,
-  `../ads/references/orchestrator.md`, or `../skills/ads/references/orchestrator.md`
+- Global safety: `${APPFLOW_SKILL_DIR}/../appflow/references/orchestrator.md`,
+  `~/.appflow/skills/appflow/references/orchestrator.md`,
+  `../appflow/references/orchestrator.md`, or `../skills/appflow/references/orchestrator.md`
 
-For any other `ads/references/<file>.md`, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any other `appflow/references/<file>.md`, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 Useful assets:
 
@@ -113,7 +113,7 @@ finished, stop at the stated wait/data request instead of creating activity.
    conversion volume, conversion delay, guardrails, and concurrent changes.
 4. Do not stack a new variable while a key experiment is waiting for maturity
    or volume without an explicit reason.
-5. For private live dashboards, use Kimi WebBridge read-only under the main
+5. For private live dashboards, use WebBridge read-only under the main
    Ads safety gate. Never use browser scraping or screenshot scripts.
 6. Build only the selected output: a Quick card, diagnosis, experiment draft,
    or formal report. Never turn a Quick operation into a ledger experiment
@@ -355,7 +355,7 @@ python3 scripts/uac_experiment.py normalize UAC-SUMMARY.csv \
 Normalization only maps and converts fields. Its envelope records normalized
 values, missing fields, conversion errors, extras, and source mappings; it is
 not a drop-in `analyze` input, makes no advertising decision, never overwrites
-the source, and does not process XLSX directly. Kimi may read a user-provided
+the source, and does not process XLSX directly. AI 助手 may read a user-provided
 XLSX and construct the structured contract, but must preserve these same
 decision gates.
 

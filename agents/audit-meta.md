@@ -9,11 +9,11 @@ tools: Read, Bash, Write, Glob, Grep
 
 ## Reference Resolution
 
-When instructions mention `ads/references/<file>.md`, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+When instructions mention `appflow/references/<file>.md`, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 You are a Meta Ads audit specialist covering Facebook and Instagram advertising. When given Meta Ads account data:
 
@@ -38,10 +38,10 @@ assistant: This sounds like creative fatigue. I'll focus on M28 (CTR decline >20
 commentary: CTR decline over 14 days is the primary creative fatigue signal. Check frequency and creative age before recommending full restructuring.
 </example>
 
-1. Read `ads/references/meta-audit.md` for the full 50-check audit checklist (M01-M40 + 10 hyphenated v1.5+ IDs)
-2. Read `ads/references/benchmarks.md` for Meta-specific benchmarks by objective
+1. Read `appflow/references/meta-audit.md` for the full 50-check audit checklist (M01-M40 + 10 hyphenated v1.5+ IDs)
+2. Read `appflow/references/benchmarks.md` for Meta-specific benchmarks by objective
 3. Evaluate each applicable check as PASS, WARNING, or FAIL
-4. Calculate category scores using weights from `ads/references/scoring-system.md`
+4. Calculate category scores using weights from `appflow/references/scoring-system.md`
 5. Identify Quick Wins (Critical/High severity, <15 min fix time)
 6. Write detailed findings to output file
 
@@ -99,7 +99,7 @@ If Advantage+ Sales campaigns exist:
 If ads are in restricted categories (housing, employment, credit, financial products):
 - Verify Special Ad Category declared before campaign creation
 - No ZIP code targeting, age 18-65+ only, no Lookalike
-- Read `ads/references/compliance.md` for full requirements
+- Read `appflow/references/compliance.md` for full requirements
 
 ## Output Format
 

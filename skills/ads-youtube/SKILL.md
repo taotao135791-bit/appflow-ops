@@ -1,11 +1,12 @@
 ---
 name: ads-youtube
 description: >-
-  YouTube Ads specific analysis covering campaign types, creative quality, audience
+  YouTube Ads analysis for app promotion: campaign types, creative quality, audience
   targeting, and measurement. Evaluates video ad performance across skippable in-stream,
   non-skippable, bumper, Shorts, Demand Gen, and Connected TV (CTV) formats. Covers
   VAC→Demand Gen migration, Shorts creative requirements, CTV shoppable ads, and frequency
-  capping. Use when user says YouTube Ads, video ads, pre-roll, bumper ads, skippable
+  capping, with app-install and in-app-event optimization as the primary use
+  case. Use when user says YouTube Ads, video ads, pre-roll, bumper ads, skippable
   in-stream, YouTube campaign, YouTube Shorts ads, Demand Gen, VAC, or CTV YouTube ads.
   中文触发: YouTube 广告, 视频贴片广告, YouTube 投放诊断.
 ---
@@ -14,21 +15,21 @@ description: >-
 
 ## Reference Resolution
 
-For any `ads/references/<file>.md` path below, read the first existing path:
-`${KIMI_SKILL_DIR}/../ads/references/<file>.md`,
-`~/.kimi-code/skills/ads/references/<file>.md`,
-`~/.agents/skills/ads/references/<file>.md`,
-`skills/ads/references/<file>.md`, then `ads/references/<file>.md`.
+For any `appflow/references/<file>.md` path below, read the first existing path:
+`${APPFLOW_SKILL_DIR}/../appflow/references/<file>.md`,
+`~/.appflow/skills/appflow/references/<file>.md`,
+`~/.agents/skills/appflow/references/<file>.md`,
+`skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 
 <!-- Updated: 2026-04-13 | v1.5: Demand Gen replaces VAC, Shorts expansion, CTV section, frequency capping -->
 
 ## Process
 
 1. Collect YouTube Ads data (Google Ads export filtered to Video campaigns)
-2. Read `ads/references/google-audit.md` for YouTube-relevant checks (incl. G-DG1 through G-DG3, G-CTV1)
-3. Read `ads/references/platform-specs.md` for video specifications
-4. Read `ads/references/benchmarks.md` for YouTube benchmarks
-5. Read `ads/references/scoring-system.md` for health score algorithm
+2. Read `appflow/references/google-audit.md` for YouTube-relevant checks (incl. G-DG1 through G-DG3, G-CTV1)
+3. Read `appflow/references/platform-specs.md` for video specifications
+4. Read `appflow/references/benchmarks.md` for YouTube benchmarks
+5. Read `appflow/references/scoring-system.md` for health score algorithm
 6. **Validate**: confirm at least one active video campaign exists before proceeding
 7. **Check**: flag any remaining Video Action Campaigns (VAC). All auto-upgraded to Demand Gen by April 2026
 8. Evaluate campaign setup, creative quality, targeting, and measurement
@@ -153,7 +154,7 @@ For any `ads/references/<file>.md` path below, read the first existing path:
 
 ### YouTube Ads Health Score (0-100)
 
-Weighted assessment from `ads/references/scoring-system.md`:
+Weighted assessment from `appflow/references/scoring-system.md`:
 
 ```
 Category Weights:
