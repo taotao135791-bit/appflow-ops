@@ -244,12 +244,13 @@ def test_recommend_only_allows_recommendation_but_rejects_execution_claim(
     )
     assert allowed_id is not None
     assert run.last_verdict is not None and run.last_verdict.outcome == "allowed"
-    # Execution claim in the reason must be rejected by the runtime.
+    # Execution claim in the reason must be rejected by the runtime —
+    # regardless of permission level (Decision != Change invariant).
     rejected_id = run.record_decision(decision_class="pause", reason="已暂停这个广告组")
     assert rejected_id is None
     assert run.last_verdict is not None
     assert run.last_verdict.outcome == "rejected"
-    assert run.last_verdict.reason_code == "permission_recommend_only"
+    assert run.last_verdict.reason_code == "execution_claim_in_decision"
     run.finish()
     store = StateStore(RunContext.from_workspace(workspace))
     assert store.status()["events_by_type"]["decision"] == 1  # only the allowed one

@@ -131,6 +131,31 @@ component; this runtime does not replace it.
   from real policy context (never a hardcoded default), and the safety
   result is persisted with the decision.
 
+### Scope & decision safety closure (v3.4.2)
+
+- **Decision ≠ Change invariant**: A Decision records what AppFlow
+  recommends or concludes operationally. A Change records confirmed
+  execution or account change. Execution claims ("已暂停/executed/
+  applied/…") are NEVER valid Decision content, regardless of permission
+  level — even `full` cannot turn a Decision into a Change. Correct path:
+  Decision = 建议暂停; Change = 已确认暂停.
+- **Constrained is not persisted**: persistence contract is `allowed →
+  persist`; `rejected → never persist`; `constrained WITHOUT a validated
+  compliant candidate → never persist`. The runtime performs no numeric
+  rewriting, so a capped/staged candidate is never written verbatim;
+  `allowed_next_actions` tells the Agent how to re-decide.
+- **Diagnostic claim safety**: candidates carry structured
+  `diagnosis_confidence` (none / tentative / probable / confirmed). With
+  invalid measurement, probable/confirmed measurement-dependent diagnoses
+  are rejected; with insufficient maturity, confirmed diagnoses are
+  rejected. Tentative hypotheses always stay allowed. Confidence is
+  persisted with the Decision so follow-ups know it was a hypothesis.
+- **Scope attribution**: Decision → may be cross-platform
+  (`cross_platform` + `platform_scope`); Change → targets an explicit
+  platform (cross-platform runs REJECT changes without `target_platform`);
+  Outcome → inherits the scope of its linked Decision/Change (including
+  cross-platform scope), conflicts rejected.
+
 ## PlatformAdapter (thin contract)
 
 Keep the contract minimal — projections and vocabulary, no framework:

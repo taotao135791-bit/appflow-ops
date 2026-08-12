@@ -243,6 +243,7 @@ class StateSession:
         source_digest: str | None = None,
         platform: str | None = None,
         platform_scope: tuple[str, ...] = (),
+        diagnosis_confidence: str | None = None,
     ) -> str | None:
         """Record one operational recommendation. ``origin`` defaults to
         ``agent_constrained`` (LLM interpretation constrained by runtime
@@ -276,6 +277,7 @@ class StateSession:
             review_after=review_after,
             platform=platform,
             platform_scope=platform_scope,
+            diagnosis_confidence=diagnosis_confidence,
             run_id=self.run_id,
         )
         self._written.add(dedupe_key)
@@ -341,6 +343,7 @@ class StateSession:
         evidence_status: str = "confirmed",
         source_digest: str | None = None,
         platform: str | None = None,
+        platform_scope: tuple[str, ...] = (),
     ) -> str | None:
         """Record an outcome only when later evidence justifies it — never
         at decision time."""
@@ -364,6 +367,7 @@ class StateSession:
             source_type=source_type,
             evidence_status=evidence_status,
             platform=platform,
+            platform_scope=platform_scope,
             run_id=self.run_id,
         )
         self._written.add(dedupe_key)

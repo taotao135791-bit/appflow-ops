@@ -53,6 +53,15 @@ investigate them; explore broadly internally, answer concisely externally.
   persistence (measurement / maturity / policy / permission +
   execution-claim check); rejected candidates are never persisted and are
   reported via reason codes with allowed next actions.
+- **Never persist a constrained candidate unless the runtime has produced
+  a concrete compliant candidate.** `allowed → persist`; `rejected → no`;
+  `constrained without a validated candidate → no`. The runtime performs
+  no numeric rewriting.
+- **Cross-platform runs require explicit target attribution for confirmed
+  platform changes.** A Decision may be cross-platform; a Change acts on
+  one explicit platform; an Outcome inherits scope from its linked
+  Decision/Change. Execution claims are never valid Decision content,
+  regardless of permission level.
 
 ## Layout
 

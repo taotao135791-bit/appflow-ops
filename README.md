@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.1/install.sh | bash -s -- --ref=v3.4.1
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.2/install.sh | bash -s -- --ref=v3.4.2
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：

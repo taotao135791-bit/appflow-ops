@@ -2,6 +2,41 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.4.2 — 2026-08-12
+
+### Fixed
+
+- **Cross-platform Change requires an explicit target platform**: a
+  cross-platform run without `target_platform` is rejected
+  (`cross_platform_change_requires_target`) — a real Change acts on one
+  platform; unscoped Changes are never written. Invalid targets outside
+  the run's scope are rejected too.
+- **Cross-platform Outcome inherits scope**: an Outcome linked to a
+  cross-platform Decision inherits `platform = cross_platform` +
+  `platform_scope`; platform-filtered Outcome retrieval works for all
+  four event types; conflicting refs or explicit platforms are rejected.
+- **Decision ≠ Change invariant under every permission**: execution
+  claims ("已暂停/已经暂停/executed/applied/…") in a Decision are ALWAYS
+  rejected (`execution_claim_in_decision`), even with `full` permission;
+  the correct path is Decision = recommendation, Change = confirmed
+  execution. Structured `execution_status` is checked first; natural
+  language detection is defense-in-depth.
+- **Constrained candidates are never persisted verbatim**: the
+  persistence contract is now `allowed → persist`; `rejected → no`;
+  `constrained WITHOUT a validated compliant candidate → no`. The runtime
+  performs no numeric rewriting, so cap_20pct / staged_required
+  candidates return None + `last_verdict` with re-decision guidance.
+- **Diagnostic claim safety**: candidates carry structured
+  `diagnosis_confidence` (none / tentative / probable / confirmed),
+  persisted with the Decision. Invalid measurement rejects
+  probable/confirmed measurement-dependent diagnoses;
+  insufficient maturity rejects confirmed diagnoses; tentative hypotheses
+  stay allowed. Safety now constrains claims as well as actions.
+- **Run-local reset**: `PlatformOperationalRun` is reusable-but-reset —
+  `begin()` clears current observations, persistence warnings, last
+  verdict, platform scope, and the state snapshot, so a second run never
+  inherits residue from the first.
+
 ## 3.4.1 — 2026-08-12
 
 ### Fixed

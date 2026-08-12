@@ -208,14 +208,26 @@ class PlatformOperationalRun:
         """Start the run: resolve platform scope and state access, then
         load platform-aware state when required. ``policy_state`` comes from
         real policy context when available (explicit or workspace policy
-        file); it is never a hardcoded default."""
+        file); it is never a hardcoded default.
+
+        The object is REUSABLE-BUT-RESET: begin() clears every run-local
+        field from any previous run (current observations, persistence
+        warnings, last verdict, platform scope, state snapshot), so a
+        second run never inherits residue from the first.
+        """
         self.request = request_text or ""
-        scope = platform_scope or self.explicit_platform_scope
-        if scope is None and request_text:
-            scope = detect_platforms(request_text)
-        self.platform_scope = tuple(scope or ())
+        self.platform_scope = tuple(
+            platform_scope or self.explicit_platform_scope or ()
+        )
+        if not self.platform_scope and request_text:
+            self.platform_scope = detect_platforms(request_text)
         self.policy_state = self._resolve_policy_state(policy_state)
         self.permission_state = self._permission_state()
+        self.state_access = StateAccess.NOT_NEEDED
+        self._platform_state = None
+        self._current_observations = {}
+        self._persistence_warnings = []
+        self.last_verdict = None
         if state_access is not None:
             self.state_access = state_access
         elif request_text is None:
@@ -357,16 +369,21 @@ class PlatformOperationalRun:
         review_condition: str | None = None,
         review_after: str | None = None,
         execution_status: str | None = None,
+        diagnosis_confidence: str = "none",
     ) -> str | None:
         """Persist one operational Decision through the shared session.
 
         The candidate ALWAYS runs through the runtime safety validator
-        (measurement / maturity / policy / permission + execution-claim
-        check) before persistence. A rejected candidate returns None and
-        sets ``last_verdict`` with the reason and allowed next actions; it
-        is never persisted and never raised as an internal exception.
-        Platform attribution is inherited from the run's platform scope
-        (single platform → that platform; multi → cross_platform + scope).
+        (Decision≠Change, permission, diagnostic claim, measurement,
+        maturity, policy) before persistence. Persistence contract:
+
+        - allowed → persists
+        - rejected → never persists (None + ``last_verdict``)
+        - constrained WITHOUT a validated compliant candidate → never
+          persists (None + ``last_verdict``); a constrained candidate must
+          never be written verbatim into state.
+
+        Platform attribution is inherited from the run's platform scope.
         """
         self._require_started()
         measurement_by_platform, maturity_by_platform = self._safety_states()
@@ -382,9 +399,12 @@ class PlatformOperationalRun:
             policy_state=self.policy_state,
             permission_state=self.permission_state,
             execution_status=execution_status,
+            diagnosis_confidence=diagnosis_confidence,
         )
         self.last_verdict = verdict
-        if verdict.outcome == "rejected":
+        if verdict.outcome != "allowed":
+            # rejected, or constrained without a validated candidate:
+            # the original candidate is never persisted.
             return None
         platform, platform_scope = self._decision_platform()
         policy_constraints: dict[str, Any] = {
@@ -406,6 +426,7 @@ class PlatformOperationalRun:
             policy_constraints=policy_constraints,
             platform=platform,
             platform_scope=platform_scope,
+            diagnosis_confidence=diagnosis_confidence,
         )
 
     def record_confirmed_change(
@@ -437,7 +458,12 @@ class PlatformOperationalRun:
         elif len(self.platform_scope) == 1:
             platform = self.platform_scope[0]
         else:
-            platform = None  # cross-platform run: explicit target required
+            # Cross-platform run: a real Change acts on ONE explicit
+            # platform. Never write an unscoped Change.
+            raise ContractError(
+                "cross-platform change requires an explicit target_platform "
+                "inside the run's platform scope"
+            )
         return self.session.record_confirmed_change(
             change_type=change_type,
             direction=direction,
@@ -461,16 +487,28 @@ class PlatformOperationalRun:
         """Record an outcome only when later evidence justifies it.
 
         Platform attribution is derived from the linked decision/change when
-        the caller does not pass it; conflicting explicit platforms are
+        the caller does not pass it; a cross-platform decision's scope is
+        inherited by the outcome; conflicting explicit platforms are
         rejected rather than guessed.
         """
         self._require_started()
         derived: str | None = None
+        derived_scope: tuple[str, ...] = ()
         for ref in (decision_id, change_id):
             if ref is None:
                 continue
             event = self.store.get_event(ref)
             event_platform = event.get("platform")
+            if event_platform == "cross_platform":
+                scope = event.get("payload", {}).get("platform_scope", ())
+                if isinstance(scope, (list, tuple)) and scope:
+                    if derived_scope and tuple(scope) != derived_scope:
+                        raise ContractError(
+                            "outcome refs disagree on cross-platform scope; "
+                            "pass platform explicitly"
+                        )
+                    derived_scope = tuple(scope)
+                continue
             if event_platform and event_platform != "cross_platform":
                 if derived is None:
                     derived = str(event_platform)
@@ -484,6 +522,11 @@ class PlatformOperationalRun:
                 f"outcome platform {platform!r} conflicts with derived "
                 f"platform {derived!r} from its refs"
             )
+        if platform is not None and derived_scope and platform != "cross_platform":
+            raise ContractError(
+                f"outcome platform {platform!r} conflicts with the derived "
+                f"cross-platform scope {derived_scope}"
+            )
         return self.session.record_outcome(
             outcome_class=outcome_class,
             decision_id=decision_id,
@@ -491,7 +534,10 @@ class PlatformOperationalRun:
             observation_ids=observation_ids,
             source_type=source_type,
             evidence_status=evidence_status,
-            platform=platform or derived,
+            platform=platform
+            or derived
+            or ("cross_platform" if derived_scope else None),
+            platform_scope=derived_scope,
         )
 
     def result(

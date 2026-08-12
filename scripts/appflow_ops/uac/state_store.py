@@ -396,6 +396,7 @@ class StateStore:
         review_after: str | None = None,
         platform: str | None = None,
         platform_scope: tuple[str, ...] = (),
+        diagnosis_confidence: str | None = None,
         run_id: str | None = None,
     ) -> str:
         """Record one operational recommendation with minimal context.
@@ -410,7 +411,10 @@ class StateStore:
         ``platform`` attributes the decision to one platform (or
         "cross_platform" with ``platform_scope`` listing the platforms);
         legacy events without a platform stay readable and are excluded
-        from platform-filtered retrieval.
+        from platform-filtered retrieval. ``diagnosis_confidence`` is the
+        structured diagnostic claim level (none/tentative/probable/
+        confirmed) so a later follow-up knows whether the conclusion was a
+        hypothesis or a confirmed fact.
         """
 
         if decision_class not in DECISION_CLASSES:
@@ -434,6 +438,8 @@ class StateStore:
         }
         if platform_scope:
             payload["platform_scope"] = sorted(platform_scope)
+        if diagnosis_confidence is not None:
+            payload["diagnosis_confidence"] = diagnosis_confidence
         if review_condition is not None:
             payload["review_condition"] = review_condition
         if review_after is not None:
@@ -462,11 +468,14 @@ class StateStore:
         source_type: str = "export",
         evidence_status: str = "confirmed",
         platform: str | None = None,
+        platform_scope: tuple[str, ...] = (),
         run_id: str | None = None,
     ) -> str:
         """Record what happened after a previous decision/change. References
         are validated for existence and exact type. ``platform`` may be
-        derived from the linked decision/change by the caller."""
+        derived from the linked decision/change by the caller;
+        ``platform_scope`` lets a cross-platform outcome inherit the scope
+        of its cross-platform decision (optional, backward compatible)."""
 
         if outcome_class not in OUTCOME_CLASSES:
             raise ContractError(f"unknown outcome_class: {outcome_class}")
@@ -493,6 +502,8 @@ class StateStore:
             "change_id": change_id,
             "observation_ids": sorted(observation_ids),
         }
+        if platform_scope:
+            payload["platform_scope"] = sorted(platform_scope)
         return self._append(
             event_type="outcome",
             platform=platform,

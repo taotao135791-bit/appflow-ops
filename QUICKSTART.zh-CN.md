@@ -5,14 +5,14 @@
 ## 安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.1/install.sh | bash -s -- --ref=v3.4.1
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.2/install.sh | bash -s -- --ref=v3.4.2
 ```
 
 Windows：
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.1/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v3.4.1
+irm https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.2/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v3.4.2
 ```
 
 ## 第一次使用
