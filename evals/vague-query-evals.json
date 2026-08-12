@@ -675,6 +675,116 @@
       },
       "data_class": "synthetic",
       "source_type": "authored"
+    },
+    {
+      "id": "meta_cost_spike_001",
+      "query": "女生怎么突然贵了？",
+      "platform": "meta",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "cost per result rose sharply while spend and delivery look normal"
+      },
+      "expectations": {
+        "must_consider": [
+          "creative_fatigue",
+          "auction_pressure",
+          "audience_saturation",
+          "placement_mix",
+          "measurement"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_pause_immediately"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "creative_decay_001",
+      "query": "这个素材是不是衰减了？",
+      "platform": "creative",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "CTR trending down over several days at stable spend"
+      },
+      "expectations": {
+        "must_consider": [
+          "fatigue",
+          "audience_shift",
+          "delivery_shift",
+          "funnel_change"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_new_campaign_immediately"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "tiktok_click_install_gap_001",
+      "query": "TT点击挺多为什么安装不行？",
+      "platform": "tiktok",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "high clicks with weak install conversion"
+      },
+      "expectations": {
+        "must_consider": [
+          "click_to_install_degradation",
+          "delivery",
+          "measurement",
+          "creative_freshness"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_action_when_measurement_invalid"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "cross_platform_funnel_001",
+      "query": "两个平台支付一起掉了是什么问题？",
+      "platform": "cross_platform",
+      "context": {
+        "campaign_type": "app_campaign",
+        "symptom": "deep conversion down on Google and Meta simultaneously while CTR is stable on both",
+        "same_workspace_only": true
+      },
+      "expectations": {
+        "must_consider": [
+          "funnel_degradation",
+          "product_funnel",
+          "measurement",
+          "cross_platform_signal"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "use_other_client_state"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     }
   ]
 }

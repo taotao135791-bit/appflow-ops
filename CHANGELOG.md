@@ -2,6 +2,31 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.3.4 — 2026-08-12
+
+### Fixed
+
+- **Release Privacy Gate**: the gate ran `release_check.py --full` without
+  installing dependencies, so its eval-fixture validation path
+  (`appflow_ops.evals.vague_query`) failed with `ModuleNotFoundError:
+  PyYAML` on every tag since v3.2.x. The gate now installs PyYAML (minimal,
+  pinned range) before the preflight.
+- **Windows metadata migration race**: `RunContext.from_workspace` read the
+  project context OUTSIDE the metadata lock, so on Windows a concurrent
+  locked writer's atomic `os.replace` could collide with another thread's
+  open read handle (`PermissionError`). The whole read-and-maybe-bind
+  sequence now runs under the workspace-local metadata lock;
+  `_bind_workspace_id` no longer takes the lock itself (re-locking the same
+  file would deadlock) and keeps the double-check.
+- **Cross-platform formatting/type-check regression**: `privacy_doctor`
+  `_finding` annotation (`dict[str, str]` vs `list[str]`) fixed; top-level
+  scripts mypy is green again. `account_state.py` re-formatted after the
+  lock change.
+- **Release artifact alignment**: README/QUICKSTART install pins,
+  manifest, runtime version strings, and version tests all aligned to
+  3.3.4; `docs/releasing.md` no longer carries the stale v1.9.2 candidate
+  status.
+
 ## 3.3.3 — 2026-08-12
 
 ### Release recovery (P0)

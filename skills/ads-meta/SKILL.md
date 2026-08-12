@@ -22,6 +22,8 @@ For any `appflow/references/<file>.md` path below, read the first existing path:
 `skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 Ambiguous operational diagnosis follows the AppFlow Reasoning Contract: `appflow/references/reasoning-contract.md` (resolve per Reference Resolution).
 
+Meta-specific hypothesis families (shared loop, platform evidence only): creative fatigue, auction pressure, audience saturation, placement mix, learning state, budget constraint, bid/cost-cap constraint, delivery fragmentation, funnel degradation, measurement, recent operator changes. Project observations/decisions through the platform adapter (`scripts/appflow_ops/uac/platform_adapters.py`, META); decisions reuse the shared decision classes; a recommendation never becomes a Change.
+
 
 ## Andromeda + GEM + Lattice (2026)
 

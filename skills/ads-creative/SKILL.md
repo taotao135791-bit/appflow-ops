@@ -22,6 +22,8 @@ For any `appflow/references/<file>.md` path below, read the first existing path:
 `skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 Ambiguous operational diagnosis follows the AppFlow Reasoning Contract: `appflow/references/reasoning-contract.md` (resolve per Reference Resolution).
 
+Creative-specific hypothesis families (shared loop, platform evidence only): fatigue, audience shift, delivery shift, bid/budget interference, funnel change, measurement issue. Creative state uses the shared Observation / Change / Decision / Outcome types — no CreativeMemory or AssetHistory state type. Converge to an action (continue / reduce / pause / replace / retest / scale / observe) using the shared decision classes.
+
 
 ## Process
 

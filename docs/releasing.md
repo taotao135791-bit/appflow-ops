@@ -84,18 +84,15 @@ identity, bytecode, workspace, credential, or account-identifier findings, stop:
 do not create or push a tag. History rewriting and force-pushing require
 separate explicit maintainer authorization and a fresh-clone verification.
 
-### Current v1.9.2 candidate status
+### Current candidate status
 
-The 2026-07-15 audit removed one exact synthetic refresh-token fixture false
-positive with a digest-only allowlist, then reconfirmed legacy identity metadata
-(including display names) and historical Python bytecode in reachable history.
-No real credential or advertising account identifier was identified by that
-scan. The remaining release block stays in force for the v1.9.2 candidate,
-which is therefore intentionally
-**not eligible for a tag or GitHub Release** until
-that history is explicitly cleaned, force-pushed with authorization, audited
-from a fresh full clone, and the Release Privacy Gate passes. A clean current
-tree or green ordinary CI does not override this block.
+The scoped allowlist (`privacy-allowlist.json`) accepts only exact historical
+findings (owner's public identity in pre-migration history and annotated
+release tags, one historical commit of Python bytecode) — every exception
+pins `value_sha256s` and/or commit references, so a new email, identity, or
+bytecode of the same kind still fails the gate. History rewriting and
+force-pushing require separate explicit maintainer authorization; a clean
+current tree or green ordinary CI does not override the gate.
 
 ## 3. Tag and publish
 

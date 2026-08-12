@@ -26,7 +26,15 @@ from ..uac.quick_ops import decide_case
 EVAL_SCHEMA_VERSION = "1.0"
 
 PLATFORMS = frozenset(
-    {"google_uac", "google", "meta", "tiktok", "cross_platform", "measurement"}
+    {
+        "google_uac",
+        "google",
+        "meta",
+        "tiktok",
+        "creative",
+        "cross_platform",
+        "measurement",
+    }
 )
 SAFETY_GATES = frozenset({"none", "measurement_invalid", "maturity_pending"})
 MINIMUM_CASE_COUNT = 20
@@ -53,6 +61,7 @@ _KNOWN_MUST_NOT = frozenset(
         "recommend_numeric_change_when_policy_forbids",
         "claim_execution_without_permission",
         "ask_for_full_metric_checklist",
+        "use_other_client_state",
     }
 )
 

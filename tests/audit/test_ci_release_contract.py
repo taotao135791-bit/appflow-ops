@@ -84,7 +84,7 @@ def test_subprocess_coverage_and_release_documentation_are_explicit(
     assert "--cov-report=xml:coverage.xml" in releasing
     assert "--cov-fail-under=80" in releasing
     assert "Release Privacy Gate" in releasing
-    assert "not eligible for a tag or GitHub Release" in releasing
+    assert "privacy-allowlist.json" in releasing
     assert "do not create or push a tag" in releasing
     assert "python3 scripts/privacy_doctor.py --json" in releasing
     assert "tagger metadata and the tag message" in releasing

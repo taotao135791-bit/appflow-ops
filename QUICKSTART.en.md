@@ -7,14 +7,14 @@ then copy one natural-language prompt.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.3/install.sh | bash -s -- --ref=v3.3.3
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.4/install.sh | bash -s -- --ref=v3.3.4
 ```
 
 Windows:
 
 ```powershell
-irm https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.3/install.ps1 -OutFile install.ps1
-.\install.ps1 -Ref v3.3.3
+irm https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.4/install.ps1 -OutFile install.ps1
+.\install.ps1 -Ref v3.3.4
 ```
 
 ## First Use

@@ -20,6 +20,8 @@ For any `appflow/references/<file>.md` path below, read the first existing path:
 `skills/appflow/references/<file>.md`, then `appflow/references/<file>.md`.
 Ambiguous operational diagnosis follows the AppFlow Reasoning Contract: `appflow/references/reasoning-contract.md` (resolve per Reference Resolution).
 
+TikTok-specific hypothesis families (shared loop, platform evidence only): creative delivery decay, creative freshness, auction, audience, budget, bid, delivery, click→install degradation, install→deep event degradation, measurement, recent changes. Project observations through the platform adapter (`scripts/appflow_ops/uac/platform_adapters.py`, TIKTOK); decisions reuse the shared decision classes; a recommendation never becomes a Change.
+
 
 ## Process
 

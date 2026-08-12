@@ -23,6 +23,22 @@ def test_runtime_version_strings_stay_in_sync(repo_root):
     assert "github.com/taotao135791-bit/appflow-ops" in fetch_page
     assert "github.com/taotao135791-bit/appflow-ops" in report
 
+    # Every fixed-version install pin must match VERSION, so a release can
+    # never ship with README still installing an older tag.
+    for name in (
+        "README.md",
+        "README.en.md",
+        "QUICKSTART.zh-CN.md",
+        "QUICKSTART.en.md",
+    ):
+        text = _read(repo_root, name)
+        pins = [
+            line for line in text.splitlines() if "--ref=v" in line or "-Ref v" in line
+        ]
+        assert pins, f"{name} has no fixed-version install pin"
+        for pin in pins:
+            assert f"v{version}" in pin, f"{name} pins an older tag: {pin.strip()}"
+
 
 def test_installer_uses_local_venv_without_breaking_system_packages(repo_root):
     install_sh = _read(repo_root, "install.sh")

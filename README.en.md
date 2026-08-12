@@ -229,6 +229,13 @@ Broad internally, concise externally    Explore widely inside; return a focused 
 > context for relevant follow-up and diagnosis requests. Direct
 > informational questions ("CTR 是什么？") do not need business-state
 > retrieval.
+- **Platform adoption (AppFlow Core)**: Meta / TikTok / Creative work
+  through the shared AppFlow Core — Reasoning Contract + workspace state +
+  safety gates + runtime lifecycle. Each platform contributes only its own
+  hypothesis families and metric projection (`platform_adapters.py`); no
+  copied reasoning loop, no new state types. Today they are **structured
+  Agent workflows + shared runtime**, not deterministic engines (see
+  [docs/appflow-core.md](docs/appflow-core.md))
 - **Funnel dashboard**: spend → installs → registrations → payments rendered
   as one self-contained HTML file with the bottleneck layer highlighted
 - **Daily agency ops**: patrols, anomaly triage, creative request briefs,
@@ -283,7 +290,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.3/install.sh | bash -s -- --ref=v3.3.3
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.4/install.sh | bash -s -- --ref=v3.3.4
 ```
 
 Then talk to your AI coding assistant in natural language:
