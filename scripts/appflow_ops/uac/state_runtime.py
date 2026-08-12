@@ -241,6 +241,8 @@ class StateSession:
         review_condition: str | None = None,
         review_after: str | None = None,
         source_digest: str | None = None,
+        platform: str | None = None,
+        platform_scope: tuple[str, ...] = (),
     ) -> str | None:
         """Record one operational recommendation. ``origin`` defaults to
         ``agent_constrained`` (LLM interpretation constrained by runtime
@@ -272,6 +274,8 @@ class StateSession:
             origin=origin,
             review_condition=review_condition,
             review_after=review_after,
+            platform=platform,
+            platform_scope=platform_scope,
             run_id=self.run_id,
         )
         self._written.add(dedupe_key)
@@ -291,6 +295,7 @@ class StateSession:
         effective_at: str | None = None,
         source_digest: str | None = None,
         refs: tuple[str, ...] = (),
+        platform: str | None = None,
     ) -> str | None:
         """Record a change ONLY after execution is confirmed (operator
         confirmation or deterministic evidence). A recommendation alone
@@ -317,6 +322,7 @@ class StateSession:
             evidence_status=evidence_status,
             effective_at=effective_at,
             refs=refs,
+            platform=platform,
             run_id=self.run_id,
         )
         self._written.add(dedupe_key)
@@ -334,6 +340,7 @@ class StateSession:
         source_type: str = "export",
         evidence_status: str = "confirmed",
         source_digest: str | None = None,
+        platform: str | None = None,
     ) -> str | None:
         """Record an outcome only when later evidence justifies it — never
         at decision time."""
@@ -356,6 +363,7 @@ class StateSession:
             observation_ids=observation_ids,
             source_type=source_type,
             evidence_status=evidence_status,
+            platform=platform,
             run_id=self.run_id,
         )
         self._written.add(dedupe_key)

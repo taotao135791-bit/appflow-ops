@@ -357,6 +357,13 @@ def test_meta_immature_blocks_aggressive_action() -> None:
 
 
 def test_recommend_only_permission_cannot_claim_execution(workspace) -> None:
+    # Explicit capability: recommend only ([] would be read_only).
+    import yaml
+
+    context_path = workspace.context_path
+    document = yaml.safe_load(context_path.read_text(encoding="utf-8"))
+    document["permissions"]["optimizer_can"] = ["recommend"]
+    context_path.write_text(yaml.safe_dump(document), encoding="utf-8")
     run = PlatformOperationalRun(workspace)
     run.begin(request_text="Meta 这个广告组是不是该关了？")
     run.record_observation(

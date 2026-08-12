@@ -2,6 +2,45 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.4.1 — 2026-08-12
+
+### Fixed
+
+- **Same-run current observation**: a recorded Observation now immediately
+  becomes the run's `current_observations` (per platform) and is visible in
+  `OperationalContext` — no full state reload; persistence failure keeps
+  reasoning going with the in-memory observation and a warning, never
+  pretending persistence.
+- **Event platform attribution**: Decision / Change / Outcome now carry
+  `platform` (or `cross_platform` + `platform_scope`); platform-filtered
+  retrieval matches exact platform and cross-platform scope for all four
+  event types, and legacy unscoped events remain readable but are never
+  broadcast into a platform filter.
+- **Platform-scoped safety**: measurement/maturity are derived per platform
+  (current observation first, then platform-filtered history) — a Meta
+  request can never inherit TikTok's safety state, even when TikTok's
+  events are newer. Multi-platform runs keep
+  `measurement_by_platform` / `maturity_by_platform` and expose a
+  conservative aggregate (any invalid → invalid) instead of flattening to
+  one scalar.
+- **Safety enum canonicalization**: the runtime now consumes
+  Measurement/Maturity/Policy/Permission enums from the canonical safety
+  module; permission tiers are capability-based (read_only /
+  recommend_only / budget_bid_creative / full); policy comes from real
+  policy context (explicit or workspace policy file), never a hardcoded
+  default.
+- **Runtime safety enforcement**: every candidate Decision runs through
+  the shared validator (measurement / maturity / policy / permission +
+  execution-claim check) before persistence; rejected candidates return
+  None with `last_verdict` (short reason_code + allowed next actions)
+  instead of being persisted or raised as internal exceptions. The safety
+  result is persisted with the decision; Decision != Change stays
+  enforced.
+- **Unknown platform raw passthrough removed**: unregistered platforms are
+  rejected; the `generic` adapter is allowlist-only and requires explicit
+  opt-in; `google_ads` uses a safe projection; UAC CLI decisions are now
+  attributed to google_ads.
+
 ## 3.4.0 — 2026-08-12
 
 ### Added

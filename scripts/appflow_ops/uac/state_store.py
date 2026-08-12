@@ -352,12 +352,14 @@ class StateStore:
         evidence_status: str = "confirmed",
         refs: tuple[str, ...] = (),
         effective_at: str | None = None,
+        platform: str | None = None,
         run_id: str | None = None,
     ) -> str:
         """Record a confirmed account/operation change. Unconfirmed user
         statements belong in an observation with evidence_status=reported,
         not here. ``effective_at`` is optional and only for changes with a
-        real execution-time difference."""
+        real execution-time difference. ``platform`` attributes the change
+        to its platform."""
 
         payload: dict[str, Any] = {
             "change_type": change_type,
@@ -371,7 +373,7 @@ class StateStore:
             payload["effective_at"] = effective_at
         return self._append(
             event_type="change",
-            platform=None,
+            platform=platform,
             payload=payload,
             source_type="manual",
             evidence_status=evidence_status,
@@ -392,6 +394,8 @@ class StateStore:
         origin: str = "agent_constrained",
         review_condition: str | None = None,
         review_after: str | None = None,
+        platform: str | None = None,
+        platform_scope: tuple[str, ...] = (),
         run_id: str | None = None,
     ) -> str:
         """Record one operational recommendation with minimal context.
@@ -402,6 +406,11 @@ class StateStore:
         evidence_status is ``inferred`` by default — the engine never
         claims decisions as confirmed facts. Hidden chain-of-thought is
         never persisted (Broad internally, concise persistently).
+
+        ``platform`` attributes the decision to one platform (or
+        "cross_platform" with ``platform_scope`` listing the platforms);
+        legacy events without a platform stay readable and are excluded
+        from platform-filtered retrieval.
         """
 
         if decision_class not in DECISION_CLASSES:
@@ -423,13 +432,15 @@ class StateStore:
             "confidence": confidence,
             "origin": origin,
         }
+        if platform_scope:
+            payload["platform_scope"] = sorted(platform_scope)
         if review_condition is not None:
             payload["review_condition"] = review_condition
         if review_after is not None:
             payload["review_after"] = review_after
         return self._append(
             event_type="decision",
-            platform=None,
+            platform=platform,
             payload=payload,
             source_type={
                 "deterministic": "deterministic_engine",
@@ -450,10 +461,12 @@ class StateStore:
         observation_ids: tuple[str, ...] = (),
         source_type: str = "export",
         evidence_status: str = "confirmed",
+        platform: str | None = None,
         run_id: str | None = None,
     ) -> str:
         """Record what happened after a previous decision/change. References
-        are validated for existence and exact type."""
+        are validated for existence and exact type. ``platform`` may be
+        derived from the linked decision/change by the caller."""
 
         if outcome_class not in OUTCOME_CLASSES:
             raise ContractError(f"unknown outcome_class: {outcome_class}")
@@ -482,7 +495,7 @@ class StateStore:
         }
         return self._append(
             event_type="outcome",
-            platform=None,
+            platform=platform,
             payload=payload,
             source_type=source_type,
             evidence_status=evidence_status,
@@ -553,9 +566,28 @@ class StateStore:
             if len(matched) >= limit:
                 break
             event = self._read_event(path)
-            if event.get("platform") == platform:
+            if self._event_matches_platform(event, platform):
                 matched.append(event)
         return tuple(matched)
+
+    @staticmethod
+    def _event_matches_platform(event: dict[str, Any], platform: str) -> bool:
+        """One platform-filtered match rule for all event types.
+
+        - event.platform == requested platform
+        - cross-platform events (platform == "cross_platform") match when
+          their payload platform_scope contains the requested platform
+        - legacy unscoped events (no platform) NEVER match a platform
+          filter: they stay readable in unfiltered history but are not
+          broadcast into any platform's context
+        """
+        event_platform = event.get("platform")
+        if event_platform == platform:
+            return True
+        if event_platform == "cross_platform":
+            scope = event.get("payload", {}).get("platform_scope", ())
+            return isinstance(scope, (list, tuple)) and platform in scope
+        return False
 
     def get_recent_observations(
         self, limit: int = _DEFAULT_LIMIT, *, platform: str | None = None

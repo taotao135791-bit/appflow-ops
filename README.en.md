@@ -233,8 +233,10 @@ Broad internally, concise externally    Explore widely inside; return a focused 
   adapters)**: Meta / TikTok / Creative and cross-platform diagnosis run
   full workflows through the shared `PlatformOperationalRun` — platform
   scope resolution, platform-aware bounded state retrieval (no platform
-  starvation), evidence projection, automatic Observation/Decision
-  persistence, and the four safety gates. Platforms contribute only
+  starvation), same-run current evidence, event platform attribution
+  (retrievable Decisions/Changes/Outcomes), and the four safety gates
+  enforced BEFORE persistence (rejected decisions never land, returning a
+  reason code + allowed next actions). Platforms contribute only
   hypothesis families, metric projection, and terminology
   (`platform_adapters.py`); no copied reasoning loop, no new state types.
   Today they are **Agent + shared operational runtime**, not deterministic
@@ -293,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.0/install.sh | bash -s -- --ref=v3.4.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.1/install.sh | bash -s -- --ref=v3.4.1
 ```
 
 Then talk to your AI coding assistant in natural language:

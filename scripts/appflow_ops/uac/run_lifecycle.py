@@ -259,6 +259,8 @@ class AppFlowRuntime:
         review_condition: str | None = None,
         review_after: str | None = None,
         source_digest: str | None = None,
+        platform: str | None = None,
+        platform_scope: tuple[str, ...] = (),
     ) -> str | None:
         self._require_started()
         return self.session.record_decision(
@@ -273,6 +275,8 @@ class AppFlowRuntime:
             review_condition=review_condition,
             review_after=review_after,
             source_digest=source_digest,
+            platform=platform,
+            platform_scope=platform_scope,
         )
 
     def record_confirmed_change(

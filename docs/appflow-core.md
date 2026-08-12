@@ -92,9 +92,12 @@ operational lifecycle for Meta / TikTok / Creative / cross-platform:
 begin(request, platform_scope?, state_access?)
 → resolve workspace + platform scope
 → platform-aware bounded state load (per-platform budget, total capped)
-→ record_observation(metrics)  # adapter projection + shared dedupe
-→ operational_context()        # state + hypotheses + safety envelope
-→ record_decision(...)         # shared decision classes + provenance
+→ record_observation(metrics)  # adapter projection + shared dedupe;
+                               # unknown platforms are rejected
+→ operational_context()        # current evidence + state + hypotheses +
+                               # platform-scoped safety envelope
+→ record_decision(...)         # runs the runtime safety validator FIRST;
+                               # rejected candidates are never persisted
 → result() → OperationalResult
 → finish()
 ```
@@ -102,6 +105,31 @@ begin(request, platform_scope?, state_access?)
 Callers no longer manage `StateSession` manually for normal operational
 runs. Google UAC keeps its deterministic engine as a stronger decision
 component; this runtime does not replace it.
+
+### Context and safety correctness (v3.4.1)
+
+- **Same-run current evidence**: a recorded Observation becomes THIS run's
+  `current_observations` (per platform) immediately; no full state reload
+  is needed to see it. Persistence failure keeps reasoning going with the
+  in-memory observation and a warning, never pretending persistence.
+- **Event platform attribution**: Decision / Change / Outcome carry
+  `platform` (or `cross_platform` + `platform_scope`); platform-filtered
+  retrieval matches exact platform and cross-platform scope, and legacy
+  unscoped events stay readable but are never broadcast into a platform
+  filter.
+- **Platform-scoped safety**: measurement/maturity are derived per
+  platform (current observation first, then platform-filtered history); a
+  Meta request can never inherit TikTok's safety state. Multi-platform
+  runs keep `measurement_by_platform` / `maturity_by_platform` and expose
+  a conservative aggregate (any invalid → invalid).
+- **Runtime safety enforcement**: every candidate Decision passes the
+  shared validator (measurement / maturity / policy / permission +
+  execution-claim check) before persistence; rejected candidates return
+  `None` with `last_verdict` (reason_code + allowed next actions) instead
+  of an internal exception. Permission tiers are capability-based
+  (read_only / recommend_only / budget_bid_creative / full), policy comes
+  from real policy context (never a hardcoded default), and the safety
+  result is persisted with the decision.
 
 ## PlatformAdapter (thin contract)
 

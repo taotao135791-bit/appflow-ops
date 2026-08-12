@@ -41,6 +41,18 @@ investigate them; explore broadly internally, answer concisely externally.
   `PlatformOperationalRun` + the platform adapters are the only sanctioned
   operational path for non-Google platforms, and platform-specific
   evidence goes through the adapters' projection (never raw dumps).
+- **Platform-scoped events must remain attributable to their platform or
+  explicit platform scope.** Decisions / Changes / Outcomes carry
+  `platform` (or `cross_platform` + `platform_scope`); platform-filtered
+  retrieval must never broadcast legacy unscoped events, and safety state
+  must be derived per platform — one platform's measurement/maturity can
+  never pollute another platform's context.
+- **Safety expectations in tests are insufficient; supported operational
+  decision paths must run through the runtime safety validator.**
+  Candidate decisions go through `validate_decision_action` before
+  persistence (measurement / maturity / policy / permission +
+  execution-claim check); rejected candidates are never persisted and are
+  reported via reason codes with allowed next actions.
 
 ## Layout
 

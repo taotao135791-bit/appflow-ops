@@ -137,6 +137,21 @@ CREATIVE_SPECIFIC_KEYS = (
     "install_to_purchase_rate",
 )
 
+# Google safe projection: the deterministic UAC path owns Google analysis;
+# this thin adapter only allows the common envelope for operational runs.
+GOOGLE_SPECIFIC_KEYS = (
+    "target_cpa",
+    "daily_budget",
+    "cvr",
+    "conversions",
+    "impressions",
+    "clicks",
+)
+
+# Generic adapter: explicit allowlist ONLY. Unknown platforms must opt into
+# this adapter; raw passthrough never happens.
+GENERIC_SPECIFIC_KEYS = ()
+
 _FUNNEL_KEYS = (
     "click_to_install_rate",
     "install_to_registration_rate",
@@ -210,11 +225,23 @@ CREATIVE = PlatformAdapter(
     ),
     action_subtypes={"replace": ("replace_creative",)},
 )
+GOOGLE = PlatformAdapter(
+    platform="google_ads",
+    hypothesis_families=(),
+    specific_keys=GOOGLE_SPECIFIC_KEYS,
+)
+GENERIC = PlatformAdapter(
+    platform="generic",
+    hypothesis_families=(),
+    specific_keys=GENERIC_SPECIFIC_KEYS,
+)
 
 PLATFORM_ADAPTERS: Mapping[str, PlatformAdapter] = {
     META.platform: META,
     TIKTOK.platform: TIKTOK,
     CREATIVE.platform: CREATIVE,
+    GOOGLE.platform: GOOGLE,
+    GENERIC.platform: GENERIC,
 }
 
 

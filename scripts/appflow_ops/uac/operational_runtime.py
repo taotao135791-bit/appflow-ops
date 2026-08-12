@@ -16,12 +16,13 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from .account_state import RunContext
 from .platform_adapters import (
     CROSS_PLATFORM_HYPOTHESES,
+    GENERIC,
     PlatformAdapter,
     adapter_for,
 )
@@ -31,8 +32,10 @@ from .run_lifecycle import (
     build_state_context,
     classify_state_access,
 )
+from .safety_validator import SafetyVerdict, validate_decision_action
 from .state_runtime import StateSession
 from .state_store import StateStore
+from .types import ContractError
 from .workspace import Workspace
 
 # Per-platform retrieval budget: bounded regardless of platform count.
@@ -62,25 +65,43 @@ def detect_platforms(text: str) -> tuple[str, ...]:
 
 @dataclass(frozen=True)
 class PlatformSafetyContext:
-    """The four shared safety gates, platform-neutral."""
+    """The four shared safety gates, platform-neutral vocabulary (values
+    come from the canonical enums in appflow_ops.evals.safety).
 
-    measurement_state: str = "unknown"  # stable | invalid | unknown
-    maturity_state: str = "unknown"  # sufficient | insufficient | unknown
-    policy_state: str = "default"
-    permission_state: str = "recommend_only"  # full_access | recommend_only | read_only
+    Single-platform runs expose ``measurement_state`` / ``maturity_state``
+    as the platform's own value. Multi-platform runs keep per-platform
+    values in ``measurement_by_platform`` / ``maturity_by_platform`` and
+    expose conservative aggregates in the scalar fields (any relevant
+    platform invalid → invalid; else any unknown → unknown; else stable).
+    """
+
+    measurement_state: str = "unknown"
+    maturity_state: str = "unknown"
+    measurement_by_platform: Mapping[str, str] = field(default_factory=dict)
+    maturity_by_platform: Mapping[str, str] = field(default_factory=dict)
+    policy_state: str = "none"
+    permission_state: str = "read_only"
+    platform_scope: tuple[str, ...] = ()
 
 
 @dataclass
 class OperationalContext:
-    """Bounded context handed to the Agent/Reasoning layer."""
+    """Bounded context handed to the Agent/Reasoning layer.
+
+    ``current_observation`` is a convenience for single-platform runs (the
+    latest recorded observation of this run); ``current_observations``
+    always holds the per-platform map so cross-platform runs see every
+    platform's current evidence.
+    """
 
     request: str
     workspace: Workspace
     platform_scope: tuple[str, ...]
     state_context: dict[str, Any] | None
-    current_observation: dict[str, Any] | None
-    hypotheses: tuple[str, ...]
-    safety: PlatformSafetyContext
+    current_observation: dict[str, Any] | None = None
+    current_observations: dict[str, Any] = field(default_factory=dict)
+    hypotheses: tuple[str, ...] = ()
+    safety: PlatformSafetyContext = field(default_factory=PlatformSafetyContext)
 
 
 @dataclass
@@ -168,7 +189,12 @@ class PlatformOperationalRun:
         self.platform_scope: tuple[str, ...] = ()
         self.state_access: str = StateAccess.NOT_NEEDED
         self.request = ""
+        self.policy_state: str = "none"
+        self.permission_state: str = "read_only"
         self._platform_state: dict[str, Any] | None = None
+        self._current_observations: dict[str, Any] = {}
+        self._persistence_warnings: list[str] = []
+        self.last_verdict: SafetyVerdict | None = None
         self._started = False
 
     def begin(
@@ -177,14 +203,19 @@ class PlatformOperationalRun:
         *,
         state_access: str | None = None,
         platform_scope: tuple[str, ...] | None = None,
+        policy_state: str | None = None,
     ) -> PlatformOperationalRun:
         """Start the run: resolve platform scope and state access, then
-        load platform-aware state when required."""
+        load platform-aware state when required. ``policy_state`` comes from
+        real policy context when available (explicit or workspace policy
+        file); it is never a hardcoded default."""
         self.request = request_text or ""
         scope = platform_scope or self.explicit_platform_scope
         if scope is None and request_text:
             scope = detect_platforms(request_text)
         self.platform_scope = tuple(scope or ())
+        self.policy_state = self._resolve_policy_state(policy_state)
+        self.permission_state = self._permission_state()
         if state_access is not None:
             self.state_access = state_access
         elif request_text is None:
@@ -215,32 +246,76 @@ class PlatformOperationalRun:
         observed_at: str,
         source_type: str = "export",
         evidence_status: str = "confirmed",
+        allow_generic: bool = False,
     ) -> str | None:
         """Project new evidence through the platform adapter and persist one
-        Observation (deduped by the shared runtime)."""
+        Observation (deduped by the shared runtime).
+
+        Unknown platforms are REJECTED (no raw passthrough); the explicit
+        ``generic`` adapter is allowlist-only and requires ``allow_generic``.
+        The projected observation also becomes THIS run's current evidence,
+        so the same-run reasoning context sees it without a full reload.
+        If persistence fails, reasoning continues with the in-memory
+        current observation (``persisted=False``) and a recorded warning;
+        nothing is pretended to be persisted.
+        """
         self._require_started()
         adapter = adapter_for(platform)
-        facts = adapter.project_observation(metrics) if adapter else dict(metrics)
-        funnel = adapter.project_funnel(metrics) if adapter else {}
+        if adapter is None:
+            raise ContractError(
+                f"unknown platform {platform!r}: no adapter registered; "
+                "raw passthrough is not allowed (use a known platform or "
+                "the explicit 'generic' adapter)"
+            )
+        if adapter is GENERIC and not allow_generic:
+            raise ContractError(
+                "the 'generic' adapter requires allow_generic=True (explicit opt-in)"
+            )
+        facts = adapter.project_observation(metrics)
+        funnel = adapter.project_funnel(metrics)
         facts.update(funnel)
-        return self.session.record_observation(
-            observed_at=observed_at,
-            platform=platform,
-            facts=facts,
-            source_type=source_type,
-            evidence_status=evidence_status,
-        )
+        event_id: str | None = None
+        persisted = True
+        try:
+            event_id = self.session.record_observation(
+                observed_at=observed_at,
+                platform=platform,
+                facts=facts,
+                source_type=source_type,
+                evidence_status=evidence_status,
+            )
+        except ContractError as exc:  # pragma: no cover - failure path
+            persisted = False
+            self._persistence_warnings.append(f"observation not persisted: {exc}")
+        self._current_observations[platform] = {
+            "event_id": event_id,
+            "type": "observation",
+            "platform": platform,
+            "observed_at": observed_at,
+            "persisted": persisted,
+            "payload": {"facts": facts},
+        }
+        return event_id
 
     def operational_context(
         self, adapter: PlatformAdapter | None = None
     ) -> OperationalContext:
-        """Bounded context for the reasoning layer: state + hypotheses +
-        safety envelope."""
+        """Bounded context for the reasoning layer: current evidence (this
+        run) + platform-scoped historical state + hypotheses + safety."""
         self._require_started()
+        measurement_by_platform, maturity_by_platform = self._safety_states()
         safety = PlatformSafetyContext(
-            measurement_state=self._measurement_state(),
-            maturity_state=self._maturity_state(),
-            permission_state=self._permission_state(),
+            measurement_state=self._aggregate_safety(
+                measurement_by_platform, self.platform_scope
+            ),
+            maturity_state=self._aggregate_safety(
+                maturity_by_platform, self.platform_scope
+            ),
+            measurement_by_platform=measurement_by_platform,
+            maturity_by_platform=maturity_by_platform,
+            policy_state=self.policy_state,
+            permission_state=self.permission_state,
+            platform_scope=self.platform_scope,
         )
         hypotheses: tuple[str, ...] = ()
         if adapter is not None:
@@ -251,12 +326,22 @@ class PlatformOperationalRun:
             single = self.platform_scope[0] if self.platform_scope else None
             found = adapter_for(single) if single else None
             hypotheses = found.hypothesis_families if found else ()
+        current_observation = None
+        if self._current_observations:
+            last = list(self._current_observations.values())[-1]
+            if len(self.platform_scope) == 1:
+                current_observation = self._current_observations.get(
+                    self.platform_scope[0], last
+                )
+            else:
+                current_observation = last
         return OperationalContext(
             request=self.request,
             workspace=self.workspace,
             platform_scope=self.platform_scope,
             state_context=self._platform_state,
-            current_observation=None,
+            current_observation=current_observation,
+            current_observations=dict(self._current_observations),
             hypotheses=hypotheses,
             safety=safety,
         )
@@ -271,9 +356,45 @@ class PlatformOperationalRun:
         origin: str = "agent_constrained",
         review_condition: str | None = None,
         review_after: str | None = None,
+        execution_status: str | None = None,
     ) -> str | None:
-        """Persist one operational Decision through the shared session."""
+        """Persist one operational Decision through the shared session.
+
+        The candidate ALWAYS runs through the runtime safety validator
+        (measurement / maturity / policy / permission + execution-claim
+        check) before persistence. A rejected candidate returns None and
+        sets ``last_verdict`` with the reason and allowed next actions; it
+        is never persisted and never raised as an internal exception.
+        Platform attribution is inherited from the run's platform scope
+        (single platform → that platform; multi → cross_platform + scope).
+        """
         self._require_started()
+        measurement_by_platform, maturity_by_platform = self._safety_states()
+        verdict = validate_decision_action(
+            decision_class=decision_class,
+            reason=reason,
+            measurement_state=self._aggregate_safety(
+                measurement_by_platform, self.platform_scope
+            ),
+            maturity_state=self._aggregate_safety(
+                maturity_by_platform, self.platform_scope
+            ),
+            policy_state=self.policy_state,
+            permission_state=self.permission_state,
+            execution_status=execution_status,
+        )
+        self.last_verdict = verdict
+        if verdict.outcome == "rejected":
+            return None
+        platform, platform_scope = self._decision_platform()
+        policy_constraints: dict[str, Any] = {
+            "permission_state": self.permission_state,
+            "policy_state": self.policy_state,
+            "safety_result": {
+                "outcome": verdict.outcome,
+                "reason_code": verdict.reason_code,
+            },
+        }
         return self.session.record_decision(
             decision_class=decision_class,
             reason=reason,
@@ -282,7 +403,95 @@ class PlatformOperationalRun:
             origin=origin,
             review_condition=review_condition,
             review_after=review_after,
-            policy_constraints={"permission_state": self._permission_state()},
+            policy_constraints=policy_constraints,
+            platform=platform,
+            platform_scope=platform_scope,
+        )
+
+    def record_confirmed_change(
+        self,
+        *,
+        change_type: str,
+        direction: str,
+        magnitude: float | None = None,
+        effective_at: str | None = None,
+        target_platform: str | None = None,
+        refs: tuple[str, ...] = (),
+    ) -> str | None:
+        """Record a confirmed change ONLY after execution is confirmed.
+
+        Platform attribution: a single-platform run inherits its platform;
+        a cross-platform run REQUIRES an explicit ``target_platform`` that
+        belongs to the run's scope (a recommendation never becomes a
+        Change, and a Change is never mislabeled to another platform).
+        """
+        self._require_started()
+        platform: str | None
+        if target_platform is not None:
+            if self.platform_scope and target_platform not in self.platform_scope:
+                raise ContractError(
+                    f"target_platform {target_platform!r} is outside the run's "
+                    f"platform scope {self.platform_scope}"
+                )
+            platform = target_platform
+        elif len(self.platform_scope) == 1:
+            platform = self.platform_scope[0]
+        else:
+            platform = None  # cross-platform run: explicit target required
+        return self.session.record_confirmed_change(
+            change_type=change_type,
+            direction=direction,
+            magnitude=magnitude,
+            effective_at=effective_at,
+            refs=refs,
+            platform=platform,
+        )
+
+    def record_outcome(
+        self,
+        *,
+        outcome_class: str,
+        decision_id: str | None = None,
+        change_id: str | None = None,
+        observation_ids: tuple[str, ...] = (),
+        source_type: str = "export",
+        evidence_status: str = "confirmed",
+        platform: str | None = None,
+    ) -> str | None:
+        """Record an outcome only when later evidence justifies it.
+
+        Platform attribution is derived from the linked decision/change when
+        the caller does not pass it; conflicting explicit platforms are
+        rejected rather than guessed.
+        """
+        self._require_started()
+        derived: str | None = None
+        for ref in (decision_id, change_id):
+            if ref is None:
+                continue
+            event = self.store.get_event(ref)
+            event_platform = event.get("platform")
+            if event_platform and event_platform != "cross_platform":
+                if derived is None:
+                    derived = str(event_platform)
+                elif derived != event_platform:
+                    raise ContractError(
+                        "outcome refs disagree on platform "
+                        f"({derived!r} vs {event_platform!r}); pass platform explicitly"
+                    )
+        if platform is not None and derived is not None and platform != derived:
+            raise ContractError(
+                f"outcome platform {platform!r} conflicts with derived "
+                f"platform {derived!r} from its refs"
+            )
+        return self.session.record_outcome(
+            outcome_class=outcome_class,
+            decision_id=decision_id,
+            change_id=change_id,
+            observation_ids=observation_ids,
+            source_type=source_type,
+            evidence_status=evidence_status,
+            platform=platform or derived,
         )
 
     def result(
@@ -311,25 +520,112 @@ class PlatformOperationalRun:
         self._started = False
         self._platform_state = None
 
-    # ── safety state (live workspace evidence + permissions) ─────────────
+    # ── safety state (platform-scoped, current-first) ────────────────────
 
-    def _measurement_state(self) -> str:
-        for event in self.store.get_recent_observations(limit=5):
+    def _safety_states(self) -> tuple[dict[str, str], dict[str, str]]:
+        """(measurement_by_platform, maturity_by_platform).
+
+        Current observations of THIS run take priority over history, and
+        history is read platform-scoped — a Meta request can never inherit
+        TikTok's measurement state, even when TikTok's events are newer.
+        """
+        measurement: dict[str, str] = {}
+        maturity: dict[str, str] = {}
+        for platform, event in self._current_observations.items():
             facts = event.get("payload", {}).get("facts", {})
             value = facts.get("measurement_state")
             if isinstance(value, str) and value != "unknown":
-                return value
-        return "unknown"
-
-    def _maturity_state(self) -> str:
-        for event in self.store.get_recent_observations(limit=5):
-            facts = event.get("payload", {}).get("facts", {})
+                measurement[platform] = value
             value = facts.get("maturity_state")
             if isinstance(value, str) and value != "unknown":
-                return value
-        return "unknown"
+                maturity[platform] = value
+        for platform in self.platform_scope:
+            if platform not in measurement:
+                for event in self.store.get_recent_observations(
+                    limit=5, platform=platform
+                ):
+                    facts = event.get("payload", {}).get("facts", {})
+                    value = facts.get("measurement_state")
+                    if isinstance(value, str) and value != "unknown":
+                        measurement[platform] = value
+                        break
+            if platform not in maturity:
+                for event in self.store.get_recent_observations(
+                    limit=5, platform=platform
+                ):
+                    facts = event.get("payload", {}).get("facts", {})
+                    value = facts.get("maturity_state")
+                    if isinstance(value, str) and value != "unknown":
+                        maturity[platform] = value
+                        break
+        return measurement, maturity
+
+    @staticmethod
+    def _aggregate_safety(states: Mapping[str, str], scope: tuple[str, ...]) -> str:
+        """Conservative aggregation over the RELEVANT platforms only.
+        Never an average, never a flat scalar that hides platform
+        differences (per-platform values stay in the by_platform maps).
+        Measurement vocabulary: any invalid → invalid; else unknown; else
+        stable. Maturity vocabulary: any insufficient → insufficient;
+        else unknown; else sufficient.
+        """
+        relevant = [states[platform] for platform in scope if platform in states]
+        if not relevant:
+            return "unknown"
+        if "invalid" in relevant:
+            return "invalid"
+        if "insufficient" in relevant:
+            return "insufficient"
+        if "unknown" in relevant:
+            return "unknown"
+        if all(value in {"sufficient", "stable"} for value in relevant):
+            return "sufficient" if "sufficient" in relevant else "stable"
+        return relevant[-1]
+
+    def _decision_platform(self) -> tuple[str | None, tuple[str, ...]]:
+        """Platform attribution inherited from the run's scope; when the
+        scope is empty but this run recorded exactly one platform's
+        observation, that platform is inherited (never guessed from
+        history)."""
+        if len(self.platform_scope) == 1:
+            return self.platform_scope[0], ()
+        if len(self.platform_scope) > 1:
+            return "cross_platform", self.platform_scope
+        if len(self._current_observations) == 1:
+            return next(iter(self._current_observations)), ()
+        return None, ()
+
+    def _resolve_policy_state(self, explicit: str | None) -> str:
+        """Real policy context only: explicit argument or a workspace-level
+        policy file; never a hardcoded default. Unknown values degrade to
+        "none" (no additional policy restriction)."""
+        from appflow_ops.evals.safety import POLICY_STATES
+
+        if explicit is not None:
+            return explicit if explicit in POLICY_STATES else "none"
+        try:
+            from .io import _load
+
+            for name in ("policy.yaml", "ads-policy.yaml"):
+                path = self.workspace.root / name
+                if path.is_file() and not path.is_symlink():
+                    document = _load(path)
+                    if isinstance(document, dict):
+                        value = document.get("policy_state")
+                        if isinstance(value, str) and value in POLICY_STATES:
+                            return value
+        except (OSError, ValueError, TypeError):
+            pass
+        return "none"
 
     def _permission_state(self) -> str:
+        """Capability-based permission tier (canonical PERMISSION_STATES):
+        [] → read_only; recommend-only → recommend_only; budget/bid/creative
+        execution set → budget_bid_creative; explicit full/execute → full.
+        Never a non-empty-list shortcut.
+        """
+
+        allowed: set[str] = set()
         try:
             document = self.workspace.context_path
             if document.is_file() and not document.is_symlink():
@@ -338,12 +634,18 @@ class PlatformOperationalRun:
                 context = _load(document)
                 permissions = context.get("permissions", {})
                 if isinstance(permissions, dict):
-                    allowed = permissions.get("optimizer_can", [])
-                    if isinstance(allowed, list):
-                        return "full_access" if allowed else "recommend_only"
+                    raw = permissions.get("optimizer_can", [])
+                    if isinstance(raw, list):
+                        allowed = {str(item) for item in raw}
         except (OSError, ValueError, TypeError):
             pass
-        return "recommend_only"
+        if "full" in allowed or "execute" in allowed:
+            return "full"
+        if allowed & {"budget", "bid", "creative", "structure", "campaign"}:
+            return "budget_bid_creative"
+        if "recommend" in allowed:
+            return "recommend_only"
+        return "read_only"
 
 
 def build_operational_context(

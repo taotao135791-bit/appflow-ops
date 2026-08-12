@@ -170,6 +170,7 @@ def _record_quick_decision(workspace: Workspace, result: dict[str, Any]) -> None
             origin="deterministic",
             review_condition=_review_condition_text(result.get("review_condition")),
             review_after=metadata.get("review_after"),
+            platform="google_ads",
         )
         runtime.finish_run()
     except (ContractError, OSError, ValueError) as exc:
