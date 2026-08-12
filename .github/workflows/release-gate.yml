@@ -29,6 +29,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Install release-gate dependencies
+        # The preflight (release_check.py -> appflow_ops.evals.vague_query)
+        # needs PyYAML to validate eval fixtures; keep the gate minimal.
+        run: python -m pip install --disable-pip-version-check "PyYAML>=6.0.2,<7.0"
+
       - name: Verify release tag version and exact main commit
         if: github.ref_type == 'tag'
         shell: bash
