@@ -595,19 +595,22 @@ class PlatformOperationalRun:
     def _safety_states(self) -> tuple[dict[str, str], dict[str, str]]:
         """(measurement_by_platform, maturity_by_platform).
 
-        Current observations of THIS run take priority over history, and
-        history is read platform-scoped — a Meta request can never inherit
-        TikTok's measurement state, even when TikTok's events are newer.
+        Freshness rule (absent ≠ unknown): if the CURRENT observation
+        contains the field, its canonical value wins — including an
+        explicit "unknown", which is itself new safety evidence and MUST
+        override stale historical certainty. History is only searched when
+        the current observation is MISSING the field. History is read
+        platform-scoped — a Meta request can never inherit TikTok's state.
         """
         measurement: dict[str, str] = {}
         maturity: dict[str, str] = {}
         for platform, event in self._current_observations.items():
             facts = event.get("payload", {}).get("facts", {})
             value = facts.get("measurement_state")
-            if isinstance(value, str) and value != "unknown":
-                measurement[platform] = value
+            if isinstance(value, str):
+                measurement[platform] = value  # explicit unknown included
             value = facts.get("maturity_state")
-            if isinstance(value, str) and value != "unknown":
+            if isinstance(value, str):
                 maturity[platform] = value
         for platform in self.platform_scope:
             if platform not in measurement:
@@ -616,7 +619,7 @@ class PlatformOperationalRun:
                 ):
                     facts = event.get("payload", {}).get("facts", {})
                     value = facts.get("measurement_state")
-                    if isinstance(value, str) and value != "unknown":
+                    if isinstance(value, str):
                         measurement[platform] = value
                         break
             if platform not in maturity:
@@ -625,21 +628,22 @@ class PlatformOperationalRun:
                 ):
                     facts = event.get("payload", {}).get("facts", {})
                     value = facts.get("maturity_state")
-                    if isinstance(value, str) and value != "unknown":
+                    if isinstance(value, str):
                         maturity[platform] = value
                         break
         return measurement, maturity
 
     @staticmethod
     def _aggregate_safety(states: Mapping[str, str], scope: tuple[str, ...]) -> str:
-        """Conservative aggregation over the RELEVANT platforms only.
-        Never an average, never a flat scalar that hides platform
-        differences (per-platform values stay in the by_platform maps).
+        """Conservative aggregation over the FULL scope: a platform with
+        no safety evidence is treated as "unknown" (never silently
+        ignored — stable + missing must NOT aggregate to stable). Never an
+        average, never a flat scalar that hides platform differences.
         Measurement vocabulary: any invalid → invalid; else unknown; else
         stable. Maturity vocabulary: any insufficient → insufficient;
         else unknown; else sufficient.
         """
-        relevant = [states[platform] for platform in scope if platform in states]
+        relevant = [states.get(platform, "unknown") for platform in scope]
         if not relevant:
             return "unknown"
         if "invalid" in relevant:

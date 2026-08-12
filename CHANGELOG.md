@@ -2,6 +2,39 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.4.5 — 2026-08-12
+
+### Fixed
+
+- **Explicit current unknown safety state no longer falls back to stale
+  historical certainty**: absent ≠ unknown — a current Observation
+  missing `measurement_state`/`maturity_state` may use history, but an
+  explicit `unknown` is new safety evidence that overrides yesterday's
+  `stable`/`sufficient` (freshness: current field wins, history only when
+  the field is absent).
+- **Cross-platform missing safety evidence now aggregates conservatively
+  as unknown**: aggregation covers the full scope — an in-scope platform
+  with no safety state counts as `unknown`, so `stable + missing →
+  unknown` (never silently `stable`); conservative precedence preserved
+  (`invalid`/`insufficient` > `unknown` > `stable`/`sufficient`).
+- **Invalid `platform=None + platform_scope` future writes rejected**: a
+  scoped-but-unattributable ghost event can no longer be created;
+  `platform=None` requires an empty scope; legacy unscoped events remain
+  readable (no history migration).
+- **Direct State decision path validates canonical policy/permission
+  states**: `policy_constraints` carrying malformed `policy_state` /
+  `permission_state` fails closed; unrelated policy metadata keys are
+  still allowed; runtime decision path unaffected.
+
+### Changed
+
+- **Roadmap now points to Ads Decision Intelligence** (Meta auction
+  pressure vs creative fatigue vs audience saturation; TikTok
+  click→install and deep-funnel diagnosis; Creative continue/replace/
+  retest/scale; Bid & Budget when/how-much/when-to-wait; Cross-platform
+  media vs product vs measurement diagnosis) instead of Platform
+  Adoption.
+
 ## 3.4.4 — 2026-08-12
 
 ### Fixed

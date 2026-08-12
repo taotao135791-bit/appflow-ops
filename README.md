@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.4/install.sh | bash -s -- --ref=v3.4.4
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.5/install.sh | bash -s -- --ref=v3.4.5
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -277,7 +277,15 @@ python3 scripts/uac_experiment.py funnel-dashboard --workspace "workspaces/acme/
 
 ## 下一阶段（Roadmap，尚未开始）
 
-Continuous Account State 已作为稳定基础层收口。下一阶段是**平台采用**：让 Meta、TikTok、素材诊断与跨平台运维复用现有的 Reasoning Contract + workspace-scoped Continuous State + Policy/Safety Kernel，而不是继续扩展 State 基础设施。
+Platform Operational Runtime 与 Safety Kernel 已作为稳定基础收口。下一阶段是 **Ads Decision Intelligence**：提升真正影响投放结果 的判断能力，而不是继续扩展 Runtime / State / Safety 基础设施。
+
+- Meta：auction pressure vs creative fatigue vs audience saturation
+- TikTok：click→install 与 deep-funnel 断点诊断
+- Creative：continue / replace / retest / scale 决策
+- Bid & Budget：何时改、改多少、何时等
+- Cross-platform：media vs product vs measurement 诊断
+
+AppFlow 对证据支持的假设排序，并收敛到最小可用操作——不承诺 AI 总能识别真实原因。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

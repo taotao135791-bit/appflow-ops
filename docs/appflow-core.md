@@ -197,6 +197,24 @@ component; this runtime does not replace it.
   cross_platform without a ≥2-platform scope) and canonicalizes scope
   order.
 
+### Safety Freshness Semantics (v3.4.5)
+
+- **Absent ≠ unknown**: a current Observation without a
+  `measurement_state`/`maturity_state` field makes no new judgment —
+  history may be used. An explicit `unknown` value IS new safety evidence
+  and overrides historical certainty (yesterday's `stable` cannot mask
+  today's `unknown`).
+- **Cross-platform missing-as-unknown**: aggregation covers the FULL
+  scope — an in-scope platform with no safety evidence counts as
+  `unknown`, so `stable + missing → unknown` (never silently `stable`);
+  conservative precedence is preserved (`invalid` > `insufficient` >
+  `unknown`).
+- **Attribution canonical contract**: `platform is None` → empty scope;
+  single platform → empty scope; `cross_platform` → scope with ≥2 unique
+  platforms. New writes violating this (e.g. `platform=None` + non-empty
+  scope — a ghost event invisible to every platform filter) are rejected;
+  legacy events stay readable.
+
 ## PlatformAdapter (thin contract)
 
 Keep the contract minimal — projections and vocabulary, no framework:

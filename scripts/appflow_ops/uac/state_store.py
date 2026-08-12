@@ -44,6 +44,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from appflow_ops.evals.safety import PERMISSION_STATES, POLICY_STATES
+
 from .account_state import (
     CONFIDENCE_LEVELS,
     DECISION_CLASSES,
@@ -91,9 +93,11 @@ def validate_platform_attribution(
     """Lightweight defense-in-depth for new platform attribution.
 
     Runtime is the primary line; this gate rejects contradictory NEW
-    attribution before it reaches persistence:
+    attribution before it reaches persistence. Canonical contract:
 
-    - ``platform=None`` (legacy) → unvalidated, unchanged
+    - ``platform is None`` → scope must be empty (a None + non-empty
+      scope event would be a ghost: scoped but invisible to every
+      platform filter)
     - ``platform="cross_platform"`` → scope must contain >= 2 unique
       platforms (an empty scope contradicts cross_platform)
     - single platform → scope must be empty (platform + scope both set is
@@ -104,6 +108,11 @@ def validate_platform_attribution(
 
     canonical = tuple(sorted(set(platform_scope)))
     if platform is None:
+        if canonical:
+            raise ContractError(
+                f"platform None cannot carry a platform_scope {canonical}; "
+                "unscoped events must have an empty scope"
+            )
         return canonical
     if platform == "cross_platform":
         if len(canonical) < 2:
@@ -470,11 +479,23 @@ class StateStore:
             # persistence through a non-runtime path.
             raise ContractError(f"unknown diagnosis_confidence: {diagnosis_confidence}")
         validate_decision_origin(origin)
+        # Defense-in-depth: known canonical keys inside policy_constraints
+        # must carry canonical enum values, even on non-runtime paths.
+        constraints = dict(policy_constraints or {})
+        for key, states in (
+            ("policy_state", POLICY_STATES),
+            ("permission_state", PERMISSION_STATES),
+        ):
+            value = constraints.get(key)
+            if value is not None and value not in states:
+                raise ContractError(
+                    f"unknown {key}: {value!r}; expected one of {states}"
+                )
         payload: dict[str, Any] = {
             "decision_class": decision_class,
             "reason": reason[:500],
             "evidence_refs": sorted(evidence_refs),
-            "policy_constraints": dict(policy_constraints or {}),
+            "policy_constraints": constraints,
             "measurement_state": measurement_state,
             "maturity_state": maturity_state,
             "confidence": confidence,

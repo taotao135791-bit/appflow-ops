@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.4/install.sh | bash -s -- --ref=v3.4.4
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.5/install.sh | bash -s -- --ref=v3.4.5
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -381,11 +381,20 @@ The following are direction, **not** what the system does today:
 
 ## Next Phase (Roadmap — Not Started)
 
-Continuous Account State is closed as a stable foundation. The next phase is
-**platform adoption**: Meta, TikTok, creative diagnosis, and cross-platform
-operations reuse the existing Reasoning Contract + workspace-scoped
-Continuous State + Policy/Safety Kernel instead of expanding State
-infrastructure.
+Platform Operational Runtime and the Safety Kernel are closed as stable
+foundations. The next phase is **Ads Decision Intelligence**: improving
+judgment quality that actually moves campaign outcomes — not expanding
+Runtime / State / Safety infrastructure.
+
+- Meta: auction pressure vs creative fatigue vs audience saturation
+- TikTok: click→install and deep-funnel breakpoint diagnosis
+- Creative: continue / replace / retest / scale decisions
+- Bid & Budget: when to change, how much, when to wait
+- Cross-platform: media vs product vs measurement diagnosis
+
+AppFlow ranks evidence-backed hypotheses and converges to the smallest
+useful operational action — it does not promise AI can always identify
+the true cause.
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

@@ -82,6 +82,12 @@ investigate them; explore broadly internally, answer concisely externally.
 - **A single-platform Change may narrow a cross-platform Decision's
   Outcome only when the Change platform belongs to the Decision's
   scope.** Explicit cross_platform Outcomes keep the inherited scope.
+- **Explicit `unknown` is current safety information and must not be
+  replaced by stale historical certainty.** An absent field may fall back
+  to history; an explicit `unknown` is itself new evidence that overrides
+  it.
+- **Cross-platform aggregation must treat missing safety state for an
+  in-scope platform as `unknown`, not silently ignore that platform.**
 
 ## Layout
 
