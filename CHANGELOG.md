@@ -2,6 +2,60 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.4.0 — 2026-08-12
+
+### Added
+
+- **Platform Operational Runtime** (`PlatformOperationalRun`,
+  `operational_runtime.py`): the canonical operational lifecycle for Meta /
+  TikTok / Creative / cross-platform — begin → platform scope → state
+  access → platform-aware bounded state load → evidence projection →
+  Observation persistence → hypotheses + safety envelope → Decision
+  persistence → `OperationalResult`. Callers no longer manage
+  `StateSession` manually for normal operational runs.
+- **Platform-aware state retrieval**: `StateStore.get_recent*` supports a
+  `platform` filter; the runtime fetches per-platform bounded budgets (3
+  observations / 2 changes / 2 decisions / 1 outcome per platform, scope
+  capped at 4) so one platform's recent history can never starve another
+  platform out of context.
+- **Platform-specific evidence projection**: adapters now preserve
+  platform-owned fields — Meta (frequency, purchase_cpa, learning_state,
+  cost_cap, placement_mix, funnel rates), TikTok (creative_delivery_state,
+  install_to_purchase_rate, cost_per_result), Creative (creative_id_local,
+  creative_age_bucket, delivery_change, spend_share, downstream_conversion,
+  recent budget/bid changes) — plus a common envelope; funnel fields are
+  truly projected; unknown raw fields never persist.
+- **Public facade** `appflow_ops.runtime`: re-exports `AppFlowRuntime`,
+  `PlatformOperationalRun`, `RunContext`, adapters so platform code stops
+  reaching into `uac.*`.
+- **Shared action vocabulary**: `retest` added to the shared decision
+  classes; adapters declare `actions` + platform `action_subtypes`
+  (replace_creative, change_bid, change_budget).
+- **Platform safety integration**: `PlatformSafetyContext`
+  (measurement/maturity/policy/permission) is supplied to every operational
+  run; permission state is persisted with decisions; the four gates are
+  tested on non-Google platforms.
+- Vague-query eval: +7 synthetic cases (Meta/TikTok/Creative/cross-platform
+  incl. measurement-invalid and maturity-pending safety cases), 35 total.
+
+### Changed
+
+- `_COMMON_METRIC_KEYS` split into common envelope + per-platform specific
+  keys (no more shared mega-allowlist).
+- Platform scope detection (Router may pass `platform_scope` explicitly;
+  fallback keyword detection handles CJK boundaries, e.g. "TT还是没量").
+- Cross-platform reasoning is now an operational run with its own
+  hypothesis families; still strictly same-workspace.
+- docs/appflow-core.md documents the four layers (Core / Platform
+  Operational Runtime / Platform Adapters / Deterministic Specialization);
+  main router documents the operational runtime entry.
+
+### Not Included
+
+- deterministic Meta/TikTok engines (still Agent + shared runtime)
+- Ads APIs / background monitoring / GUI / Computer Use
+- cross-client learning / global creative benchmark store
+
 ## 3.3.4 — 2026-08-12
 
 ### Fixed

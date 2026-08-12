@@ -61,6 +61,7 @@ DECISION_CLASSES = (
     "pause",
     "reopen",
     "replace",
+    "retest",
     "wait",
     "observe",
     "investigate",

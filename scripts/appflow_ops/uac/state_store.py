@@ -520,9 +520,19 @@ class StateStore:
         return document
 
     def get_recent(
-        self, *, limit: int = _DEFAULT_LIMIT, event_type: str | None = None
+        self,
+        *,
+        limit: int = _DEFAULT_LIMIT,
+        event_type: str | None = None,
+        platform: str | None = None,
     ) -> tuple[dict[str, Any], ...]:
-        """Return the newest events, newest first. Bounded by default."""
+        """Return the newest events, newest first. Bounded by default.
+
+        ``platform`` filters on the event's platform field (a workspace-
+        internal filter; it can never reach another workspace). Platform-
+        aware retrieval prevents one platform's recent history from
+        starving another platform out of a bounded context.
+        """
         if event_type is not None:
             validate_event_type(event_type)
         if not 0 < limit <= _MAX_LIMIT:
@@ -536,27 +546,36 @@ class StateStore:
             if event_type is None or kind == event_type
         ]
         entries.sort(reverse=True)
-        return tuple(self._read_event(path) for _, _, path in entries[:limit])
+        if platform is None:
+            return tuple(self._read_event(path) for _, _, path in entries[:limit])
+        matched: list[dict[str, Any]] = []
+        for _sequence, _kind, path in entries:
+            if len(matched) >= limit:
+                break
+            event = self._read_event(path)
+            if event.get("platform") == platform:
+                matched.append(event)
+        return tuple(matched)
 
     def get_recent_observations(
-        self, limit: int = _DEFAULT_LIMIT
+        self, limit: int = _DEFAULT_LIMIT, *, platform: str | None = None
     ) -> tuple[dict[str, Any], ...]:
-        return self.get_recent(limit=limit, event_type="observation")
+        return self.get_recent(limit=limit, event_type="observation", platform=platform)
 
     def get_recent_changes(
-        self, limit: int = _DEFAULT_LIMIT
+        self, limit: int = _DEFAULT_LIMIT, *, platform: str | None = None
     ) -> tuple[dict[str, Any], ...]:
-        return self.get_recent(limit=limit, event_type="change")
+        return self.get_recent(limit=limit, event_type="change", platform=platform)
 
     def get_recent_decisions(
-        self, limit: int = _DEFAULT_LIMIT
+        self, limit: int = _DEFAULT_LIMIT, *, platform: str | None = None
     ) -> tuple[dict[str, Any], ...]:
-        return self.get_recent(limit=limit, event_type="decision")
+        return self.get_recent(limit=limit, event_type="decision", platform=platform)
 
     def get_recent_outcomes(
-        self, limit: int = _DEFAULT_LIMIT
+        self, limit: int = _DEFAULT_LIMIT, *, platform: str | None = None
     ) -> tuple[dict[str, Any], ...]:
-        return self.get_recent(limit=limit, event_type="outcome")
+        return self.get_recent(limit=limit, event_type="outcome", platform=platform)
 
     def get_event(self, event_id: str) -> dict[str, Any]:
         if not is_event_id(event_id):

@@ -35,6 +35,12 @@ investigate them; explore broadly internally, answer concisely externally.
   adoption — reuse the shared reasoning + state runtime across Meta,
   TikTok, creative diagnosis, and cross-platform operations — not more
   StateStore work.
+- **New platform integrations must adopt the shared operational runtime
+  before introducing platform-specific infrastructure.** Do not create
+  platform-local copies of State, Reasoning, or Safety infrastructure:
+  `PlatformOperationalRun` + the platform adapters are the only sanctioned
+  operational path for non-Google platforms, and platform-specific
+  evidence goes through the adapters' projection (never raw dumps).
 
 ## Layout
 

@@ -180,7 +180,7 @@ Broad internally, concise externally   系统内广泛探索，对外给出聚�
 - **连续账户状态**：workspace 级持续状态（Observation / Change / Decision / Outcome / Current State），追问“现在呢？”可直接复用之前的观察、调整、建议与结果 。状态按 workspace 物理隔离，AppFlow 没有跨客户全局业务记忆（见 [docs/account-state.md](docs/account-state.md)）
 
 > AppFlow runtime automatically restores workspace-scoped operational context for relevant follow-up and diagnosis requests. Direct informational questions ("CTR 是什么？") do not need business-state retrieval.
-- **平台采用（AppFlow Core）**：Meta / TikTok / Creative 通过共享的 AppFlow Core（Reasoning Contract + workspace 状态 + 安全门禁 + 运行时生命周期）工作——平台只提供自己的 hypothesis families 与指标投影（`platform_adapters.py`），不复制推理循环、不新增状态类型。它们目前是 **structured Agent workflow + shared runtime**，不是 deterministic engine（见 [docs/appflow-core.md](docs/appflow-core.md)）
+- **平台运营运行时（One AppFlow Core, multiple platform adapters）**：Meta / TikTok / Creative 与跨平台诊断通过统一的 `PlatformOperationalRun` 执行完整工作流——平台范围解析、平台感知的有界状态检索（不饿死任何平台）、证据投影、Observation/Decision 自动持久化、四层安全门禁。平台只贡献 hypothesis families、指标投影与术语（`platform_adapters.py`），不复制推理循环、不新增状态类型。它们目前是 **Agent + shared operational runtime**，不是 deterministic engine（见 [docs/appflow-core.md](docs/appflow-core.md)）
 - **漏斗诊断看板**：把花费→安装→注册→支付生成一张单文件 HTML 看板，自动标红瓶颈层
 - **乙方日常**：每日巡检、异常排查、素材需求单、甲方模板适配、客户回复、操作变更记录
 - **甲方/内部双份报告**：给甲方的解释稿和给内部的操作票分开写
@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.4/install.sh | bash -s -- --ref=v3.3.4
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.0/install.sh | bash -s -- --ref=v3.4.0
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：

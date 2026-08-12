@@ -38,7 +38,7 @@ _DIRECT_INFORMATIONAL_RE = re.compile(
     re.IGNORECASE,
 )
 _DIAGNOSIS_RE = re.compile(
-    r"(跑不动|掉量|掉了|没量|突然|异常|为什么|涨了|下降|不行了|为什么有点击|没安装|没转化)",
+    r"(跑不动|掉量|掉了|没量|突然|异常|为什么|涨了|下降|不行了|为什么有点击|没安装|没转化|怎么了|怎么回事)",
     re.IGNORECASE,
 )
 _FOLLOW_UP_RE = re.compile(

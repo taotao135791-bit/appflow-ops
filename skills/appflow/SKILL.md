@@ -5,34 +5,36 @@ description: >-
   AC2.0/2.5/3.0, 广告账户审计, 只读看后台, 日报/周报, 甲方模板, 每日巡检, 客户回复,
   素材需求, 漏斗诊断看板, 客户急单响应, Google/Meta/TikTok App 投放, KPI受限诊断.
 ---
-
 # AppFlow Ops Router
 
 AppFlow Ops is a router for overseas app-promotion agency (乙方) work. Keep
 this file lean: route the task, load only the needed sub-skill, and use
 references on demand.
-
 ## State Lifecycle (workspace-scoped, automatic)
 
 After workspace resolution and BEFORE reasoning, load the workspace's
 continuous state through the State Runtime API (`StateSession`), never by
 reading state files directly. Full rules: `references/state-lifecycle.md`.
 
-- **before_reasoning** — ambiguous follow-ups ("现在呢?", "Google 怎么又
-  不行了?") load current state + bounded recent history + pending review;
-  terminology questions skip state entirely.
-- **after_observation** — one observation per reliable new fact, deduped by
-  source digest within the run.
-- **after_decision** — one decision per clear recommendation; `origin` =
-  deterministic | agent_constrained | operator (default agent_constrained);
-  never store the full answer.
-- **after_confirmed_change** — a change is recorded ONLY after execution is
-  confirmed; a recommendation alone never becomes a Change.
+- **before_reasoning** — ambiguous follow-ups load current state + bounded
+  recent history + pending review; terminology questions skip state.
+- **after_observation** — one observation per reliable new fact, deduped.
+- **after_decision** — one decision per clear recommendation (`origin` =
+  deterministic | agent_constrained | operator).
+- **after_confirmed_change** — ONLY after execution is confirmed.
 - **after_outcome** — only with later evidence, never at decision time.
 
 State is per-workspace and physically isolated; never read, write, or
-reference another workspace's state, and never borrow its history to fill a
-missing gap.
+reference another workspace's state, or borrow its history.
+
+## Platform Operational Runtime
+
+Meta / TikTok / Creative / cross-platform operational requests run through
+the shared `PlatformOperationalRun` (facade `appflow_ops.runtime`): begin →
+platform scope → state access → platform-aware bounded state → projection →
+Observation → hypotheses + safety → Decision → result. Callers never
+assemble this lifecycle manually; platform skills describe hypotheses,
+evidence, actions, and terminology only.
 
 ## Always Do First
 
@@ -42,9 +44,8 @@ missing gap.
 2. Stay read-only in ad platforms unless the user confirms an exact edit.
 3. Keep real account names, IDs, campaign names, emails, payment details, and
    live metrics out of reusable skill files, examples, tests, and templates.
-4. Follow the question discipline in
-   `references/client-questions-policy.md`: ask only what changes the next
-   decision, batch the questions, and never ask what can be inferred.
+4. Follow the question discipline in `references/client-questions-policy.md`:
+   ask only what changes the next decision, batch the questions.
 5. Resolve the current client workspace before any data work; never mix two
    clients' data, ledgers, or deliverables (see Client & Account Isolation).
 6. For global protocols, quality gates, and style learning details, load

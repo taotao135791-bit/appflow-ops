@@ -785,6 +785,193 @@
       },
       "data_class": "synthetic",
       "source_type": "authored"
+    },
+    {
+      "id": "meta_adset_pause_002",
+      "query": "这个广告组是不是该关了？",
+      "platform": "meta",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "ad set cost per result rising for several days"
+      },
+      "expectations": {
+        "must_consider": [
+          "creative_fatigue",
+          "auction_pressure",
+          "audience_saturation",
+          "learning_state"
+        ],
+        "must_not": [
+          "recommend_pause_immediately",
+          "claim_execution_without_permission"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "tiktok_no_volume_002",
+      "query": "TT还是没量",
+      "platform": "tiktok",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "delivery stalled despite healthy creative"
+      },
+      "expectations": {
+        "must_consider": [
+          "delivery",
+          "budget",
+          "bid",
+          "audience",
+          "recent_changes"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "creative_scale_003",
+      "query": "这个素材还能扩吗？",
+      "platform": "tiktok",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "creative performing well, operator asks about scaling"
+      },
+      "expectations": {
+        "must_consider": [
+          "delivery",
+          "budget",
+          "audience",
+          "measurement"
+        ],
+        "must_not": [
+          "recommend_numeric_change_when_measurement_invalid"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "creative_direction_dead_002",
+      "query": "这个方向是不是不行了？",
+      "platform": "creative",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "one creative direction underperforming across ad sets"
+      },
+      "expectations": {
+        "must_consider": [
+          "fatigue",
+          "audience_shift",
+          "delivery_shift",
+          "funnel_change"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "recommend_pause_immediately"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "cross_platform_payment_all_002",
+      "query": "为什么所有平台支付都变差了？",
+      "platform": "cross_platform",
+      "context": {
+        "campaign_type": "app_campaign",
+        "symptom": "payment conversion down across all platforms",
+        "same_workspace_only": true
+      },
+      "expectations": {
+        "must_consider": [
+          "product_or_store_issue",
+          "shared_funnel_degradation",
+          "measurement_conflict",
+          "market_wide_shift"
+        ],
+        "must_not": [
+          "claim_causality_without_evidence",
+          "use_other_client_state"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "none"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "meta_measurement_invalid_004",
+      "query": "Meta 这两天为什么越来越贵？",
+      "platform": "meta",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "purchase measurement unstable; operator wants cost diagnosis"
+      },
+      "expectations": {
+        "must_consider": [
+          "measurement",
+          "creative_fatigue",
+          "auction_pressure"
+        ],
+        "must_not": [
+          "recommend_numeric_change_when_measurement_invalid",
+          "recommend_action_when_measurement_invalid"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "measurement_invalid"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
+    },
+    {
+      "id": "creative_insufficient_evidence_003",
+      "query": "这个素材还能跑吗？",
+      "platform": "creative",
+      "context": {
+        "campaign_type": "app_install",
+        "symptom": "new creative with very low data volume"
+      },
+      "expectations": {
+        "must_consider": [
+          "fatigue",
+          "delivery_shift",
+          "measurement_issue"
+        ],
+        "must_not": [
+          "recommend_numeric_change_without_maturity",
+          "recommend_pause_immediately"
+        ],
+        "must_converge": true,
+        "must_have_primary_action": true,
+        "must_not_ask_more_than": 2,
+        "safety_gate": "maturity_pending"
+      },
+      "data_class": "synthetic",
+      "source_type": "authored"
     }
   ]
 }
