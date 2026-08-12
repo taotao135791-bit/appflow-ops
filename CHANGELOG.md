@@ -2,6 +2,41 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.4.3 — 2026-08-12
+
+### Fixed
+
+- **Run identity per begin()**: `PlatformOperationalRun` is reusable but
+  every `begin()` now creates a NEW `StateSession` — fresh random run_id
+  and an empty run-local dedupe set. Cross-run dedupe regression: two runs
+  with identical payloads produce two events; run-local verdicts/warnings/
+  observations never leak into the next run.
+- **Semantic event identity includes platform**: Decision digest now
+  includes `platform`, canonicalized (sorted unique) `platform_scope` and
+  `diagnosis_confidence`; Change digest includes `platform`; Outcome
+  digest includes `platform`/`platform_scope`. Identical content on
+  different platforms is never deduped accidentally; reversed scope order
+  is one identity.
+- **diagnosis_confidence fails closed**: malformed values (e.g. `"confirmed
+  "`, `"very_high"`) raise ContractError in the validator AND in
+  StateStore (defense-in-depth) — never silently normalized to `none`;
+  validation and persistence consume the same canonical value.
+- **Outcome mixed-reference attribution**: precedence is confirmed
+  Change > Decision — an Outcome linked to a single-platform Change
+  answers "what happened after that change" (its cross-platform Decision
+  scope is dropped, no contradictory attribution); a cross-platform
+  Decision alone keeps its scope; conflicting refs are rejected.
+- **Execution-claim detection precision**: structured `execution_status`
+  stays the primary signal; the natural-language pass is now conservative
+  (action verb + operational object patterns). Harmless performance
+  language ("CTR changed after the audience expanded") is allowed; true
+  claims ("预算已经从 100 调到 80", "We changed the bid to $25") still
+  rejected in Decisions.
+- **SafetyVerdict semantics**: `accepted`/`is_allowed` now mean
+  `outcome == "allowed"` only — constrained without a rewritten candidate
+  is never persistable; stale "persist (allowed/constrained only)"
+  comments removed.
+
 ## 3.4.2 — 2026-08-12
 
 ### Fixed

@@ -156,6 +156,28 @@ component; this runtime does not replace it.
   Outcome → inherits the scope of its linked Decision/Change (including
   cross-platform scope), conflicts rejected.
 
+### Run identity & semantic validation (v3.4.3)
+
+- **Run identity**: Each `begin()` creates a new operational run identity
+  and run-local deduplication scope — a fresh `StateSession` with a new
+  random `run_id` and an empty dedupe set. No run-local cache (observations,
+  warnings, verdicts) survives into the next run; dedupe stays run-local
+  (no cross-run global dedupe database).
+- **Event identity includes scope**: Platform and explicit platform scope
+  are part of operational event semantics and therefore part of
+  deduplication identity — identical Meta/TikTok decisions or changes are
+  different events; `platform_scope` is canonicalized (sorted unique)
+  before hashing; `diagnosis_confidence` participates in Decision identity.
+- **Fail-closed validation**: Unknown structured enum values fail closed
+  before safety evaluation and persistence — malformed
+  `diagnosis_confidence` raises a ContractError in the validator AND in
+  StateStore (defense-in-depth); validator and persistence consume the
+  same canonical candidate value.
+- **Outcome attribution precedence**: confirmed Change > Decision — an
+  Outcome linked to a single-platform Change answers "what happened after
+  that change" (its cross-platform Decision scope is dropped); a
+  cross-platform Decision alone keeps its scope; conflicting refs reject.
+
 ## PlatformAdapter (thin contract)
 
 Keep the contract minimal — projections and vocabulary, no framework:

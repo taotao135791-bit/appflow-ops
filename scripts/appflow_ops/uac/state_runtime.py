@@ -83,15 +83,21 @@ def _decision_digest(
     origin: str,
     review_condition: str | None,
     review_after: str | None,
+    platform: str | None,
+    platform_scope: tuple[str, ...],
+    diagnosis_confidence: str | None,
 ) -> str:
-    """Business identity of one decision. Review semantics participate:
-    ``wait, review tomorrow`` and ``wait, review in 7 days`` are different
-    decisions.
+    """Business identity of one decision. Business identity includes scope:
+    platform (and canonicalized platform_scope) participates, so Meta and
+    TikTok decisions with identical content are different events. Review
+    semantics and structured diagnosis confidence also participate.
     """
 
     return _stable_digest(
         {
             "type": "decision",
+            "platform": platform,
+            "platform_scope": sorted(set(platform_scope)),
             "decision_class": decision_class,
             "reason": reason,
             "evidence_refs": sorted(evidence_refs),
@@ -102,6 +108,7 @@ def _decision_digest(
             "origin": origin,
             "review_condition": review_condition,
             "review_after": review_after,
+            "diagnosis_confidence": diagnosis_confidence,
         }
     )
 
@@ -115,14 +122,16 @@ def _change_digest(
     origin: str,
     evidence_status: str,
     effective_at: str | None,
+    platform: str | None,
 ) -> str:
-    """Business identity of one change. ``effective_at`` participates when
-    present: budget +20% effective Monday vs Friday are different changes.
+    """Business identity of one change. ``effective_at`` and ``platform``
+    participate: budget +20% on Meta vs TikTok are different changes.
     """
 
     return _stable_digest(
         {
             "type": "change",
+            "platform": platform,
             "change_type": change_type,
             "direction": direction,
             "magnitude": magnitude,
@@ -142,10 +151,14 @@ def _outcome_digest(
     observation_ids: tuple[str, ...],
     source_type: str,
     evidence_status: str,
+    platform: str | None,
+    platform_scope: tuple[str, ...],
 ) -> str:
     return _stable_digest(
         {
             "type": "outcome",
+            "platform": platform,
+            "platform_scope": sorted(set(platform_scope)),
             "outcome_class": outcome_class,
             "decision_id": decision_id,
             "change_id": change_id,
@@ -260,6 +273,9 @@ class StateSession:
             origin=origin,
             review_condition=review_condition,
             review_after=review_after,
+            platform=platform,
+            platform_scope=platform_scope,
+            diagnosis_confidence=diagnosis_confidence,
         )
         dedupe_key = ("decision", digest)
         if dedupe_key in self._written:
@@ -311,6 +327,7 @@ class StateSession:
             origin=origin,
             evidence_status=evidence_status,
             effective_at=effective_at,
+            platform=platform,
         )
         dedupe_key = ("change", digest)
         if dedupe_key in self._written:
@@ -355,6 +372,8 @@ class StateSession:
             observation_ids=observation_ids,
             source_type=source_type,
             evidence_status=evidence_status,
+            platform=platform,
+            platform_scope=platform_scope,
         )
         dedupe_key = ("outcome", digest)
         if dedupe_key in self._written:

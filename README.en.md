@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.2/install.sh | bash -s -- --ref=v3.4.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.3/install.sh | bash -s -- --ref=v3.4.3
 ```
 
 Then talk to your AI coding assistant in natural language:

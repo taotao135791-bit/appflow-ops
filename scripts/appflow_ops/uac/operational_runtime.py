@@ -210,12 +210,15 @@ class PlatformOperationalRun:
         real policy context when available (explicit or workspace policy
         file); it is never a hardcoded default.
 
-        The object is REUSABLE-BUT-RESET: begin() clears every run-local
-        field from any previous run (current observations, persistence
-        warnings, last verdict, platform scope, state snapshot), so a
-        second run never inherits residue from the first.
+        The object is REUSABLE-BUT-RESET: begin() creates a NEW
+        StateSession (fresh run_id + empty run-local dedupe set) and clears
+        every run-local field from any previous run (current observations,
+        persistence warnings, last verdict, platform scope, state
+        snapshot), so a second run is a genuinely independent run.
         """
         self.request = request_text or ""
+        self.session = StateSession(self.context)  # new run_id + empty dedupe
+        self.store = StateStore(self.context)
         self.platform_scope = tuple(
             platform_scope or self.explicit_platform_scope or ()
         )
@@ -486,46 +489,51 @@ class PlatformOperationalRun:
     ) -> str | None:
         """Record an outcome only when later evidence justifies it.
 
-        Platform attribution is derived from the linked decision/change when
-        the caller does not pass it; a cross-platform decision's scope is
-        inherited by the outcome; conflicting explicit platforms are
-        rejected rather than guessed.
+        Attribution precedence: confirmed Change > Decision (an Outcome
+        linked to an executed Meta Change answers "what happened after that
+        Meta change", even when it also references a cross-platform
+        Decision). A cross-platform Decision alone keeps its scope; refs
+        with conflicting platforms are rejected rather than guessed.
         """
         self._require_started()
-        derived: str | None = None
-        derived_scope: tuple[str, ...] = ()
-        for ref in (decision_id, change_id):
-            if ref is None:
-                continue
-            event = self.store.get_event(ref)
+        change_platform: str | None = None
+        decision_platform: str | None = None
+        decision_scope: tuple[str, ...] = ()
+        if change_id is not None:
+            event = self.store.get_event(change_id)
+            change_platform = event.get("platform")
+            if change_platform == "cross_platform":
+                change_platform = None  # legacy only; never newly written
+        if decision_id is not None:
+            event = self.store.get_event(decision_id)
             event_platform = event.get("platform")
             if event_platform == "cross_platform":
                 scope = event.get("payload", {}).get("platform_scope", ())
-                if isinstance(scope, (list, tuple)) and scope:
-                    if derived_scope and tuple(scope) != derived_scope:
-                        raise ContractError(
-                            "outcome refs disagree on cross-platform scope; "
-                            "pass platform explicitly"
-                        )
-                    derived_scope = tuple(scope)
-                continue
-            if event_platform and event_platform != "cross_platform":
-                if derived is None:
-                    derived = str(event_platform)
-                elif derived != event_platform:
-                    raise ContractError(
-                        "outcome refs disagree on platform "
-                        f"({derived!r} vs {event_platform!r}); pass platform explicitly"
-                    )
+                if isinstance(scope, (list, tuple)):
+                    decision_scope = tuple(scope)
+            else:
+                decision_platform = event_platform
+        if change_platform is not None and decision_platform is not None:
+            if change_platform != decision_platform:
+                raise ContractError(
+                    "outcome refs disagree on platform "
+                    f"({decision_platform!r} decision vs {change_platform!r} "
+                    "change); pass platform explicitly"
+                )
+        # Precedence: a confirmed single-platform Change narrows the
+        # Outcome (its cross-platform Decision scope is dropped — the
+        # Outcome answers "what happened after that Meta change"); a
+        # cross-platform Decision alone keeps its scope.
+        derived = change_platform or decision_platform
         if platform is not None and derived is not None and platform != derived:
             raise ContractError(
                 f"outcome platform {platform!r} conflicts with derived "
                 f"platform {derived!r} from its refs"
             )
-        if platform is not None and derived_scope and platform != "cross_platform":
+        if platform is not None and decision_scope and platform != "cross_platform":
             raise ContractError(
                 f"outcome platform {platform!r} conflicts with the derived "
-                f"cross-platform scope {derived_scope}"
+                f"cross-platform scope {decision_scope}"
             )
         return self.session.record_outcome(
             outcome_class=outcome_class,
@@ -536,8 +544,10 @@ class PlatformOperationalRun:
             evidence_status=evidence_status,
             platform=platform
             or derived
-            or ("cross_platform" if derived_scope else None),
-            platform_scope=derived_scope,
+            or ("cross_platform" if decision_scope else None),
+            platform_scope=decision_scope
+            if derived is None and platform is None
+            else (),
         )
 
     def result(

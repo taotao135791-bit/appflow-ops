@@ -62,6 +62,16 @@ investigate them; explore broadly internally, answer concisely externally.
   one explicit platform; an Outcome inherits scope from its linked
   Decision/Change. Execution claims are never valid Decision content,
   regardless of permission level.
+- **Never remove platform attribution from semantic event identity.**
+  Platform and canonicalized platform scope are part of deduplication
+  identity; identical content on different platforms is different events.
+- **Validation and persistence must consume the same canonical decision
+  candidate.** Unknown structured enum values (e.g. malformed
+  `diagnosis_confidence`) fail closed with a ContractError in both the
+  validator and StateStore.
+- **Run-local caches must never survive a new operational `begin()`.**
+  Every begin() creates a fresh StateSession (new run_id, empty dedupe
+  set); dedupe is run-local only.
 
 ## Layout
 

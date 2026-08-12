@@ -425,6 +425,15 @@ class StateStore:
             raise ContractError(f"unknown maturity_state: {maturity_state}")
         if confidence not in CONFIDENCE_LEVELS:
             raise ContractError(f"unknown confidence: {confidence}")
+        if diagnosis_confidence is not None and diagnosis_confidence not in (
+            "none",
+            "tentative",
+            "probable",
+            "confirmed",
+        ):
+            # Defense-in-depth: never let a malformed structured enum reach
+            # persistence through a non-runtime path.
+            raise ContractError(f"unknown diagnosis_confidence: {diagnosis_confidence}")
         validate_decision_origin(origin)
         payload: dict[str, Any] = {
             "decision_class": decision_class,

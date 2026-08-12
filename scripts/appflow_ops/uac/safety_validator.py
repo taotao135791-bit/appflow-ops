@@ -11,15 +11,20 @@ decision before persistence:
         ↓
     allowed | constrained | rejected   (+ reason_code, allowed_next_actions)
         ↓
-    persist Decision (allowed/constrained only)
+    allowed → persist
+    rejected → never
+    constrained without validated candidate → never
 
 This is NOT a new safety model: it only applies the existing four gates to
 concrete decision classes. No numeric rewriting happens — when the runtime
 cannot safely clamp, it rejects and tells the Agent which actions remain.
+Unknown structured enum values (e.g. malformed ``diagnosis_confidence``)
+fail closed with a ContractError before safety evaluation.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from appflow_ops.evals.safety import (
@@ -28,6 +33,7 @@ from appflow_ops.evals.safety import (
     PERMISSION_STATES,
     POLICY_STATES,
 )
+from appflow_ops.uac.types import ContractError
 
 SAFETY_OUTCOMES = ("allowed", "constrained", "rejected")
 
@@ -45,27 +51,43 @@ READ_ONLY_ALLOWED_ACTIONS = frozenset(
 )
 
 # Execution-claim vocabulary: a decision phrased as already executed.
-EXECUTION_CLAIM_WORDS = (
-    "已暂停",
-    "已经暂停",
-    "已执行",
-    "已经执行",
-    "已调整",
-    "已经调整",
-    "已应用",
-    "已经应用",
-    "已改",
-    "已经改",
-    "已更新",
-    "已经更新",
-    "已修改",
-    "已经修改",
-    "paused",
-    "executed",
-    "applied",
-    "updated",
-    "changed",
+# Execution-claim detection is STRUCTURED-FIRST (execution_status is the
+# primary signal; this natural-language pass is conservative defense-in-
+# depth only). Patterns require an action verb plus an operational object
+# or a strong execution marker — bare words like "changed" / "updated" /
+# "已改" are deliberately NOT matched, so harmless performance language
+# ("CTR changed after the audience expanded") stays allowed.
+EXECUTION_CLAIM_PATTERNS = (
+    # Chinese: strong completed-action markers (execution claims)
+    r"已暂停",
+    r"已经暂停",
+    r"已执行",
+    r"已经执行",
+    r"已应用",
+    r"已经应用",
+    r"(?:我们|已(?:经)?)调整(?:了)?(?:预算|出价|tCPA|素材|广告|campaign)",
+    r"已(?:经)?改(?:了)?(?:预算|出价|素材|广告|campaign)",
+    r"(?:预算|出价|tCPA)已(?:经)?(?:从.*?)?(?:调|改|降|升)(?:到|为)",
+    # English: we-claims and object-scoped claims
+    r"\bwe (?:paused|changed|updated|executed|applied)\b",
+    r"\b(?:was|were|has been|have been) (?:paused|applied|executed)\b",
+    r"\bchanged the (?:bid|budget|target|tCPA|campaign|ad group|adset)\b",
+    r"\bupdated the (?:bid|budget|target|tCPA|campaign|ad group|adset)\b",
+    # English: strong single execution markers kept
+    r"\bexecuted\b",
+    r"\bapplied\b",
 )
+
+_EXECUTION_CLAIM_RE = tuple(
+    re.compile(pattern, re.IGNORECASE) for pattern in EXECUTION_CLAIM_PATTERNS
+)
+
+
+def reason_contains_execution_claim(reason: str) -> bool:
+    """Conservative natural-language defense-in-depth for execution claims.
+    Structured ``execution_status`` is the primary signal; this pass only
+    flags clear action-verb + operational-object phrasings."""
+    return any(pattern.search(reason) for pattern in _EXECUTION_CLAIM_RE)
 
 
 @dataclass(frozen=True)
@@ -78,12 +100,14 @@ class SafetyVerdict:
 
     @property
     def accepted(self) -> bool:
-        return self.outcome in ("allowed", "constrained")
+        """Backward-compatible alias of ``is_allowed``: only ``allowed``
+        outcomes may persist — constrained without a rewritten candidate
+        never persists."""
+        return self.outcome == "allowed"
 
-
-def reason_contains_execution_claim(reason: str) -> bool:
-    lowered = reason.lower()
-    return any(word in lowered for word in EXECUTION_CLAIM_WORDS)
+    @property
+    def is_allowed(self) -> bool:
+        return self.outcome == "allowed"
 
 
 def validate_decision_action(
@@ -115,7 +139,12 @@ def validate_decision_action(
     if permission_state not in PERMISSION_STATES:
         permission_state = "read_only"
     if diagnosis_confidence not in DIAGNOSIS_CONFIDENCE:
-        diagnosis_confidence = "none"
+        # Fail closed: a malformed enum must never be silently treated as
+        # "none" (which would let a claim dodge its safety gate).
+        raise ContractError(
+            f"invalid diagnosis_confidence {diagnosis_confidence!r}; "
+            f"expected one of {DIAGNOSIS_CONFIDENCE}"
+        )
 
     # ── Decision != Change: execution claims never belong in a Decision ──
     # Regardless of permission level (even full), a Decision that states
