@@ -108,6 +108,19 @@ Never:
 Global Memory → Client A / Client B
 ```
 
+## Locks and migration
+
+Two workspace-local lock families exist, never held at the same time:
+
+- `.workspace.lock` (workspace root): workspace identity initialization.
+  Legacy workspaces without a `workspace_id` bind one under this lock with
+  double-check, so 50 concurrent first-opens yield exactly one id.
+- `state/.write.lock`: every append / rebuild / clear.
+
+Lock ordering: identity initialization completes BEFORE any state write
+lock is taken, so ABBA deadlock is impossible; after initialization normal
+appends only take the state write lock.
+
 ## Cross-workspace
 
 Denied by default: A cannot read, search, compare, copy, or index B's state,
@@ -178,8 +191,27 @@ single source of truth.
 - Corrupted event file → explicit error; history is never silently cleared.
 - Unexpected symlink anywhere in the state tree → explicit error.
 - Event filename must match `event_id`/type inside the file; mismatch is an
-  explicit error. `state verify` reports all integrity problems (identity,
-  schema, sequence uniqueness, references, freshness) without fixing them.
+  explicit error.
+- The event log must be one continuous sequence 1..max; a gap or a
+  duplicate sequence is an explicit integrity error (rebuild/append fail
+  loudly) — the doctor reports it without fixing.
+- Current-state freshness checks BOTH `derived_through_sequence` and
+  `event_count` against the real log; stale or missing derived state
+  rebuilds automatically, damaged event history never does.
+- `state verify` / `state doctor` report all integrity problems (identity,
+  schema, sequence continuity, references, freshness, payload validity,
+  symlinks) without fixing them.
+
+## Payload guard
+
+Before every write the payload is checked (fail closed): credential keys
+(password/token/api_key/…), raw conversations, email addresses, and
+strings over 2000 characters raise `StatePayloadError`. The guard is
+recursive (nested payloads included), key matching is normalized and exact
+(`email_ctr` is not a false positive), and it is defense-in-depth — not
+DLP. Workspace isolation protects business boundaries; the guard reduces
+accidental persistence of content that does not belong in structured
+state.
 
 ## CLI (internal/debug)
 
@@ -191,17 +223,45 @@ python3 scripts/uac_experiment.py state status --workspace "..." [--json]
 python3 scripts/uac_experiment.py state show --workspace "..." [--limit N] [--type observation|change|decision|outcome] [--json]
 python3 scripts/uac_experiment.py state rebuild --workspace "..."
 python3 scripts/uac_experiment.py state verify --workspace "..." [--json]
+python3 scripts/uac_experiment.py state doctor --workspace "..." [--json]
 python3 scripts/uac_experiment.py state clear --workspace "..." --yes
 ```
 
 `clear` is destructive and workspace-scoped; it requires `--yes` and only
-touches the current workspace. `verify` is the state doctor: it reports
-identity/schema/sequence/reference/freshness problems without fixing them.
+touches the current workspace. `verify` (alias `doctor`) is the state
+doctor: it reports identity/schema/sequence/reference/freshness/payload
+problems without fixing them.
+
+Deterministic CLI paths reuse the runtime lifecycle: `analyze --workspace`
+records one Observation (metrics + measurement/maturity state) after a
+successful analysis; `decide --workspace` records one Decision (origin =
+deterministic, review condition from the engine). `normalize`, `replay`,
+and dry/debug paths never write state. A state write failure prints a
+warning to stderr and never alters the advertising result.
 
 ## Python API
 
-The runtime integration point for Agent workflows is `StateSession` (the
-canonical lifecycle — skills never write state files directly):
+The canonical runtime entry for Agent workflows is `AppFlowRuntime` — the
+runtime itself decides whether state is loaded (request classification),
+not the prompt:
+
+```python
+from appflow_ops.uac.run_lifecycle import AppFlowRuntime
+
+runtime = AppFlowRuntime(workspace)
+runtime.begin_run(request_text="现在呢？")  # None = deterministic tool path
+context = runtime.state_context()  # bounded; None for direct informational
+runtime.record_decision(decision_class="wait", reason="...", origin="agent_constrained")
+runtime.finish_run()
+```
+
+Request classes: `direct_informational` ("CTR 是什么？") never reads or
+writes state; `follow_up` / `operational_diagnosis` / `decision_request`
+auto-load the bounded context (current state + last observation/change/
+decision/outcome + pending review + bounded recent history).
+
+`StateSession` remains the lower-level session (same rules, explicit
+record_* calls):
 
 ```python
 from appflow_ops.uac.account_state import RunContext
@@ -209,16 +269,15 @@ from appflow_ops.uac.state_runtime import StateSession
 
 session = StateSession(RunContext.from_workspace(workspace))
 
-# before_reasoning: ambiguous follow-up loads current state + bounded history
-summary = session.load_context_summary()
-
-# after_observation: reliable new facts (deduped per run by source_digest)
+# after_observation: reliable new facts — deduped by a stable digest.
+# source_digest is optional: when absent the runtime derives one from the
+# canonical structured payload (type, platform, facts, source/evidence
+# state), never from timestamps or random ids.
 observation_id = session.record_observation(
     observed_at="2026-08-10T09:00:00Z",
     platform="google",
     facts={"ctr": 0.02, "spend": 62.0, "measurement_state": "stable"},
     source_type="export",
-    source_digest="export-2026-08-10",
 )
 
 # after_decision: origin-aware recommendation (default agent_constrained)
@@ -238,6 +297,11 @@ session.record_confirmed_change(
 # after_outcome: only with later evidence
 session.record_outcome(outcome_class="neutral", decision_id=decision_id)
 ```
+
+Provenance mapping (decision envelope `source_type` from `origin`):
+`deterministic` → `deterministic_engine`; `agent_constrained` → `agent`;
+`operator` → `manual`. `evidence_status` stays separate and answers how
+reliable the supporting evidence is.
 
 Lower-level access (tests, migration tooling) uses `StateStore` directly:
 `get_recent_changes(limit=5)`, `get_pending_review()`, `current_state()`,

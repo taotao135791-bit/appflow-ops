@@ -38,10 +38,8 @@ Invariants:
 from __future__ import annotations
 
 import json
-import os
 import re
 import shutil
-import time
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -62,6 +60,8 @@ from .account_state import (
     validate_refs,
 )
 from .io import _dump
+from .state_guard import check_state_payload
+from .state_lock import WorkspaceWriteLock
 from .types import ContractError
 
 _EVENT_FILE_RE = re.compile(r"^([0-9]{8})-(observation|change|decision|outcome)\.json$")
@@ -82,79 +82,6 @@ _OUTCOME_REF_FIELDS = (
 
 def _event_id(sequence: int) -> str:
     return f"event_{sequence:08d}"
-
-
-class _WorkspaceWriteLock:
-    """Workspace-local exclusive lock (POSIX flock / Windows msvcrt).
-
-    One lock file per workspace (``state/.write.lock``); concurrent runs of
-    different workspaces never touch each other's lock.
-    """
-
-    def __init__(self, lock_path: Path, timeout: float = _LOCK_TIMEOUT_SECONDS) -> None:
-        self.lock_path = lock_path
-        self.timeout = timeout
-        self._handle: Any = None
-
-    def __enter__(self) -> _WorkspaceWriteLock:
-        self.lock_path.parent.mkdir(parents=True, exist_ok=True)
-        handle = open(self.lock_path, "a+b")
-        try:
-            if os.name == "nt":
-                import msvcrt
-
-                handle.seek(0, os.SEEK_END)
-                if handle.tell() == 0:
-                    handle.write(b"\0")
-                    handle.flush()
-                handle.seek(0)
-                deadline = time.monotonic() + self.timeout
-                while True:
-                    try:
-                        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)  # type: ignore[attr-defined]
-                        break
-                    except OSError:
-                        if time.monotonic() > deadline:
-                            raise ContractError(
-                                f"state write lock timed out: {self.lock_path}"
-                            ) from None
-                        time.sleep(0.02)
-            else:
-                import fcntl
-
-                deadline = time.monotonic() + self.timeout
-                while True:
-                    try:
-                        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                        break
-                    except OSError:
-                        if time.monotonic() > deadline:
-                            raise ContractError(
-                                f"state write lock timed out: {self.lock_path}"
-                            ) from None
-                        time.sleep(0.02)
-        except Exception:
-            handle.close()
-            raise
-        self._handle = handle
-        return self
-
-    def __exit__(self, *exc_info: object) -> None:
-        if self._handle is None:
-            return
-        try:
-            if os.name == "nt":
-                import msvcrt
-
-                self._handle.seek(0)
-                msvcrt.locking(self._handle.fileno(), msvcrt.LK_UNLCK, 1)  # type: ignore[attr-defined]
-            else:
-                import fcntl
-
-                fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)
-        finally:
-            self._handle.close()
-            self._handle = None
 
 
 class StateStore:
@@ -255,7 +182,7 @@ class StateStore:
         """Delete this workspace's state only (locked). Other workspaces are
         untouched."""
 
-        with _WorkspaceWriteLock(self._resolved_lock_path()):
+        with WorkspaceWriteLock(self._resolved_lock_path()):
             state_dir = self._resolved_state_dir()
             if state_dir.exists():
                 shutil.rmtree(state_dir)
@@ -305,7 +232,8 @@ class StateStore:
         run_id: str | None = None,
         ref_type_map: Mapping[str, str] | None = None,
     ) -> str:
-        with _WorkspaceWriteLock(self._resolved_lock_path()):
+        check_state_payload(payload, context=f"{event_type} payload")
+        with WorkspaceWriteLock(self._resolved_lock_path()):
             self.ensure_initialized()
             validate_refs(refs, self.context.workspace)
             self._validate_ref_types(refs, ref_type_map)
@@ -482,9 +410,11 @@ class StateStore:
             event_type="decision",
             platform=None,
             payload=payload,
-            source_type="manual"
-            if origin != "deterministic"
-            else "deterministic_engine",
+            source_type={
+                "deterministic": "deterministic_engine",
+                "agent_constrained": "agent",
+                "operator": "manual",
+            }[origin],
             evidence_status="inferred",
             refs=tuple(evidence_refs),
             run_id=run_id,
@@ -624,7 +554,7 @@ class StateStore:
         An old decision with a review condition stays pending even after
         hundreds of later events, as long as no outcome links to it.
         """
-        with _WorkspaceWriteLock(self._resolved_lock_path()):
+        with WorkspaceWriteLock(self._resolved_lock_path()):
             return self._derive_pending_review_locked()
 
     # ── derived current state (full log) ─────────────────────────────────
@@ -649,14 +579,20 @@ class StateStore:
         derived_through = document.get("derived_through_sequence")
         if not isinstance(derived_through, int):
             return self.rebuild_current_state()
-        if derived_through < self._max_sequence():
+        actual_max, actual_count = self._log_extent()
+        stored_count = document.get("event_count")
+        if (
+            derived_through < actual_max
+            or stored_count != actual_count
+            or not isinstance(stored_count, int)
+        ):
             return self.rebuild_current_state()
         return document
 
     def rebuild_current_state(self) -> dict[str, Any]:
         """Rebuild from the full event log (streaming scan, bounded memory)."""
 
-        with _WorkspaceWriteLock(self._resolved_lock_path()):
+        with WorkspaceWriteLock(self._resolved_lock_path()):
             return self._rebuild_locked()
 
     def _rebuild_locked(self) -> dict[str, Any]:
@@ -664,6 +600,7 @@ class StateStore:
         entries = (
             sorted(self._iter_event_files(events_dir)) if events_dir.is_dir() else []
         )
+        self._assert_sequence_continuity(entries)
         last: dict[str, str | None] = {
             "observation": None,
             "change": None,
@@ -730,6 +667,35 @@ class StateStore:
         _best_effort_chmod(self._resolved_current_path(), 0o600)
         return current
 
+    def _assert_sequence_continuity(self, entries: list[tuple[int, str, Path]]) -> None:
+        """The event log must be one continuous sequence 1..max.
+
+        A gap or duplicate sequence means the event history itself is
+        broken (deleted or copied files); this fails loudly instead of
+        silently rebuilding a "healthy" derived state on top of a damaged
+        log.
+        """
+
+        sequences = [sequence for sequence, _kind, _path in entries]
+        if not sequences:
+            return
+        expected = set(range(1, max(sequences) + 1))
+        missing = sorted(expected.difference(sequences))
+        if missing:
+            raise ContractError(
+                "state event log has sequence gap(s): "
+                + ", ".join(f"event_{number:08d}" for number in missing[:5])
+                + "; event history is damaged, fix it before continuing"
+            )
+        duplicates = [
+            sequence for sequence in sequences if sequences.count(sequence) > 1
+        ]
+        if duplicates:
+            raise ContractError(
+                "state event log has duplicate sequence(s): "
+                + ", ".join(f"event_{number:08d}" for number in sorted(set(duplicates)))
+            )
+
     def _derive_pending_review_locked(self) -> dict[str, Any] | None:
         events_dir = self._resolved_events_dir()
         if not events_dir.is_dir():
@@ -764,13 +730,18 @@ class StateStore:
         )
 
     def _max_sequence(self) -> int:
+        return self._log_extent()[0]
+
+    def _log_extent(self) -> tuple[int, int]:
+        """(max sequence, event count) for the current event log."""
+
         events_dir = self._resolved_events_dir()
         if not events_dir.is_dir():
-            return 0
+            return (0, 0)
         sequences = [
             sequence for sequence, _kind, _path in self._iter_event_files(events_dir)
         ]
-        return max(sequences, default=0)
+        return (max(sequences, default=0), len(sequences))
 
     # ── diagnostics ──────────────────────────────────────────────────────
 
@@ -827,8 +798,14 @@ class StateStore:
             issues.append(f"schema: {exc}")
         events_dir = self._resolved_events_dir()
         if events_dir.is_dir():
+            try:
+                entries = sorted(self._iter_event_files(events_dir))
+                self._assert_sequence_continuity(entries)
+            except ContractError as exc:
+                issues.append(f"event log: {exc}")
+                entries = []
             seen_sequences: set[int] = set()
-            for sequence, kind, path in self._iter_event_files(events_dir):
+            for sequence, kind, path in entries:
                 if sequence in seen_sequences:
                     issues.append(f"duplicate sequence {sequence}")
                 seen_sequences.add(sequence)
@@ -887,9 +864,17 @@ class StateStore:
             try:
                 document = json.loads(current.read_text(encoding="utf-8"))
                 derived_through = document.get("derived_through_sequence")
+                stored_count = document.get("event_count")
+                try:
+                    actual_max, actual_count = self._log_extent()
+                except ContractError as exc:
+                    issues.append(f"event log: {exc}")
+                    actual_max, actual_count = 0, 0
                 if (
                     not isinstance(derived_through, int)
-                    or derived_through < self._max_sequence()
+                    or derived_through < actual_max
+                    or not isinstance(stored_count, int)
+                    or stored_count != actual_count
                 ):
                     issues.append("current state is stale (rebuild needed)")
             except (OSError, ValueError):

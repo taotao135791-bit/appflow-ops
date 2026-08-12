@@ -51,6 +51,7 @@ SOURCE_TYPES = (
     "deterministic_engine",
     "replay",
     "manual",
+    "agent",
 )
 
 DECISION_CLASSES = (
@@ -171,29 +172,45 @@ class RunContext:
         return self.state_dir / WRITE_LOCK_NAME
 
 
+WORKSPACE_METADATA_LOCK_NAME = ".workspace.lock"
+
+
 def _bind_workspace_id(workspace: Workspace) -> str:
-    """Atomically add a workspace_id to project-context.yaml (migration)."""
+    """Concurrency-safe migration: create one workspace_id under a
+    workspace-local metadata lock with double-check.
+
+    Lock ordering (docs/account-state.md): identity initialization (this
+    metadata lock) completes BEFORE any StateStore write lock is taken, so
+    the two lock families are never held together and ABBA deadlock is
+    impossible. After initialization, normal appends take only the state
+    write lock.
+    """
+
+    from .state_lock import WorkspaceWriteLock
 
     context = workspace.context_path
-    if context.is_file() and not context.is_symlink():
-        document = _load(context)
-    else:
-        document = {}
-    project_info = document.get("project", {})
-    if not isinstance(project_info, dict):
-        raise ContractError("workspace project-context is malformed; fix it manually")
-    if (
-        isinstance(project_info.get(WORKSPACE_ID_KEY), str)
-        and project_info[WORKSPACE_ID_KEY]
-    ):
-        return project_info[WORKSPACE_ID_KEY]
-    from .io import _dump
+    lock_path = workspace.root / WORKSPACE_METADATA_LOCK_NAME
+    with WorkspaceWriteLock(lock_path):
+        # Double-check: another run may have bound the id while we waited.
+        if context.is_file() and not context.is_symlink():
+            document = _load(context)
+        else:
+            document = {}
+        project_info = document.get("project", {})
+        if not isinstance(project_info, dict):
+            raise ContractError(
+                "workspace project-context is malformed; fix it manually"
+            )
+        existing = project_info.get(WORKSPACE_ID_KEY)
+        if isinstance(existing, str) and existing:
+            return existing
+        from .io import _dump
 
-    workspace_id = new_workspace_id()
-    project_info[WORKSPACE_ID_KEY] = workspace_id
-    document["project"] = project_info
-    _dump(context, document)
-    return workspace_id
+        workspace_id = new_workspace_id()
+        project_info[WORKSPACE_ID_KEY] = workspace_id
+        document["project"] = project_info
+        _dump(context, document)
+        return workspace_id
 
 
 def _utc_now() -> str:

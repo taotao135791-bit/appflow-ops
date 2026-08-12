@@ -1,37 +1,47 @@
-# State Lifecycle (workspace-scoped, automatic)
+# State Lifecycle (workspace-scoped, runtime-enforced)
 
 Canonical runtime lifecycle for Continuous Account State
-(`docs/account-state.md`). The main router owns this lifecycle; platform
-skills may provide platform-specific observation mapping but must never
-implement their own state lifecycle.
+(`docs/account-state.md`). The runtime enforces this lifecycle — it is not
+merely a prompt contract. The single entry point is `AppFlowRuntime`
+(`scripts/appflow_ops/uac/run_lifecycle.py`):
+
+```text
+AppFlowRuntime(workspace).begin_run(request_text)
+  → classify_request (follow-up / diagnosis / decision / direct informational)
+  → state_context() only when the request needs business state
+→ reason / deterministic tools
+→ record_observation / record_decision / record_confirmed_change / record_outcome
+→ finish_run()
+```
+
+Platform skills may provide platform-specific observation mapping but must
+never implement their own state lifecycle; skills never write state files
+directly.
 
 ## before_reasoning
 
 For ambiguous follow-ups ("现在呢?", "昨天那个呢?", "Google 怎么又不行了?",
-"还是没量。", "这个还能继续跑吗?"), after workspace resolution load the
-workspace's continuous state through the State Runtime API
-(`StateSession.load_context_summary()`), never by reading state files
-directly:
+"还是没量。", "这个还能继续跑吗?"), the runtime loads the workspace's
+continuous state through `AppFlowRuntime.state_context()` (bounded):
 
 ```text
 current state (derived, freshness-checked)
++ last observation / last change / last decision / last outcome
++ pending review
 + bounded recent history
-  → last observation facts
-  → recent changes
-  → previous decision
-  → previous outcome
-  → pending review
 ```
 
-Terminology questions ("CTR 是什么?") and fully specified procedures skip
-state entirely — retrieval is semantic + bounded, never a history dump.
+Terminology questions ("CTR 是什么?") classify as direct informational:
+no state read, no state write. Loading state never writes business events.
 
 ## after_observation
 
 Record ONE observation when reliable new facts arrive (normalized export,
 screenshot interpretation, pasted table, deterministic engine, structured
 workspace evidence). `evidence_status`: confirmed / reported / inferred.
-Deduplicate by source digest within the run. Do not record speculative
+Deduplicated by a stable digest — the caller may pass `source_digest`, and
+when absent the runtime derives one from the canonical structured payload
+(never from timestamps or random ids). Do not record speculative
 interpretations as observations.
 
 ## after_decision
@@ -46,6 +56,8 @@ investigate). Provenance:
 - `confidence`: high / medium / low.
 - Event `evidence_status` is `inferred` (a decision is a recommendation,
   not a business fact).
+- Envelope `source_type` maps from origin: deterministic →
+  `deterministic_engine`, agent_constrained → `agent`, operator → `manual`.
 
 Never store the full assistant answer — only the structured summary
 (decision class, concise reason, evidence refs, uncertainty, review
@@ -69,3 +81,11 @@ State is per-workspace and physically isolated. Never read, write, or
 reference another workspace's state; never borrow its history to fill a
 missing gap. When the current workspace has no history, say so plainly and
 rely on observed facts, policy, and general platform knowledge.
+
+## Payload guard
+
+State payloads are checked before every write (fail closed): credential
+keys, raw conversations, emails, and oversized free text are rejected with
+`StatePayloadError`; the guard is defense-in-depth, not DLP. Workspace
+isolation protects business boundaries; the guard reduces accidental
+persistence of content that does not belong in structured state.

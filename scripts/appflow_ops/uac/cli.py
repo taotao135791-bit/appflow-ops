@@ -32,6 +32,7 @@ from .quick_ops import decide_case
 from .quick_reporting import render_quick_card
 from .replay import render_replay, replay_path
 from .reporting import render_markdown
+from .run_lifecycle import AppFlowRuntime
 from .state_store import StateStore
 from .types import ContractError
 from .workspace import (
@@ -48,6 +49,133 @@ def _add_workspace_argument(parser: argparse.ArgumentParser) -> None:
         type=Path,
         help="initialized private workspace with safe command-specific default paths",
     )
+
+
+def _record_state_warning(description: str, exc: Exception) -> None:
+    """State persistence failure never breaks the advertising reasoning;
+    but it is never silent (docs/account-state.md, v3.3.2)."""
+
+    print(
+        f"warning: state {description} not recorded: {exc}",
+        file=sys.stderr,
+    )
+
+
+def _record_analysis_observation(
+    workspace: Workspace, case: dict[str, Any], analysis: dict[str, Any]
+) -> None:
+    """Record one Observation after a successful deterministic analyze run.
+
+    Facts come from the normalized case's own metrics plus the engine's
+    measurement/maturity state. The runtime path is the canonical lifecycle
+    (tool path: no classification, no state load); failures are warnings.
+    """
+
+    try:
+        metrics = case.get("facts", {}).get("metrics", {})
+        facts: dict[str, Any] = {}
+        if isinstance(metrics, dict):
+            facts = {
+                key: metrics[key]
+                for key in ("spend", "installs", "registrations", "payments")
+                if key in metrics and metrics[key] is not None
+            }
+        measurement = analysis.get("measurement_state", {}).get("status")
+        facts["measurement_state"] = {
+            "measurement_reliable": "stable",
+            "measurement_unreliable": "invalid",
+        }.get(str(measurement), "unknown")
+        learning = analysis.get("learning_eligibility", {}).get("status")
+        facts["maturity_state"] = {
+            "LEARNABLE": "sufficient",
+            "NOT_LEARNABLE": "insufficient",
+        }.get(str(learning), "unknown")
+        observed_at = ""
+        scope = case.get("scope", {})
+        if isinstance(scope, dict) and scope.get("end_date"):
+            observed_at = str(scope["end_date"]) + "T00:00:00Z"
+        runtime = AppFlowRuntime(workspace)
+        runtime.begin_run()  # deterministic tool path: no state load
+        runtime.record_observation(
+            observed_at=observed_at,
+            platform="google_ads",
+            facts=facts,
+            source_type="deterministic_engine",
+            evidence_status="confirmed",
+        )
+        runtime.finish_run()
+    except (ContractError, OSError, ValueError) as exc:
+        _record_state_warning("observation", exc)
+
+
+def _verdict_decision_class(verdict: str) -> str:
+    """Map a Quick Decision verdict to the state decision-class vocabulary.
+
+    Conservative and deterministic: direction-specific verdicts use the
+    bid decision's action; anything ambiguous maps to ``wait``/``observe``
+    instead of inventing a direction.
+    """
+
+    if verdict.startswith(("CONTINUE_CURRENT", "DO_NOT_START")):
+        return "keep"
+    if "_AND_TEST_" in verdict:
+        return "observe"
+    if verdict.startswith("ADJUST_CURRENT"):
+        return "observe"
+    if verdict.startswith(("CREATE_NEW", "MOVE_")):
+        return "replace"
+    return "wait"
+
+
+def _review_condition_text(review: object) -> str | None:
+    """Render the deterministic review_condition mapping as one short string."""
+
+    if not isinstance(review, dict):
+        return None
+    parts: list[str] = []
+    if review.get("after_days"):
+        parts.append(f"after {review['after_days']} days")
+    if review.get("minimum_additional_mature_events"):
+        parts.append(f"+{review['minimum_additional_mature_events']} mature events")
+    if review.get("maximum_additional_spend"):
+        parts.append(f"≤{review['maximum_additional_spend']} spend")
+    return "; ".join(parts) if parts else None
+
+
+def _record_quick_decision(workspace: Workspace, result: dict[str, Any]) -> None:
+    """Record one Decision after a successful deterministic decide run.
+
+    Origin is deterministic (the quick-decision engine produced it); the
+    summary is the concise reason; the review condition comes from the
+    engine's own review_condition mapping.
+    """
+
+    try:
+        decision = result.get("decision", {})
+        if not isinstance(decision, dict):
+            return
+        verdict = str(decision.get("verdict", ""))
+        if not verdict:
+            return
+        decision_class = _verdict_decision_class(verdict)
+        bid_action = result.get("bid_decision", {}).get("action")
+        if verdict.startswith("ADJUST_CURRENT") and isinstance(bid_action, str):
+            decision_class = {
+                "INCREASE": "increase",
+                "DECREASE": "decrease",
+            }.get(bid_action, decision_class)
+        runtime = AppFlowRuntime(workspace)
+        runtime.begin_run()  # deterministic tool path: no state load
+        runtime.record_decision(
+            decision_class=decision_class,
+            reason=str(decision.get("summary", ""))[:500],
+            confidence=str(decision.get("confidence", "medium")),
+            origin="deterministic",
+            review_condition=_review_condition_text(result.get("review_condition")),
+        )
+        runtime.finish_run()
+    except (ContractError, OSError, ValueError) as exc:
+        _record_state_warning("decision", exc)
 
 
 def _workspace_for(args: argparse.Namespace) -> Workspace | None:
@@ -161,7 +289,7 @@ def _run_state_command(args: argparse.Namespace, workspace: Workspace | None) ->
         )
         return 0
 
-    if args.state_command == "verify":
+    if args.state_command in ("verify", "doctor"):
         report = store.verify()
         if args.json_output:
             print(_render_json(report))
@@ -396,6 +524,12 @@ def _cli() -> int:
     )
     _add_workspace_argument(state_verify_parser)
     state_verify_parser.add_argument("--json", action="store_true", dest="json_output")
+    state_doctor_parser = state_subparsers.add_parser(
+        "doctor",
+        help="alias of verify: report state integrity issues without fixing them",
+    )
+    _add_workspace_argument(state_doctor_parser)
+    state_doctor_parser.add_argument("--json", action="store_true", dest="json_output")
     state_clear_parser = state_subparsers.add_parser(
         "clear", help="delete THIS workspace's state only (explicit)"
     )
@@ -706,6 +840,8 @@ def _cli() -> int:
                     print(f"structured decision: {json_output}")
                     print(f"operation card: {markdown_output}")
                     print("ledger: unchanged (Quick Decision is not an experiment)")
+            if workspace is not None:
+                _record_quick_decision(workspace, result)
             _print_migration_notice(input_path, workspace)
             return 0
 
@@ -910,6 +1046,8 @@ def _cli() -> int:
                 if args.append_experiment
                 else "ledger: unchanged (human confirmation is required before append)"
             )
+        if workspace is not None:
+            _record_analysis_observation(workspace, case, result)
         _print_migration_notice(input_path, workspace)
         return 0
     except (

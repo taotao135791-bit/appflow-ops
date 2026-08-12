@@ -2,6 +2,56 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.3.2 — 2026-08-12
+
+### Runtime-enforced State Lifecycle
+
+- New `AppFlowRuntime` (`scripts/appflow_ops/uac/run_lifecycle.py`) is the
+  canonical runtime entry: `begin_run(request_text)` classifies the request
+  and conditionally loads state; `state_context()` returns one bounded
+  StateContext (current state + last observation/change/decision/outcome +
+  pending review + bounded recent history); `record_*` + `finish_run` close
+  the run. The lifecycle is executed by the runtime, not merely promised in
+  skill prompts.
+- Lightweight request classification (no LLM classifier):
+  `direct_informational` ("CTR 是什么？") never reads or writes state;
+  `follow_up` / `operational_diagnosis` / `decision_request` auto-load
+  bounded state. Deterministic tool paths (`begin_run(None)`) skip
+  classification and loading.
+- Deterministic CLI paths now reuse the same lifecycle: `analyze
+  --workspace` records one Observation (metrics + measurement/maturity
+  state, `observed_at` = case end date, source `deterministic_engine`);
+  `decide --workspace` records one Decision (origin `deterministic`,
+  decision class mapped from the verdict + bid action, review condition
+  rendered from the engine mapping). `normalize` and `replay` never write
+  state. State write failures print a stderr warning and never alter the
+  advertising result.
+
+### Integrity and hygiene
+
+- Legacy `workspace_id` migration is now concurrency-safe: a workspace-local
+  `.workspace.lock` (metadata lock) with double-check guarantees 50
+  concurrent first-opens yield exactly one id. Lock ordering is fixed
+  (metadata lock before state write lock, never held together).
+- Current-state freshness validates both `derived_through_sequence` AND
+  `event_count`; the event log must be one continuous sequence 1..max —
+  gaps and duplicates fail loudly (rebuild/append raise; `state verify` /
+  `state doctor` report them without fixing).
+- Runtime-owned deduplication: an explicit `source_digest` is still honored;
+  when absent the runtime derives a stable digest from the canonical
+  structured payload (type, platform, facts, source/evidence state) — never
+  from timestamps, event ids, or run ids.
+- New state payload guard (fail closed, `StatePayloadError`): credential
+  keys, raw conversations, email addresses, and strings over 2000 characters
+  are rejected, including in nested payloads; key matching is normalized and
+  exact (`email_ctr` is not a false positive). Documented as defense-in-depth,
+  not DLP.
+- Provenance cleanup: decision envelope `source_type` maps from `origin` —
+  `deterministic` → `deterministic_engine`, `agent_constrained` → `agent`
+  (new source type), `operator` → `manual`; `evidence_status` stays
+  separate.
+- `state doctor` added as an alias of `state verify`.
+
 ## 3.3.1 — 2026-08-12
 
 ### State integrity (P0)

@@ -18,8 +18,11 @@ Rules enforced here:
 - A recommendation alone never records a Change; only confirmed execution
   does (record_confirmed_change is intentionally named).
 - An outcome is never written at decision time; it needs later evidence.
-- Duplicate writes within one run are prevented by (type, source_digest)
-  deduplication.
+- Duplicate writes within one run are prevented by a stable digest: the
+  caller may pass an explicit ``source_digest`` (used verbatim), otherwise
+  the runtime derives one from the canonical structured payload (event
+  type, platform, normalized facts, source/evidence state) — never from
+  volatile fields like recorded_at, event_id, or run_id.
 - Full assistant answers are never stored; only the structured summary.
 - Every write goes through StateStore (validation, locking, workspace
   binding); the model never writes state files directly.
@@ -27,11 +30,107 @@ Rules enforced here:
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Mapping
 from typing import Any
 
 from .account_state import RunContext, new_run_id
+from .state_guard import canonical_json
 from .state_store import StateStore
+
+
+def _stable_digest(canonical: Mapping[str, Any]) -> str:
+    return hashlib.sha256(
+        canonical_json(canonical).encode("utf-8", errors="replace")
+    ).hexdigest()[:16]
+
+
+def _observation_digest(
+    *,
+    platform: str,
+    facts: Mapping[str, Any],
+    source_type: str,
+    evidence_status: str,
+) -> str:
+    return _stable_digest(
+        {
+            "type": "observation",
+            "platform": platform,
+            "source_type": source_type,
+            "evidence_status": evidence_status,
+            "facts": dict(facts),
+        }
+    )
+
+
+def _decision_digest(
+    *,
+    decision_class: str,
+    reason: str,
+    evidence_refs: tuple[str, ...],
+    policy_constraints: Mapping[str, Any] | None,
+    measurement_state: str,
+    maturity_state: str,
+    confidence: str,
+    origin: str,
+) -> str:
+    return _stable_digest(
+        {
+            "type": "decision",
+            "decision_class": decision_class,
+            "reason": reason,
+            "evidence_refs": sorted(evidence_refs),
+            "policy_constraints": dict(policy_constraints or {}),
+            "measurement_state": measurement_state,
+            "maturity_state": maturity_state,
+            "confidence": confidence,
+            "origin": origin,
+        }
+    )
+
+
+def _change_digest(
+    *,
+    change_type: str,
+    direction: str,
+    magnitude: float | None,
+    source: str,
+    origin: str,
+    evidence_status: str,
+) -> str:
+    return _stable_digest(
+        {
+            "type": "change",
+            "change_type": change_type,
+            "direction": direction,
+            "magnitude": magnitude,
+            "source": source,
+            "origin": origin,
+            "evidence_status": evidence_status,
+        }
+    )
+
+
+def _outcome_digest(
+    *,
+    outcome_class: str,
+    decision_id: str | None,
+    change_id: str | None,
+    observation_ids: tuple[str, ...],
+    source_type: str,
+    evidence_status: str,
+) -> str:
+    return _stable_digest(
+        {
+            "type": "outcome",
+            "outcome_class": outcome_class,
+            "decision_id": decision_id,
+            "change_id": change_id,
+            "observation_ids": sorted(observation_ids),
+            "source_type": source_type,
+            "evidence_status": evidence_status,
+        }
+    )
 
 
 class StateSession:
@@ -78,10 +177,17 @@ class StateSession:
         refs: tuple[str, ...] = (),
     ) -> str | None:
         """Record one observation for reliable new facts. Same-run writes
-        with the same (observation, source_digest) are deduplicated."""
+        with the same canonical payload (or explicit source_digest) are
+        deduplicated."""
 
-        dedupe_key = ("observation", source_digest or "")
-        if source_digest is not None and dedupe_key in self._written:
+        digest = source_digest or _observation_digest(
+            platform=platform,
+            facts=facts,
+            source_type=source_type,
+            evidence_status=evidence_status,
+        )
+        dedupe_key = ("observation", digest)
+        if dedupe_key in self._written:
             return None
         event_id = self.store.append_observation(
             observed_at=observed_at,
@@ -116,8 +222,18 @@ class StateSession:
         ``agent_constrained`` (LLM interpretation constrained by runtime
         gates) — never claimed as purely deterministic unless it is."""
 
-        dedupe_key = ("decision", source_digest or "")
-        if source_digest is not None and dedupe_key in self._written:
+        digest = source_digest or _decision_digest(
+            decision_class=decision_class,
+            reason=reason,
+            evidence_refs=evidence_refs,
+            policy_constraints=policy_constraints,
+            measurement_state=measurement_state,
+            maturity_state=maturity_state,
+            confidence=confidence,
+            origin=origin,
+        )
+        dedupe_key = ("decision", digest)
+        if dedupe_key in self._written:
             return None
         event_id = self.store.append_decision(
             decision_class=decision_class,
@@ -154,8 +270,16 @@ class StateSession:
         confirmation or deterministic evidence). A recommendation alone
         must never reach this method."""
 
-        dedupe_key = ("change", source_digest or "")
-        if source_digest is not None and dedupe_key in self._written:
+        digest = source_digest or _change_digest(
+            change_type=change_type,
+            direction=direction,
+            magnitude=magnitude,
+            source=source,
+            origin=origin,
+            evidence_status=evidence_status,
+        )
+        dedupe_key = ("change", digest)
+        if dedupe_key in self._written:
             return None
         event_id = self.store.append_change(
             change_type=change_type,
@@ -187,8 +311,16 @@ class StateSession:
         """Record an outcome only when later evidence justifies it — never
         at decision time."""
 
-        dedupe_key = ("outcome", source_digest or "")
-        if source_digest is not None and dedupe_key in self._written:
+        digest = source_digest or _outcome_digest(
+            outcome_class=outcome_class,
+            decision_id=decision_id,
+            change_id=change_id,
+            observation_ids=observation_ids,
+            source_type=source_type,
+            evidence_status=evidence_status,
+        )
+        dedupe_key = ("outcome", digest)
+        if dedupe_key in self._written:
             return None
         event_id = self.store.append_outcome(
             outcome_class=outcome_class,

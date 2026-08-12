@@ -395,13 +395,19 @@ def test_decision_provenance_is_origin_aware(store: StateStore) -> None:
     event = store.get_recent_decisions(limit=1)[0]
     assert event["payload"]["origin"] == "agent_constrained"
     assert event["evidence_status"] == "inferred"
-    assert event["source_type"] == "manual"
+    assert event["source_type"] == "agent"
     store.append_decision(
         decision_class="keep", reason="engine output", origin="deterministic"
     )
     engine_event = store.get_recent_decisions(limit=1)[0]
     assert engine_event["payload"]["origin"] == "deterministic"
     assert engine_event["source_type"] == "deterministic_engine"
+    store.append_decision(
+        decision_class="keep", reason="operator choice", origin="operator"
+    )
+    operator_event = store.get_recent_decisions(limit=1)[0]
+    assert operator_event["payload"]["origin"] == "operator"
+    assert operator_event["source_type"] == "manual"
 
 
 def test_run_id_is_recorded_and_local(store: StateStore) -> None:

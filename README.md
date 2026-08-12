@@ -177,7 +177,9 @@ Broad internally, concise externally   系统内广泛探索，对外给出聚�
 
 - **账户审计**：Google / Meta / TikTok / Apple 的 App 投放结构、预算、出价、转化、素材体检，输出健康分和整改清单
 - **UAC 实验闭环**：Google App campaigns 的确定性决策引擎——测量可靠性、学习资格、单变量实验准入（草案 draft 先展示、确认后才写台账）与复盘
-- **连续账户状态**：workspace 级持续状态（Observation / Change / Decision / Outcome / Current State），追问“现在呢？”可直接复用之前的观察、调整、建议与结果。状态按 workspace 物理隔离，AppFlow 没有跨客户全局业务记忆（见 [docs/account-state.md](docs/account-state.md)）
+- **连续账户状态**：workspace 级持续状态（Observation / Change / Decision / Outcome / Current State），追问“现在呢？”可直接复用之前的观察、调整、建议与结果 。状态按 workspace 物理隔离，AppFlow 没有跨客户全局业务记忆（见 [docs/account-state.md](docs/account-state.md)）
+
+> AppFlow runtime automatically restores workspace-scoped operational context for relevant follow-up and diagnosis requests. Direct informational questions ("CTR 是什么？") do not need business-state retrieval.
 - **漏斗诊断看板**：把花费→安装→注册→支付生成一张单文件 HTML 看板，自动标红瓶颈层
 - **乙方日常**：每日巡检、异常排查、素材需求单、甲方模板适配、客户回复、操作变更记录
 - **甲方/内部双份报告**：给甲方的解释稿和给内部的操作票分开写
@@ -216,7 +218,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.1/install.sh | bash -s -- --ref=v3.3.1
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.2/install.sh | bash -s -- --ref=v3.3.2
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
