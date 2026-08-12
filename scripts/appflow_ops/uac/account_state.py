@@ -234,9 +234,7 @@ def _bind_workspace_id(workspace: Workspace) -> str:
         document = {}
     project_info = document.get("project", {})
     if not isinstance(project_info, dict):
-        raise ContractError(
-            "workspace project-context is malformed; fix it manually"
-        )
+        raise ContractError("workspace project-context is malformed; fix it manually")
     existing = project_info.get(WORKSPACE_ID_KEY)
     if isinstance(existing, str) and existing:
         return existing
