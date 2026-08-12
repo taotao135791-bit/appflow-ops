@@ -28,6 +28,14 @@ from typing import Any
 from .types import ContractError
 
 MAX_STRING_LENGTH = 2000
+# Total canonical-JSON size of one payload (defense against dumping large
+# structures); generous for real observations/decisions.
+MAX_PAYLOAD_BYTES = 65536
+# Maximum items in one list/tuple (a 1,000,000-row list must be rejected).
+MAX_COLLECTION_ITEMS = 1000
+# Maximum keys in one mapping (a 100,000-key dict must be rejected).
+MAX_MAPPING_KEYS = 200
+MAX_NESTING_DEPTH = 8
 
 # Normalized (lowercase, non-alphanumeric stripped) exact keys that must
 # never appear in structured state payloads.
@@ -56,7 +64,16 @@ _FORBIDDEN_KEYS = frozenset(
     }
 )
 
-_EMAIL_VALUE_RE = re.compile(r"^[\w.+-]+@[\w-]+\.[\w.-]+$")
+# Boundary search for obvious emails anywhere inside a string
+# ("Contact user@example.com tomorrow" is rejected).
+_EMAIL_VALUE_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+# Obvious credential/token material embedded in strings. Plain product URLs
+# are NOT matched (state contract does not forbid URLs in general).
+_TOKEN_STRING_RE = re.compile(
+    r"(?:authorization\s*[:=]\s*bearer\s+[^\s]+|"
+    r"access_token\s*=\s*[^\s&]+|\?token\s*=\s*[^\s&]+|api[_-]?key\s*[:=]\s*[^\s,;]+)",
+    re.IGNORECASE,
+)
 
 
 class StatePayloadError(ContractError):
@@ -76,11 +93,22 @@ def check_state_payload(payload: Mapping[str, Any], *, context: str) -> None:
     """
 
     _check_mapping(payload, context, _depth=0)
+    size = len(canonical_json(payload).encode("utf-8", errors="replace"))
+    if size > MAX_PAYLOAD_BYTES:
+        raise StatePayloadError(
+            f"{context}: payload exceeds {MAX_PAYLOAD_BYTES} bytes after "
+            "canonical serialization; state is structured business state, "
+            "not a document store"
+        )
 
 
 def _check_mapping(value: Mapping[str, Any], context: str, *, _depth: int) -> None:
-    if _depth > 8:
+    if _depth > MAX_NESTING_DEPTH:
         raise StatePayloadError(f"{context}: payload nesting too deep")
+    if len(value) > MAX_MAPPING_KEYS:
+        raise StatePayloadError(
+            f"{context}: mapping has {len(value)} keys; limit is {MAX_MAPPING_KEYS}"
+        )
     for key, item in value.items():
         if not isinstance(key, str):
             raise StatePayloadError(f"{context}: payload keys must be strings")
@@ -98,8 +126,13 @@ def _check_mapping(value: Mapping[str, Any], context: str, *, _depth: int) -> No
 
 
 def _check_sequence(value: Sequence[Any], context: str, *, _depth: int) -> None:
-    if _depth > 8:
+    if _depth > MAX_NESTING_DEPTH:
         raise StatePayloadError(f"{context}: payload nesting too deep")
+    if len(value) > MAX_COLLECTION_ITEMS:
+        raise StatePayloadError(
+            f"{context}: collection has {len(value)} items; "
+            f"limit is {MAX_COLLECTION_ITEMS}"
+        )
     for item in value:
         if isinstance(item, str):
             _check_string(item, "<list item>", context)
@@ -115,10 +148,15 @@ def _check_string(value: str, key: str, context: str) -> None:
             f"{context}: string field {key!r} exceeds {MAX_STRING_LENGTH} "
             "characters; state is structured business state, not a document store"
         )
-    if _EMAIL_VALUE_RE.match(value):
+    if _EMAIL_VALUE_RE.search(value):
         raise StatePayloadError(
-            f"{context}: string field {key!r} looks like an email address; "
+            f"{context}: string field {key!r} contains an email address; "
             "identities do not belong in structured state"
+        )
+    if _TOKEN_STRING_RE.search(value):
+        raise StatePayloadError(
+            f"{context}: string field {key!r} contains credential/token "
+            "material; secrets do not belong in structured state"
         )
 
 

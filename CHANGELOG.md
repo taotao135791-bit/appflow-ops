@@ -2,6 +2,79 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.3.3 — 2026-08-12
+
+### Release recovery (P0)
+
+- Fixed the CI Foundation-contracts failure that had been red since v3.3.1:
+  `privacy_doctor._finding` was annotated `dict[str, str]` but assigns a
+  `list[str]` (`value_sha256s`); the annotation is now `dict[str, Any]` and
+  the top-level-scripts mypy check passes again.
+- Fixed the Windows test-suite failure (Python 3.10 and 3.13): `clear()`
+  deleted the state directory including the open `.write.lock` file, which
+  raises PermissionError on Windows. `clear()` now removes everything
+  except the held lock file inside the lock, then removes the lock file and
+  the empty state directory after the lock is released.
+- Fixed the Windows migration-race failure: the lock's NUL-byte
+  initialization wrote inside a byte range another thread had already
+  locked (Access denied). The lock file is now initialized via
+  exclusive-create (`O_CREAT|O_EXCL`) before any handle opens, so no
+  thread ever writes into a locked byte range.
+
+### Semantic deduplication
+
+- Dedupe now follows: **deduplicate technical duplicates, never collapse
+  distinct business observations.**
+- `observed_at` participates in Observation identity (same value on two
+  days = two observations: "CPA stayed 100 for three days" is a fact);
+  `review_condition`/`review_after` participate in Decision identity
+  (wait+tomorrow vs wait+7 days are different); `effective_at`
+  participates in Change identity. Volatile fields (recorded_at, event_id,
+  run_id) remain excluded; dict key order is canonicalized away.
+
+### State access minimization
+
+- New `StateAccess` tri-state (required / not_needed / uncertain). The
+  Router / skill layer can pass `state_access` explicitly to
+  `AppFlowRuntime.begin_run`; the runtime enforces it.
+- The fallback classifier detects non-operational intents first (news,
+  translation, brief writing, client-message drafting, terminology) and
+  **unknown requests default to NO state access** — never unlock
+  production business state on a guess.
+
+### UAC state persistence completeness
+
+- New `state_adapters.py`: `project_analysis_observation` keeps business
+  metrics (spend/installs/registrations/payments/CTR/CPI/CPA/budget/…),
+  measurement/maturity, and engine funnel rates/drop; `project_quick_decision`
+  keeps maturity (from derived_signals), policy version identifiers (never
+  contents), and review_after (from review_condition.after_days). Pure
+  projections — no engine logic is recomputed.
+- CLI `decide` now persists measurement/maturity, policy_constraints,
+  evidence_refs (linked to the most recent observation), and review_after.
+
+### Integrity and payload hygiene
+
+- Current-state freshness now uses exact equality on BOTH
+  `derived_through_sequence` and `event_count` (999 vs max 100 is
+  corrupted, not fresh).
+- Payload guard adds `MAX_PAYLOAD_BYTES`, `MAX_COLLECTION_ITEMS`, and
+  `MAX_MAPPING_KEYS`; embedded email detection (boundary search, not
+  whole-string); credential/token string detection (Authorization=Bearer,
+  access_token=, ?token=, api_key=) while plain URLs and normal ad metrics
+  stay accepted.
+
+### Documentation and phase closure
+
+- Wording corrected: "canonical runtime lifecycle + supported entry points
+  use it" instead of universal runtime enforcement; no claim of host-level
+  bypass-proof enforcement.
+- AGENTS.md adds the phase-closure principle: Continuous Account State is
+  a stable foundation; do not expand State infrastructure without a
+  concrete requirement or correctness defect. README adds the next-phase
+  roadmap (Meta / TikTok / creative / cross-platform adoption), not
+  implemented.
+
 ## 3.3.2 — 2026-08-12
 
 ### Runtime-enforced State Lifecycle

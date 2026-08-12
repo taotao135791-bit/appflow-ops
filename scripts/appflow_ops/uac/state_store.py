@@ -52,6 +52,7 @@ from .account_state import (
     OUTCOME_CLASSES,
     STATE_SCHEMA_VERSION,
     WORKSPACE_ID_KEY,
+    WRITE_LOCK_NAME,
     RunContext,
     build_event,
     is_event_id,
@@ -180,12 +181,32 @@ class StateStore:
 
     def clear(self) -> None:
         """Delete this workspace's state only (locked). Other workspaces are
-        untouched."""
+        untouched.
 
+        The lock file itself is removed AFTER the lock is released: on
+        Windows a held file handle prevents deletion, and deleting our own
+        lock file while holding it would fail.
+        """
+
+        state_dir = self._resolved_state_dir()
+        if not state_dir.exists():
+            return
         with WorkspaceWriteLock(self._resolved_lock_path()):
-            state_dir = self._resolved_state_dir()
-            if state_dir.exists():
-                shutil.rmtree(state_dir)
+            for entry in list(state_dir.iterdir()):
+                if entry.name == WRITE_LOCK_NAME:
+                    continue
+                if entry.is_dir() and not entry.is_symlink():
+                    shutil.rmtree(entry)
+                else:
+                    entry.unlink()
+        try:
+            self._resolved_lock_path().unlink()
+        except OSError:
+            pass
+        try:
+            state_dir.rmdir()
+        except OSError:
+            pass  # a concurrent writer re-created content; leave the tree alone
 
     # ── path resolution (workspace-bound, containment enforced) ──────────
 
@@ -581,8 +602,10 @@ class StateStore:
             return self.rebuild_current_state()
         actual_max, actual_count = self._log_extent()
         stored_count = document.get("event_count")
+        # Exact equality on BOTH dimensions: a derived_through ABOVE the real
+        # max (e.g. 999 vs 100) is corrupted/invalid, not "ahead and fresh".
         if (
-            derived_through < actual_max
+            derived_through != actual_max
             or stored_count != actual_count
             or not isinstance(stored_count, int)
         ):
@@ -872,7 +895,7 @@ class StateStore:
                     actual_max, actual_count = 0, 0
                 if (
                     not isinstance(derived_through, int)
-                    or derived_through < actual_max
+                    or derived_through != actual_max
                     or not isinstance(stored_count, int)
                     or stored_count != actual_count
                 ):

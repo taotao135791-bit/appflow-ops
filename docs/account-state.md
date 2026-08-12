@@ -255,6 +255,15 @@ runtime.record_decision(decision_class="wait", reason="...", origin="agent_const
 runtime.finish_run()
 ```
 
+Division of labor (Router ↔ Runtime): the Router / skill layer understands
+the request category and may pass `state_access` explicitly
+(`required` / `not_needed` / `uncertain`) to `begin_run`; the runtime
+enforces it. Without an explicit declaration, the lightweight fallback
+classifier decides — and **unknown requests default to NO state access**
+(never unlock production business state on a guess). Non-operational
+intents (news, translation, brief writing, client-message drafting,
+terminology) never read or write state; operational follow-ups load it.
+
 Request classes: `direct_informational` ("CTR 是什么？") never reads or
 writes state; `follow_up` / `operational_diagnosis` / `decision_request`
 auto-load the bounded context (current state + last observation/change/

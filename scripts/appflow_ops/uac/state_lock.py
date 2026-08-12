@@ -33,15 +33,27 @@ class WorkspaceWriteLock:
 
     def __enter__(self) -> WorkspaceWriteLock:
         self.lock_path.parent.mkdir(parents=True, exist_ok=True)
+        # Ensure the lock file exists with at least one byte so msvcrt can
+        # lock a byte range on Windows. Exclusive-create is atomic: exactly
+        # one writer initializes the byte, so no thread ever writes into a
+        # byte range another thread has already locked (which would raise
+        # PermissionError on Windows).
+        try:
+            descriptor = os.open(
+                self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600
+            )
+        except OSError:
+            pass  # already exists (or created by a concurrent writer)
+        else:
+            try:
+                os.write(descriptor, b"\0")
+            finally:
+                os.close(descriptor)
         handle = open(self.lock_path, "a+b")
         try:
             if os.name == "nt":
                 import msvcrt
 
-                handle.seek(0, os.SEEK_END)
-                if handle.tell() == 0:
-                    handle.write(b"\0")
-                    handle.flush()
                 handle.seek(0)
                 deadline = time.monotonic() + self.timeout
                 while True:

@@ -218,7 +218,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.2/install.sh | bash -s -- --ref=v3.3.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.3/install.sh | bash -s -- --ref=v3.3.3
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -273,6 +273,10 @@ python3 scripts/uac_experiment.py funnel-dashboard --workspace "workspaces/acme/
 - background account ingestion / continuous polling / daemon monitoring：后台自动采集与持续监控（当前 Continuous Account State 是会话间持续，不是后台盯盘）
 - cloud sync / multi-device sync：云端同步
 - fully autonomous vague-query investigation：完全自主的模糊问题调查（当前依赖 Agent 推理 + 确定性门禁的组合）
+
+## 下一阶段（Roadmap，尚未开始）
+
+Continuous Account State 已作为稳定基础层收口。下一阶段是**平台采用**：让 Meta、TikTok、素材诊断与跨平台运维复用现有的 Reasoning Contract + workspace-scoped Continuous State + Policy/Safety Kernel，而不是继续扩展 State 基础设施。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

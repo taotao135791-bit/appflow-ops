@@ -33,6 +33,7 @@ from .quick_reporting import render_quick_card
 from .replay import render_replay, replay_path
 from .reporting import render_markdown
 from .run_lifecycle import AppFlowRuntime
+from .state_adapters import project_analysis_observation, project_quick_decision
 from .state_store import StateStore
 from .types import ContractError
 from .workspace import (
@@ -66,30 +67,13 @@ def _record_analysis_observation(
 ) -> None:
     """Record one Observation after a successful deterministic analyze run.
 
-    Facts come from the normalized case's own metrics plus the engine's
-    measurement/maturity state. The runtime path is the canonical lifecycle
-    (tool path: no classification, no state load); failures are warnings.
+    Facts are projected by the Observation adapter (sparse, engine-sourced);
+    the runtime path is the canonical lifecycle (tool path: no
+    classification, no state load); failures are warnings.
     """
 
     try:
-        metrics = case.get("facts", {}).get("metrics", {})
-        facts: dict[str, Any] = {}
-        if isinstance(metrics, dict):
-            facts = {
-                key: metrics[key]
-                for key in ("spend", "installs", "registrations", "payments")
-                if key in metrics and metrics[key] is not None
-            }
-        measurement = analysis.get("measurement_state", {}).get("status")
-        facts["measurement_state"] = {
-            "measurement_reliable": "stable",
-            "measurement_unreliable": "invalid",
-        }.get(str(measurement), "unknown")
-        learning = analysis.get("learning_eligibility", {}).get("status")
-        facts["maturity_state"] = {
-            "LEARNABLE": "sufficient",
-            "NOT_LEARNABLE": "insufficient",
-        }.get(str(learning), "unknown")
+        facts = project_analysis_observation(case, analysis)
         observed_at = ""
         scope = case.get("scope", {})
         if isinstance(scope, dict) and scope.get("end_date"):
@@ -146,8 +130,10 @@ def _record_quick_decision(workspace: Workspace, result: dict[str, Any]) -> None
     """Record one Decision after a successful deterministic decide run.
 
     Origin is deterministic (the quick-decision engine produced it); the
-    summary is the concise reason; the review condition comes from the
-    engine's own review_condition mapping.
+    summary is the concise reason; measurement/maturity, policy version
+    identifiers, and review semantics come from the engine output via the
+    Decision adapter; the most recent observation is linked as evidence
+    (never free-form text only).
     """
 
     try:
@@ -164,14 +150,26 @@ def _record_quick_decision(workspace: Workspace, result: dict[str, Any]) -> None
                 "INCREASE": "increase",
                 "DECREASE": "decrease",
             }.get(bid_action, decision_class)
+        metadata = project_quick_decision(result)
+        store = StateStore(RunContext.from_workspace(workspace))
+        store.ensure_initialized()
+        evidence_refs: tuple[str, ...] = ()
+        recent = store.get_recent_observations(limit=1)
+        if recent:
+            evidence_refs = (str(recent[0]["event_id"]),)
         runtime = AppFlowRuntime(workspace)
         runtime.begin_run()  # deterministic tool path: no state load
         runtime.record_decision(
             decision_class=decision_class,
             reason=str(decision.get("summary", ""))[:500],
+            evidence_refs=evidence_refs,
+            policy_constraints=metadata.get("policy_constraints"),
+            measurement_state=str(metadata.get("measurement_state", "unknown")),
+            maturity_state=str(metadata.get("maturity_state", "unknown")),
             confidence=str(decision.get("confidence", "medium")),
             origin="deterministic",
             review_condition=_review_condition_text(result.get("review_condition")),
+            review_after=metadata.get("review_after"),
         )
         runtime.finish_run()
     except (ContractError, OSError, ValueError) as exc:

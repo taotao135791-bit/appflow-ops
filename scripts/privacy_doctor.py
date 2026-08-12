@@ -308,7 +308,7 @@ def _finding(
     severity: str,
     *,
     value_digests: tuple[str, ...] = (),
-) -> dict[str, str]:
+) -> dict[str, Any]:
     """One finding. Values are never included, only stable SHA-256 digests.
 
     ``value_digests`` lets a scoped privacy allowlist accept the exact known
@@ -316,7 +316,7 @@ def _finding(
     whole finding kind. Digest prefixes are not reversible to the value.
     """
 
-    finding: dict[str, str] = {
+    finding: dict[str, Any] = {
         "scope": scope,
         "reference": reference,
         "path": _reported_path(path),

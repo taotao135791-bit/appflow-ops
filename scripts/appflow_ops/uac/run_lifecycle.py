@@ -42,11 +42,19 @@ _DIAGNOSIS_RE = re.compile(
     re.IGNORECASE,
 )
 _FOLLOW_UP_RE = re.compile(
-    r"(现在呢|现在怎么样|昨天|上次|之前那个|上次那个|又不行|还是没量|还能跑吗|还能不能跑|要不要继续调|那这个|看看现在)",
+    r"(现在呢|现在怎么样|昨天那个|昨天那|上次|之前那个|上次那个|又不行|还是没量|还能跑吗|还能不能跑|要不要继续调|那这个|看看现在)",
     re.IGNORECASE,
 )
 _DECISION_REQUEST_RE = re.compile(
-    r"(该不该|要不要|还是调|还是停|还是开|先处理什么|该调|该停|该开|重新开|降还是|加还是)",
+    r"(该不该|要不要|还是调|还是停|还是开|先处理什么|该调|该停|该开|重新开|降还是|加还是|该继续等|继续等还是)",
+    re.IGNORECASE,
+)
+
+# Explicit non-operational intent: these never unlock business state even
+# when they share vocabulary with operational phrasing ("昨天" + "新闻",
+# "解释" + "给甲方写").
+_NON_OPERATIONAL_RE = re.compile(
+    r"(新闻|行业新闻|翻译|translate|素材brief|创意brief|brief|给甲方|甲方消息|客户消息|写.*给甲方)",
     re.IGNORECASE,
 )
 
@@ -63,8 +71,23 @@ class RequestIntent:
 RequestIntentValue = str
 
 
+class StateAccess:
+    """Whether business state may be loaded for this request.
+
+    Router / skill layer understands the request category and may pass
+    ``state_access`` explicitly to the runtime; the runtime enforces it.
+    """
+
+    REQUIRED = "required"
+    NOT_NEEDED = "not_needed"
+    UNCERTAIN = "uncertain"
+
+
+StateAccessValue = str
+
+
 def classify_request(text: str) -> str:
-    """Classify one natural-language request for state-load decisions.
+    """Classify one natural-language request into an intent label.
 
     Order matters: an explicit meaning question wins over diagnosis words
     ("CPA 是什么意思" is informational even though it contains 什么); an
@@ -79,15 +102,34 @@ def classify_request(text: str) -> str:
         return RequestIntent.OPERATIONAL_DIAGNOSIS
     if _DECISION_REQUEST_RE.search(text):
         return RequestIntent.DECISION_REQUEST
-    # Conservative default: ambiguous operational phrasing reads state only
-    # when the workspace already has state; the caller decides via
-    # should_load_state().
     return RequestIntent.OPERATIONAL_DIAGNOSIS
 
 
-def should_load_state(intent: str) -> bool:
-    """Only follow-up / diagnosis / decision requests load business state."""
-    return intent != RequestIntent.DIRECT_INFORMATIONAL
+def classify_state_access(text: str) -> str:
+    """Decide state access with a safe default: UNKNOWN never unlocks
+    production business state (Part 4 / 6 of the v3.3.3 contract).
+
+    Non-operational intents (news, translation, brief writing, client
+    message drafting, terminology) are detected first so vocabulary overlap
+    ("昨天" + "新闻") cannot leak state access.
+    """
+
+    if _NON_OPERATIONAL_RE.search(text):
+        return StateAccess.NOT_NEEDED
+    if _DIRECT_INFORMATIONAL_RE.search(text) and not _DIAGNOSIS_RE.search(text):
+        return StateAccess.NOT_NEEDED
+    if (
+        _FOLLOW_UP_RE.search(text)
+        or _DIAGNOSIS_RE.search(text)
+        or _DECISION_REQUEST_RE.search(text)
+    ):
+        return StateAccess.REQUIRED
+    return StateAccess.UNCERTAIN
+
+
+def should_load_state(state_access: str) -> bool:
+    """Only an explicitly required access loads business state."""
+    return state_access == StateAccess.REQUIRED
 
 
 # ── bounded state context ────────────────────────────────────────────────
@@ -134,10 +176,16 @@ class AppFlowRuntime:
         self.context = RunContext.from_workspace(workspace)
         self.session = StateSession(self.context)
         self.intent: str | None = None
+        self.state_access: str | None = None
         self._state_context: dict[str, Any] | None = None
         self._started = False
 
-    def begin_run(self, request_text: str | None = None) -> AppFlowRuntime:
+    def begin_run(
+        self,
+        request_text: str | None = None,
+        *,
+        state_access: str | None = None,
+    ) -> AppFlowRuntime:
         """Start one run: classify the request, then conditionally load state.
 
         Loading state never writes business events; a stale/missing derived
@@ -147,15 +195,22 @@ class AppFlowRuntime:
         ``request_text=None`` marks a deterministic tool path (CLI
         analyze/decide): no classification, no state load — the tool has its
         own input files and only records outcomes.
+
+        ``state_access`` lets the Router / skill layer declare intent
+        explicitly (required / not_needed / uncertain); the runtime enforces
+        it instead of guessing from a few words. Unknown requests default to
+        NO state access.
         """
 
-        if request_text is None:
-            self.intent = None
-            self._state_context = None
+        if state_access is not None:
+            self.state_access = state_access
+        elif request_text is None:
+            self.state_access = StateAccess.NOT_NEEDED
         else:
-            self.intent = classify_request(request_text)
-            if should_load_state(self.intent):
-                self._state_context = build_state_context(self.session)
+            self.state_access = classify_state_access(request_text)
+        self.intent = None if request_text is None else classify_request(request_text)
+        if should_load_state(self.state_access):
+            self._state_context = build_state_context(self.session)
         self._started = True
         return self
 

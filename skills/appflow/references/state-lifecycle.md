@@ -1,9 +1,10 @@
-# State Lifecycle (workspace-scoped, runtime-enforced)
+# State Lifecycle (workspace-scoped, canonical runtime)
 
-Canonical runtime lifecycle for Continuous Account State
-(`docs/account-state.md`). The runtime enforces this lifecycle — it is not
-merely a prompt contract. The single entry point is `AppFlowRuntime`
-(`scripts/appflow_ops/uac/run_lifecycle.py`):
+AppFlow provides a canonical runtime lifecycle for workspace-scoped state,
+and supported operational entry points use it instead of relying only on
+prompt instructions (`docs/account-state.md`). Host integrations should
+route operational work through this runtime lifecycle. The single entry
+point is `AppFlowRuntime` (`scripts/appflow_ops/uac/run_lifecycle.py`):
 
 ```text
 AppFlowRuntime(workspace).begin_run(request_text)
@@ -16,7 +17,9 @@ AppFlowRuntime(workspace).begin_run(request_text)
 
 Platform skills may provide platform-specific observation mapping but must
 never implement their own state lifecycle; skills never write state files
-directly.
+directly. This is not a claim of universal host enforcement: host
+integrations choose whether to route through the runtime (for example via
+`state_access`), and only supported entry points are guaranteed to use it.
 
 ## before_reasoning
 

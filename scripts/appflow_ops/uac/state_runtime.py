@@ -48,14 +48,22 @@ def _stable_digest(canonical: Mapping[str, Any]) -> str:
 def _observation_digest(
     *,
     platform: str,
+    observed_at: str,
     facts: Mapping[str, Any],
     source_type: str,
     evidence_status: str,
 ) -> str:
+    """Business identity of one observation. ``observed_at`` participates:
+    the same value on two different days is two business observations
+    ("CPA stayed 100 for two days" is itself a fact), while recorded_at /
+    event_id / run_id stay volatile and are excluded.
+    """
+
     return _stable_digest(
         {
             "type": "observation",
             "platform": platform,
+            "observed_at": observed_at,
             "source_type": source_type,
             "evidence_status": evidence_status,
             "facts": dict(facts),
@@ -73,7 +81,14 @@ def _decision_digest(
     maturity_state: str,
     confidence: str,
     origin: str,
+    review_condition: str | None,
+    review_after: str | None,
 ) -> str:
+    """Business identity of one decision. Review semantics participate:
+    ``wait, review tomorrow`` and ``wait, review in 7 days`` are different
+    decisions.
+    """
+
     return _stable_digest(
         {
             "type": "decision",
@@ -85,6 +100,8 @@ def _decision_digest(
             "maturity_state": maturity_state,
             "confidence": confidence,
             "origin": origin,
+            "review_condition": review_condition,
+            "review_after": review_after,
         }
     )
 
@@ -97,7 +114,12 @@ def _change_digest(
     source: str,
     origin: str,
     evidence_status: str,
+    effective_at: str | None,
 ) -> str:
+    """Business identity of one change. ``effective_at`` participates when
+    present: budget +20% effective Monday vs Friday are different changes.
+    """
+
     return _stable_digest(
         {
             "type": "change",
@@ -107,6 +129,7 @@ def _change_digest(
             "source": source,
             "origin": origin,
             "evidence_status": evidence_status,
+            "effective_at": effective_at,
         }
     )
 
@@ -182,6 +205,7 @@ class StateSession:
 
         digest = source_digest or _observation_digest(
             platform=platform,
+            observed_at=observed_at,
             facts=facts,
             source_type=source_type,
             evidence_status=evidence_status,
@@ -231,6 +255,8 @@ class StateSession:
             maturity_state=maturity_state,
             confidence=confidence,
             origin=origin,
+            review_condition=review_condition,
+            review_after=review_after,
         )
         dedupe_key = ("decision", digest)
         if dedupe_key in self._written:
@@ -277,6 +303,7 @@ class StateSession:
             source=source,
             origin=origin,
             evidence_status=evidence_status,
+            effective_at=effective_at,
         )
         dedupe_key = ("change", digest)
         if dedupe_key in self._written:

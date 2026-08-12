@@ -24,7 +24,9 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 from appflow_ops.uac.account_state import RunContext
 from appflow_ops.uac.run_lifecycle import (
     AppFlowRuntime,
+    StateAccess,
     classify_request,
+    classify_state_access,
     should_load_state,
 )
 from appflow_ops.uac.state_guard import (
@@ -85,11 +87,35 @@ def test_classify_direct_informational_vs_operational() -> None:
     assert classify_request("这个 campaign 要不要重新开？") == "decision_request"
 
 
-def test_should_load_state_only_excludes_direct_informational() -> None:
-    assert not should_load_state(classify_request("CTR 是什么？"))
-    assert should_load_state(classify_request("现在呢？"))
-    assert should_load_state(classify_request("为什么有点击但是没安装？"))
-    assert should_load_state(classify_request("该不该降预算？"))
+def test_should_load_state_requires_explicit_operational_access() -> None:
+    assert not should_load_state(classify_state_access("CTR 是什么？"))
+    assert not should_load_state(classify_state_access("昨天美国有什么行业新闻？"))
+    assert not should_load_state(classify_state_access("帮我写个素材brief"))
+    assert should_load_state(classify_state_access("现在呢？"))
+    assert should_load_state(classify_state_access("为什么有点击但是没安装？"))
+    assert should_load_state(classify_state_access("该不该降预算？"))
+
+
+def test_unknown_request_never_unlocks_state() -> None:
+    # Ambiguous phrasing without operational keywords defaults to UNCERTAIN,
+    # which must NOT load business state.
+    assert classify_state_access("帮我看看这个文件") == StateAccess.UNCERTAIN
+    assert not should_load_state(StateAccess.UNCERTAIN)
+
+
+def test_router_can_declare_state_access_explicitly(workspace) -> None:
+    runtime = AppFlowRuntime(workspace)
+    # Router says this client-message draft DOES need account context.
+    runtime.begin_run(
+        "结合这个项目昨天的数据给甲方写一句", state_access=StateAccess.REQUIRED
+    )
+    assert runtime.state_loaded
+    runtime.finish_run()
+    # And the same phrase without router intent stays closed.
+    closed = AppFlowRuntime(workspace)
+    closed.begin_run("结合这个项目昨天的数据给甲方写一句")
+    assert not closed.state_loaded
+    closed.finish_run()
 
 
 # ── Scenario A: "现在呢？" through the real runtime entry ────────────────
@@ -249,24 +275,40 @@ def test_runtime_dedupes_same_observation_without_explicit_digest(
     assert runtime.session.store.status()["event_count"] == 1
 
 
-def test_auto_digest_ignores_volatile_fields(workspace) -> None:
+def test_auto_digest_keeps_business_time_semantics(workspace) -> None:
     runtime = AppFlowRuntime(workspace)
     runtime.begin_run()
-    # Same facts with a different observed_at must still dedupe: the digest
-    # is built from canonical payload, not timestamps.
+    # Same facts on two different days are TWO business observations:
+    # "CPA stayed 100 for two days" is itself a fact.
     runtime.record_observation(
         observed_at="2026-08-10T09:00:00Z",
         platform="google",
         facts={"spend": 62.0},
     )
-    duplicate = runtime.record_observation(
+    second = runtime.record_observation(
         observed_at="2026-08-11T09:00:00Z",
         platform="google",
         facts={"spend": 62.0},
     )
     runtime.finish_run()
+    assert second is not None
+    assert runtime.session.store.status()["event_count"] == 2
+    # An exact duplicate (same observed_at, same facts) in one run is one.
+    day2 = AppFlowRuntime(workspace)
+    day2.begin_run()
+    day2.record_observation(
+        observed_at="2026-08-10T09:00:00Z",
+        platform="google",
+        facts={"spend": 62.0},
+    )
+    duplicate = day2.record_observation(
+        observed_at="2026-08-10T09:00:00Z",
+        platform="google",
+        facts={"spend": 62.0},
+    )
+    day2.finish_run()
     assert duplicate is None
-    assert runtime.session.store.status()["event_count"] == 1
+    assert day2.session.store.status()["event_count"] == 3  # 2 prior + 1 new
 
 
 def test_explicit_source_digest_still_supported_and_wins(workspace) -> None:

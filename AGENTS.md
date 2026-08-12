@@ -24,9 +24,17 @@ investigate them; explore broadly internally, answer concisely externally.
   finish_run) or the lower-level `StateSession`; never write state files
   directly. The runtime classifies requests: direct informational questions
   never read or write state; follow-up/diagnosis/decision requests
-  auto-load bounded context. A recommendation alone never records a Change;
-  outcomes need later evidence; decisions carry real provenance (origin, not
-  a hardcoded deterministic claim).
+  auto-load bounded context (unknown requests default to NO state access;
+  the Router may pass `state_access` explicitly). A recommendation alone
+  never records a Change; outcomes need later evidence; decisions carry
+  real provenance (origin, not a hardcoded deterministic claim).
+- **Continuous Account State is a stable foundation.** Do not expand State
+  infrastructure unless a concrete product requirement or correctness
+  defect requires it: no new event types, no search engine, no vector
+  memory, no scheduler, no analytics on state. The next phase is platform
+  adoption — reuse the shared reasoning + state runtime across Meta,
+  TikTok, creative diagnosis, and cross-platform operations — not more
+  StateStore work.
 
 ## Layout
 

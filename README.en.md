@@ -283,7 +283,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.2/install.sh | bash -s -- --ref=v3.3.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.3/install.sh | bash -s -- --ref=v3.3.3
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -366,6 +366,14 @@ The following are direction, **not** what the system does today:
 - cloud sync / multi-device sync
 - fully autonomous vague-query investigation (today it is Agent reasoning
   plus deterministic gates)
+
+## Next Phase (Roadmap — Not Started)
+
+Continuous Account State is closed as a stable foundation. The next phase is
+**platform adoption**: Meta, TikTok, creative diagnosis, and cross-platform
+operations reuse the existing Reasoning Contract + workspace-scoped
+Continuous State + Policy/Safety Kernel instead of expanding State
+infrastructure.
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward
