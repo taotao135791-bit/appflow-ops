@@ -128,7 +128,7 @@ def test_operator_docs_prefer_private_workspace_without_hiding_stop_condition(
 def test_uac_version_and_docs_are_present(repo_root):
     manifest = json.loads(_read(repo_root, "appflow.plugin.json"))
     version = _read(repo_root, "VERSION").strip()
-    assert manifest["version"] == version == "3.4.3"
+    assert manifest["version"] == version == "3.4.4"
     assert "UAC" in _read(repo_root, "README.md")
     assert "UAC" in _read(repo_root, "README.en.md")
     assert f"## {version}" in _read(repo_root, "CHANGELOG.md")

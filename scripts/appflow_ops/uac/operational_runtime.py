@@ -390,15 +390,19 @@ class PlatformOperationalRun:
         """
         self._require_started()
         measurement_by_platform, maturity_by_platform = self._safety_states()
+        measurement_state = self._aggregate_safety(
+            measurement_by_platform, self.platform_scope
+        )
+        maturity_state = self._aggregate_safety(
+            maturity_by_platform, self.platform_scope
+        )
+        # The SAME canonical values used by the validator are persisted with
+        # the Decision (What was validated must be what was persisted).
         verdict = validate_decision_action(
             decision_class=decision_class,
             reason=reason,
-            measurement_state=self._aggregate_safety(
-                measurement_by_platform, self.platform_scope
-            ),
-            maturity_state=self._aggregate_safety(
-                maturity_by_platform, self.platform_scope
-            ),
+            measurement_state=measurement_state,
+            maturity_state=maturity_state,
             policy_state=self.policy_state,
             permission_state=self.permission_state,
             execution_status=execution_status,
@@ -427,6 +431,8 @@ class PlatformOperationalRun:
             review_condition=review_condition,
             review_after=review_after,
             policy_constraints=policy_constraints,
+            measurement_state=measurement_state,
+            maturity_state=maturity_state,
             platform=platform,
             platform_scope=platform_scope,
             diagnosis_confidence=diagnosis_confidence,
@@ -523,8 +529,16 @@ class PlatformOperationalRun:
         # Precedence: a confirmed single-platform Change narrows the
         # Outcome (its cross-platform Decision scope is dropped — the
         # Outcome answers "what happened after that Meta change"); a
-        # cross-platform Decision alone keeps its scope.
+        # cross-platform Decision alone keeps its scope. Every step must
+        # first pass scope compatibility: the Change platform must BELONG
+        # to the Decision's scope, otherwise the attribution is
+        # contradictory and rejected.
         derived = change_platform or decision_platform
+        if decision_scope and change_platform and change_platform not in decision_scope:
+            raise ContractError(
+                f"change platform {change_platform!r} is outside the linked "
+                f"decision's platform scope {decision_scope}"
+            )
         if platform is not None and derived is not None and platform != derived:
             raise ContractError(
                 f"outcome platform {platform!r} conflicts with derived "
@@ -546,7 +560,7 @@ class PlatformOperationalRun:
             or derived
             or ("cross_platform" if decision_scope else None),
             platform_scope=decision_scope
-            if derived is None and platform is None
+            if derived is None and (platform is None or platform == "cross_platform")
             else (),
         )
 
@@ -653,12 +667,18 @@ class PlatformOperationalRun:
 
     def _resolve_policy_state(self, explicit: str | None) -> str:
         """Real policy context only: explicit argument or a workspace-level
-        policy file; never a hardcoded default. Unknown values degrade to
-        "none" (no additional policy restriction)."""
+        policy file; never a hardcoded default. Malformed explicit values
+        FAIL CLOSED (ContractError) — a typo must never silently degrade to
+        "none" and disable the policy gate."""
         from appflow_ops.evals.safety import POLICY_STATES
 
         if explicit is not None:
-            return explicit if explicit in POLICY_STATES else "none"
+            if explicit not in POLICY_STATES:
+                raise ContractError(
+                    f"invalid policy_state {explicit!r}; "
+                    f"expected one of {POLICY_STATES}"
+                )
+            return explicit
         try:
             from .io import _load
 
@@ -668,8 +688,15 @@ class PlatformOperationalRun:
                     document = _load(path)
                     if isinstance(document, dict):
                         value = document.get("policy_state")
-                        if isinstance(value, str) and value in POLICY_STATES:
+                        if isinstance(value, str):
+                            if value not in POLICY_STATES:
+                                raise ContractError(
+                                    f"invalid policy_state {value!r} in "
+                                    f"{name}; expected one of {POLICY_STATES}"
+                                )
                             return value
+        except ContractError:
+            raise
         except (OSError, ValueError, TypeError):
             pass
         return "none"

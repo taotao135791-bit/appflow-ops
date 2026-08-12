@@ -130,14 +130,30 @@ def validate_decision_action(
     rewrites the candidate.
     """
 
+    # Structured safety enums fail closed: canonical "unknown"/"none" are
+    # valid states, but a malformed explicit value is NEVER silently
+    # converted to a less restrictive state (e.g. a typo'd policy must not
+    # become "none" and disable the gate). Derivation of states belongs to
+    # the runtime resolvers, not to silent normalization here.
     if measurement_state not in MEASUREMENT_STATES:
-        measurement_state = "unknown"
+        raise ContractError(
+            f"invalid measurement_state {measurement_state!r}; "
+            f"expected one of {MEASUREMENT_STATES}"
+        )
     if maturity_state not in MATURITY_STATES:
-        maturity_state = "unknown"
+        raise ContractError(
+            f"invalid maturity_state {maturity_state!r}; "
+            f"expected one of {MATURITY_STATES}"
+        )
     if policy_state not in POLICY_STATES:
-        policy_state = "none"
+        raise ContractError(
+            f"invalid policy_state {policy_state!r}; expected one of {POLICY_STATES}"
+        )
     if permission_state not in PERMISSION_STATES:
-        permission_state = "read_only"
+        raise ContractError(
+            f"invalid permission_state {permission_state!r}; "
+            f"expected one of {PERMISSION_STATES}"
+        )
     if diagnosis_confidence not in DIAGNOSIS_CONFIDENCE:
         # Fail closed: a malformed enum must never be silently treated as
         # "none" (which would let a claim dodge its safety gate).

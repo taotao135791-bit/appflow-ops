@@ -72,6 +72,16 @@ investigate them; explore broadly internally, answer concisely externally.
 - **Run-local caches must never survive a new operational `begin()`.**
   Every begin() creates a fresh StateSession (new run_id, empty dedupe
   set); dedupe is run-local only.
+- **Never silently downgrade malformed safety enums into a less
+  restrictive valid state.** Canonical `unknown` is valid; a typo'd
+  measurement/maturity/policy/permission value fails closed with a
+  ContractError in the validator, the policy resolver, and StateStore.
+- **Decision safety metadata must match the canonical values actually
+  used by the runtime validator.** What was validated must be what was
+  persisted.
+- **A single-platform Change may narrow a cross-platform Decision's
+  Outcome only when the Change platform belongs to the Decision's
+  scope.** Explicit cross_platform Outcomes keep the inherited scope.
 
 ## Layout
 

@@ -178,6 +178,25 @@ component; this runtime does not replace it.
   that change" (its cross-platform Decision scope is dropped); a
   cross-platform Decision alone keeps its scope; conflicting refs reject.
 
+### Safety context consistency (v3.4.4)
+
+- **Decision audit contract**: the safety states stored with a Decision are
+  the same canonical states used to validate that Decision — the runtime
+  persists the exact measurement/maturity values its validator consumed
+  ("What was validated must be what was persisted").
+- **Safety structured input contract**: canonical `unknown` is a valid
+  state. Malformed structured safety values are not silently converted to
+  `unknown`, `none`, or another permissive state — they fail closed with a
+  ContractError in the validator, the runtime policy resolver, and
+  StateStore.
+- **Outcome scope membership**: a single-platform Change may narrow a
+  cross-platform Decision's Outcome only when that platform belongs to the
+  Decision's scope; an explicit `platform="cross_platform"` Outcome keeps
+  the inherited `platform_scope` (never erased); StateStore rejects
+  contradictory new attribution (single platform + scope, or
+  cross_platform without a ≥2-platform scope) and canonicalizes scope
+  order.
+
 ## PlatformAdapter (thin contract)
 
 Keep the contract minimal — projections and vocabulary, no framework:

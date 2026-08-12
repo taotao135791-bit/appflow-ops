@@ -85,6 +85,41 @@ def _event_id(sequence: int) -> str:
     return f"event_{sequence:08d}"
 
 
+def validate_platform_attribution(
+    platform: str | None, platform_scope: tuple[str, ...]
+) -> tuple[str, ...]:
+    """Lightweight defense-in-depth for new platform attribution.
+
+    Runtime is the primary line; this gate rejects contradictory NEW
+    attribution before it reaches persistence:
+
+    - ``platform=None`` (legacy) → unvalidated, unchanged
+    - ``platform="cross_platform"`` → scope must contain >= 2 unique
+      platforms (an empty scope contradicts cross_platform)
+    - single platform → scope must be empty (platform + scope both set is
+      contradictory)
+
+    Returns the canonicalized (sorted unique) scope.
+    """
+
+    canonical = tuple(sorted(set(platform_scope)))
+    if platform is None:
+        return canonical
+    if platform == "cross_platform":
+        if len(canonical) < 2:
+            raise ContractError(
+                "cross_platform attribution requires a platform_scope with "
+                ">= 2 unique platforms"
+            )
+        return canonical
+    if canonical:
+        raise ContractError(
+            f"platform {platform!r} cannot carry a platform_scope {canonical}; "
+            "single-platform events have no scope"
+        )
+    return canonical
+
+
 class StateStore:
     """One workspace's continuous account state store."""
 
@@ -445,8 +480,9 @@ class StateStore:
             "confidence": confidence,
             "origin": origin,
         }
-        if platform_scope:
-            payload["platform_scope"] = sorted(platform_scope)
+        canonical_scope = validate_platform_attribution(platform, platform_scope)
+        if canonical_scope:
+            payload["platform_scope"] = list(canonical_scope)
         if diagnosis_confidence is not None:
             payload["diagnosis_confidence"] = diagnosis_confidence
         if review_condition is not None:
@@ -511,8 +547,9 @@ class StateStore:
             "change_id": change_id,
             "observation_ids": sorted(observation_ids),
         }
-        if platform_scope:
-            payload["platform_scope"] = sorted(platform_scope)
+        canonical_scope = validate_platform_attribution(platform, platform_scope)
+        if canonical_scope:
+            payload["platform_scope"] = list(canonical_scope)
         return self._append(
             event_type="outcome",
             platform=platform,

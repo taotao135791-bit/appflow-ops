@@ -2,6 +2,30 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.4.4 — 2026-08-12
+
+### Fixed
+
+- **Decision safety context preserved**: the runtime now persists the
+  exact canonical measurement/maturity states its validator consumed — a
+  Decision audited as `stable/sufficient` is stored as `stable/sufficient`
+  (never `unknown`); the semantic digest uses the same real values.
+- **Malformed safety enums fail closed everywhere**: typos like
+  `"invlaid"`, `"STABLE"`, `"forbid_numeric "`, `"full_acess"` raise a
+  ContractError in the validator, in the runtime policy resolver (a typo'd
+  policy can no longer silently become `none` and disable the gate), and
+  in StateStore; canonical `unknown`/`none` remain valid states.
+- **Outcome scope membership**: a single-platform Change may narrow a
+  cross-platform Decision's Outcome only when the Change platform belongs
+  to the Decision's scope — otherwise rejected.
+- **Explicit cross_platform Outcome keeps scope**: `platform="cross_platform"`
+  no longer erases the inherited `platform_scope`; explicit incompatible
+  single platforms are rejected.
+- **StateStore platform attribution defense-in-depth**: new events with
+  contradictory attribution (single platform + scope, or cross_platform
+  without a ≥2-platform scope) are rejected; scope order canonicalized
+  (sorted unique); legacy events without platform stay readable.
+
 ## 3.4.3 — 2026-08-12
 
 ### Fixed
