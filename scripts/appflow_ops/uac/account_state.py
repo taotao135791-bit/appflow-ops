@@ -124,10 +124,54 @@ class RunContext:
     def from_workspace(
         cls, workspace: Workspace, *, ensure_workspace_id: bool = True
     ) -> RunContext:
+        """Build the run context from the workspace metadata.
+
+        With ``ensure_workspace_id`` the whole read-and-maybe-bind sequence
+        runs under the workspace-local metadata lock, so concurrent first
+        opens cannot race a locked writer (on Windows an os.replace while
+        another thread holds a read handle raises PermissionError). The
+        double-check inside the lock yields exactly one workspace_id.
+        """
+
+        if not ensure_workspace_id:
+            return cls._from_workspace_unlocked(workspace, workspace_id="")
+        from .state_lock import WorkspaceWriteLock
+
+        lock_path = workspace.root / WORKSPACE_METADATA_LOCK_NAME
+        with WorkspaceWriteLock(lock_path):
+            context = workspace.context_path
+            client: str | None = None
+            project: str | None = None
+            workspace_id: str | None = None
+            if context.is_file() and not context.is_symlink():
+                try:
+                    document = _load(context)
+                    project_info = document.get("project", {})
+                    if isinstance(project_info, dict):
+                        client = project_info.get("client_label")
+                        project = project_info.get("name")
+                        workspace_id = project_info.get(WORKSPACE_ID_KEY)
+                except (OSError, ValueError, TypeError):
+                    pass
+            if not isinstance(workspace_id, str) or not workspace_id:
+                workspace_id = _bind_workspace_id(workspace)
+            return cls(
+                workspace=workspace,
+                workspace_id=workspace_id,
+                client_scope=str(client) if client is not None else None,
+                project_scope=str(project) if project is not None else None,
+            )
+
+    @classmethod
+    def _from_workspace_unlocked(
+        cls, workspace: Workspace, workspace_id: str
+    ) -> RunContext:
+        """Read-only context build without the metadata lock (callers that
+        never bind)."""
+
         context = workspace.context_path
         client: str | None = None
         project: str | None = None
-        workspace_id: str | None = None
         if context.is_file() and not context.is_symlink():
             try:
                 document = _load(context)
@@ -135,14 +179,8 @@ class RunContext:
                 if isinstance(project_info, dict):
                     client = project_info.get("client_label")
                     project = project_info.get("name")
-                    workspace_id = project_info.get(WORKSPACE_ID_KEY)
             except (OSError, ValueError, TypeError):
                 pass
-        if not isinstance(workspace_id, str) or not workspace_id:
-            if ensure_workspace_id:
-                workspace_id = _bind_workspace_id(workspace)
-            else:
-                workspace_id = ""
         return cls(
             workspace=workspace,
             workspace_id=workspace_id,
@@ -176,9 +214,11 @@ WORKSPACE_METADATA_LOCK_NAME = ".workspace.lock"
 
 
 def _bind_workspace_id(workspace: Workspace) -> str:
-    """Concurrency-safe migration: create one workspace_id under a
-    workspace-local metadata lock with double-check.
+    """Create one workspace_id with double-check.
 
+    The caller holds the workspace-local metadata lock (see
+    ``RunContext.from_workspace``), so this function must NOT take the lock
+    again — re-locking the same file from the same process would deadlock.
     Lock ordering (docs/account-state.md): identity initialization (this
     metadata lock) completes BEFORE any StateStore write lock is taken, so
     the two lock families are never held together and ABBA deadlock is
@@ -186,31 +226,27 @@ def _bind_workspace_id(workspace: Workspace) -> str:
     write lock.
     """
 
-    from .state_lock import WorkspaceWriteLock
-
     context = workspace.context_path
-    lock_path = workspace.root / WORKSPACE_METADATA_LOCK_NAME
-    with WorkspaceWriteLock(lock_path):
-        # Double-check: another run may have bound the id while we waited.
-        if context.is_file() and not context.is_symlink():
-            document = _load(context)
-        else:
-            document = {}
-        project_info = document.get("project", {})
-        if not isinstance(project_info, dict):
-            raise ContractError(
-                "workspace project-context is malformed; fix it manually"
-            )
-        existing = project_info.get(WORKSPACE_ID_KEY)
-        if isinstance(existing, str) and existing:
-            return existing
-        from .io import _dump
+    # Double-check: another run may have bound the id while we waited.
+    if context.is_file() and not context.is_symlink():
+        document = _load(context)
+    else:
+        document = {}
+    project_info = document.get("project", {})
+    if not isinstance(project_info, dict):
+        raise ContractError(
+            "workspace project-context is malformed; fix it manually"
+        )
+    existing = project_info.get(WORKSPACE_ID_KEY)
+    if isinstance(existing, str) and existing:
+        return existing
+    from .io import _dump
 
-        workspace_id = new_workspace_id()
-        project_info[WORKSPACE_ID_KEY] = workspace_id
-        document["project"] = project_info
-        _dump(context, document)
-        return workspace_id
+    workspace_id = new_workspace_id()
+    project_info[WORKSPACE_ID_KEY] = workspace_id
+    document["project"] = project_info
+    _dump(context, document)
+    return workspace_id
 
 
 def _utc_now() -> str:
