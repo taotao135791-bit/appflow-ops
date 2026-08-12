@@ -19,6 +19,12 @@ investigate them; explore broadly internally, answer concisely externally.
   workspace root (`state/`); all state access is workspace-bound through
   `RunContext`. Cross-workspace reads/writes/references are denied by
   default; workspace A's history never becomes workspace B's context.
+- **State is written through the runtime API only.** Agent workflows use
+  `StateSession` (record_observation / record_decision /
+  record_confirmed_change / record_outcome); never write state files
+  directly. A recommendation alone never records a Change; outcomes need
+  later evidence; decisions carry real provenance (origin, not a hardcoded
+  deterministic claim).
 
 ## Layout
 

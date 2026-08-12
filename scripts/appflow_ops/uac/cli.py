@@ -161,6 +161,19 @@ def _run_state_command(args: argparse.Namespace, workspace: Workspace | None) ->
         )
         return 0
 
+    if args.state_command == "verify":
+        report = store.verify()
+        if args.json_output:
+            print(_render_json(report))
+        else:
+            if report["healthy"]:
+                print("state integrity: OK")
+            else:
+                print("state integrity issues:")
+                for issue in report["issues"]:
+                    print(f"  - {issue}")
+        return 0 if report["healthy"] else 1
+
     if args.state_command == "clear":
         if not args.yes:
             raise ContractError(
@@ -378,6 +391,11 @@ def _cli() -> int:
         "rebuild", help="rebuild current-state.json from the event log"
     )
     _add_workspace_argument(state_rebuild_parser)
+    state_verify_parser = state_subparsers.add_parser(
+        "verify", help="state doctor: report integrity issues without fixing them"
+    )
+    _add_workspace_argument(state_verify_parser)
+    state_verify_parser.add_argument("--json", action="store_true", dest="json_output")
     state_clear_parser = state_subparsers.add_parser(
         "clear", help="delete THIS workspace's state only (explicit)"
     )

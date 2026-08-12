@@ -216,7 +216,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.0/install.sh | bash -s -- --ref=v3.3.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.1/install.sh | bash -s -- --ref=v3.3.1
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -268,7 +268,8 @@ python3 scripts/uac_experiment.py funnel-dashboard --workspace "workspaces/acme/
 - universal hypothesis engine：跨平台的通用假设生成与假设生命周期管理
 - automatic evidence retrieval across every platform：全平台的自动证据收集
 - complete Meta / TikTok deterministic decision runtime：Meta/TikTok 的确定性决策运行时（当前只有 Google UAC 具备）
-- continuous account state：持续账户状态，而非按需快照
+- background account ingestion / continuous polling / daemon monitoring：后台自动采集与持续监控（当前 Continuous Account State 是会话间持续，不是后台盯盘）
+- cloud sync / multi-device sync：云端同步
 - fully autonomous vague-query investigation：完全自主的模糊问题调查（当前依赖 Agent 推理 + 确定性门禁的组合）
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**

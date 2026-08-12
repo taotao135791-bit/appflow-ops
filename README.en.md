@@ -278,7 +278,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.0/install.sh | bash -s -- --ref=v3.3.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.3.1/install.sh | bash -s -- --ref=v3.3.1
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -355,7 +355,10 @@ The following are direction, **not** what the system does today:
 - automatic evidence retrieval across every platform
 - complete Meta / TikTok deterministic decision runtime (only Google UAC
   has one today)
-- continuous account state, rather than on-demand snapshots
+- background account ingestion / continuous polling / daemon monitoring
+  (today Continuous Account State is session-persistent, not background
+  watching)
+- cloud sync / multi-device sync
 - fully autonomous vague-query investigation (today it is Agent reasoning
   plus deterministic gates)
 

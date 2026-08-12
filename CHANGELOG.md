@@ -2,6 +2,76 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.3.1 — 2026-08-12
+
+### State integrity (P0)
+
+- **Concurrency**: every append / rebuild / clear now takes the
+  workspace-local `state/.write.lock` (POSIX flock / Windows msvcrt) for
+  the critical section (allocate sequence → persist event → derive current
+  state). 100 concurrent writers produce 100 unique events with zero
+  overwrites; A/B concurrent writes never block or mix.
+- **Workspace identity is proven**: workspaces carry a random opaque
+  `workspace_id` (project-context metadata); the state schema stores it and
+  opening a store verifies it. A copied foreign state tree is rejected;
+  legacy v3.3.0 fingerprint-only stores migrate when the fingerprint
+  matches and are rejected otherwise; moving a workspace directory keeps
+  its identity.
+- **Reference integrity**: refs now validate existence AND type inside the
+  current workspace (decision refs → observation/change; outcome refs →
+  decision/change/observation per field). Same-named events in another
+  workspace can never satisfy a reference.
+- **Time semantics**: `observed_at` lives only in the envelope (payload
+  double-write removed); `recorded_at` vs `observed_at` are canonical;
+  `effective_at` only on changes. Derived state follows event-log order,
+  so out-of-order imports cannot corrupt the latest business knowledge.
+- **Full-log derivation**: current-state rebuild scans the FULL event log
+  (streaming, bounded memory) and records `derived_through_sequence`;
+  stale/missing derived files are detected and rebuilt on read (crash
+  consistency). Pending review is derived from the full log — an old
+  pending decision survives hundreds of later events.
+- **Event integrity**: filename must match `event_id`/type inside the
+  file; `state verify` (state doctor) reports identity/schema/sequence/
+  reference/freshness problems without fixing them.
+
+### Provenance
+
+- Decisions carry `origin` (deterministic / agent_constrained / operator),
+  default `agent_constrained`, with `evidence_status: inferred` — no more
+  hardcoded deterministic_engine/confirmed claims. Observations keep
+  confirmed/reported/inferred + source_type. Every event records a local
+  random `run_id`.
+
+### Runtime integration (product loop)
+
+- New `StateSession` runtime layer (single integration point):
+  `load_context_summary()` before reasoning, `record_observation` /
+  `record_decision` / `record_confirmed_change` / `record_outcome` after
+  each stage; run-local dedupe by source_digest. Ambiguous follow-ups
+  ("现在呢?", "Google 怎么又不行了?") auto-load current workspace state;
+  terminology questions skip state entirely.
+- A recommendation alone never records a Change (only confirmed execution
+  does); outcomes are never written at decision time; full assistant
+  answers are never stored (structured summaries only).
+- Main router gains the canonical State Lifecycle section; skills must not
+  implement their own lifecycle.
+
+### Docs
+
+- README (zh/en): Continuous Account State moved out of the not-implemented
+  list; explicitly "session-persistent, not background monitoring".
+- docs/account-state.md updated to v3.3.1 semantics (identity, lock, time,
+  provenance, freshness, runtime API); AGENTS.md adds the runtime-API-only
+  state rule.
+
+### Tests
+
+- New: concurrency (100 writers, A/B isolation), identity (copy rejection,
+  move keeps identity, legacy migration match/mismatch), ref type
+  validation, time semantics, >100-event derivation, old pending review,
+  freshness, event integrity, verify, provenance, run_id, and the 8
+  runtime lifecycle tests plus the "现在呢?" / "又不行了?" scenarios.
+
 ## 3.3.0 — 2026-08-11
 
 ### Continuous Account State (isolation-first)

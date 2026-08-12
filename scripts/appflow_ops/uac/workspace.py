@@ -413,6 +413,8 @@ def workspace_migration_notice(path: Path | None) -> str | None:
 def _project_context(
     name: str, *, client_label: str | None = None, business_line: str | None = None
 ) -> dict[str, Any]:
+    from .account_state import new_workspace_id
+
     return {
         "schema_version": "1.0",
         "project": {
@@ -422,6 +424,7 @@ def _project_context(
             "platform": "google_ads",
             "campaign_type": "app_campaign",
             "account_label": None,
+            "workspace_id": new_workspace_id(),
         },
         "privacy": {
             "contains_real_account_data": True,

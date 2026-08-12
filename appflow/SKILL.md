@@ -12,6 +12,28 @@ AppFlow Ops is a router for overseas app-promotion agency (乙方) work. Keep
 this file lean: route the task, load only the needed sub-skill, and use
 references on demand.
 
+## State Lifecycle (workspace-scoped, automatic)
+
+After workspace resolution and BEFORE reasoning, load the workspace's
+continuous state through the State Runtime API (`StateSession`), never by
+reading state files directly. Full rules: `references/state-lifecycle.md`.
+
+- **before_reasoning** — ambiguous follow-ups ("现在呢?", "Google 怎么又
+  不行了?") load current state + bounded recent history + pending review;
+  terminology questions skip state entirely.
+- **after_observation** — one observation per reliable new fact, deduped by
+  source digest within the run.
+- **after_decision** — one decision per clear recommendation; `origin` =
+  deterministic | agent_constrained | operator (default agent_constrained);
+  never store the full answer.
+- **after_confirmed_change** — a change is recorded ONLY after execution is
+  confirmed; a recommendation alone never becomes a Change.
+- **after_outcome** — only with later evidence, never at decision time.
+
+State is per-workspace and physically isolated; never read, write, or
+reference another workspace's state, and never borrow its history to fill a
+missing gap.
+
 ## Always Do First
 
 1. Read optimizer profile files in the current working directory if present:
@@ -34,7 +56,6 @@ references on demand.
 
 Ambiguous operational diagnosis follows the **AppFlow Reasoning Contract** —
 `references/reasoning-contract.md` is the single canonical definition:
-
 ```text
 Diverge → Verify → Eliminate → Rank → Converge
 ```
