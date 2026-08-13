@@ -157,6 +157,20 @@ investigate them; explore broadly internally, answer concisely externally.
 - **Missing identity is not evidence of account-level aggregation.**
   Comparable identity uses workspace-local opaque entity_key — raw
   external IDs are never persisted.
+- **Convergence must preserve the same provenance boundary used by
+  evidence evaluation.** Platform-bound tops use that platform's
+  measurement/maturity (missing platform safety → unknown, never an
+  aggregate fallback); shared and run-level tops use aggregate Safety.
+- **Do not replace a ranked diagnosis with a safety action.** A safety
+  block changes convergence/action, not historical evidence or
+  hypothesis identity — `investigate_measurement` is not the same as
+  `top_hypothesis = measurement_instability`.
+- **`top_hypothesis`, `top_platform`, and evaluation scope must always
+  come from the same selected evaluation.** A safety block cannot
+  silently rewrite attribution, and a persisted Decision's platform
+  attribution must match the selected evaluation (a safety problem on
+  one platform is never a veto on an independent diagnosis for another,
+  but it can still block a shared cross-platform conclusion).
 
 ## Layout
 

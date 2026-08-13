@@ -296,3 +296,56 @@ Comparable identity never requires real media IDs — a workspace-local
 opaque `entity_key` (stable within workspace, non-reversible, not
 globally meaningful) is enough to tell "same entity" from "different
 entity".
+
+## Convergence Safety Provenance (v3.5.5)
+
+> Platform-bound conclusions use platform-bound safety. Shared and
+> run-level conclusions use aggregate safety.
+
+The evaluator has consumed provenance-aware Safety since v3.5.4; the last
+correctness gap was CONVERGENCE: it could still re-consume the whole run's
+aggregate Safety and let one platform's problem veto an independent
+diagnosis for another platform.
+
+- `converge()` resolves Safety from the SELECTED evaluation's scope via
+  `resolve_evaluation_safety(evaluation, safety_context)` — never by
+  guessing scope from hypothesis names or string matching. The ranked
+  evaluation already carries `platform` and `evaluation_scope`; use them
+  directly.
+  - `evaluation_scope="platform"` + a media platform → that platform's own
+    measurement/maturity; a platform with NO safety evidence resolves to
+    `unknown` — never borrowed from another platform or from the
+    aggregate (no pretending "stable").
+  - `evaluation_scope="shared"` → aggregate/shared Safety (conservative).
+  - `evaluation_scope="run"` → aggregate/run Safety (never a randomly
+    picked platform's state).
+- A safety block changes convergence/action, NEVER the ranked diagnosis
+  identity: `top_hypothesis`, `top_platform`, `top_evaluation_scope`
+  always derive from ONE `selected_evaluation` (hard invariant). The
+  result carries `safety_block` (`measurement_invalid` /
+  `maturity_insufficient`) separately from the diagnosis.
+- `platform_warnings` (e.g. `{"meta": ("measurement_invalid",)}`) keep
+  non-selected platforms' safety problems visible WITHOUT making them a
+  global veto.
+
+> A safety problem on one media platform is not automatically a veto on an
+> independent diagnosis for another media platform.
+
+> A safety problem on one platform can still block a shared cross-platform
+> conclusion.
+
+### Diagnosis vs Safety Block
+
+```text
+Top diagnosis        = shared_product_funnel_issue   (ranked, unchanged)
+safety_block         = measurement_invalid           (which gate blocked)
+recommended_action   = investigate_measurement       (what to do now)
+```
+
+`investigate_measurement` does NOT mean `top_hypothesis` becomes
+`measurement_instability` — unless measurement instability itself really
+ranked first. Persisted Decision attribution follows the selected
+evaluation: `auction_pressure@google_ads` persists with
+`platform=google_ads`; a blocked shared diagnosis still persists with
+`platform=cross_platform` + its scope — a safety action never rewrites the
+diagnostic attribution.

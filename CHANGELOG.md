@@ -2,6 +2,58 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.5.5 — 2026-08-13
+
+### Fixed
+
+- **Platform-bound diagnoses are no longer globally vetoed by another
+  platform's measurement or maturity state**: `converge()` now resolves
+  Safety from the SELECTED evaluation's scope
+  (`resolve_evaluation_safety`) — Meta measurement invalid never turns a
+  supported `auction_pressure@google_ads` into a run-wide
+  `investigate_measurement`, and Meta immaturity never turns the whole
+  run into a wait.
+- **Convergence now resolves Safety from the selected evaluation
+  scope**: platform-bound tops use that platform's own
+  measurement/maturity (missing platform safety → `unknown`, never an
+  aggregate fallback); shared and run-level tops use aggregate Safety
+  (conservative).
+- **Final hypothesis/platform attribution cannot diverge**: `top_hypothesis`,
+  `top_platform` and `top_evaluation_scope` always derive from ONE
+  `selected_evaluation` (hard invariant, asserted for every eval fixture
+  and enforced in the result builder).
+- **Safety investigation actions no longer replace the ranked diagnosis
+  identity**: `investigate_measurement` is expressed as
+  `safety_block=measurement_invalid` beside the unchanged diagnosis,
+  never as `top_hypothesis=measurement_instability` unless that is the
+  real ranking.
+- **Shared conclusions remain conservatively gated by aggregate Safety**:
+  Meta pay↓ invalid + Google pay↓ stable can rank
+  `shared_product_funnel_issue`, but one invalid platform still blocks a
+  confident cross-platform product conclusion.
+- **Persisted Decision attribution matches the selected evaluation**: a
+  platform-bound diagnosis persists with `platform=google_ads` (validated
+  with Google's own Safety); a blocked shared diagnosis stays
+  `platform=cross_platform` + scope — a safety action never rewrites
+  diagnostic attribution.
+
+### Changed
+
+- **Decision Intelligence result now preserves selected evaluation scope
+  through convergence and persistence**: `selected_evaluation`,
+  `top_evaluation_scope`, `safety_block`, and `platform_warnings` (e.g.
+  `{"meta": ("measurement_invalid",)}` — a warning on one platform is
+  never a veto on an independent diagnosis for another).
+- `converge()` accepts an optional `SafetyContext` (runtime-native path
+  always passes it); legacy `measurement_state`/`maturity_state` remain
+  for library callers.
+
+Eval set expanded 68 → 74 real scenarios (platform-bound convergence
+surviving other-platform invalid/insufficient, shared diagnosis blocked
+by aggregate invalid, single-platform invalid unchanged, run-level
+aggregate invalid, supported-rival behavior unchanged under
+provenance).
+
 ## 3.5.4 — 2026-08-13
 
 ### Added

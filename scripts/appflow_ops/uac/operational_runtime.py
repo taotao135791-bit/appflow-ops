@@ -39,6 +39,7 @@ from .types import ContractError
 from .workspace import Workspace
 
 if TYPE_CHECKING:
+    from appflow_ops.decision_intelligence.ranking import RankedHypothesis
     from appflow_ops.decision_intelligence.result import DecisionIntelligenceResult
 
 # Per-platform retrieval budget: bounded regardless of platform count.
@@ -466,6 +467,7 @@ class PlatformOperationalRun:
         """
         self._require_started()
         from appflow_ops.decision_intelligence import (
+            SafetyContext,
             build_evidence,
             build_hypothesis_set,
             converge,
@@ -574,11 +576,18 @@ class PlatformOperationalRun:
             maturity_by_platform=maturity_by_platform,
         )
         ranked = rank_hypotheses(evaluations)
-        convergence = converge(
-            ranked,
-            measurement_state=measurement_state,
-            maturity_state=maturity_state,
+        # v3.5.5: convergence consumes Safety resolved from the SELECTED
+        # evaluation's scope — a platform-bound top uses that platform's
+        # measurement/maturity; shared/run tops use the aggregate states.
+        # Another platform's invalid state is a warning, never a global
+        # veto.
+        safety_context = SafetyContext(
+            measurement_by_platform=measurement_by_platform,
+            maturity_by_platform=maturity_by_platform,
+            aggregate_measurement=measurement_state,
+            aggregate_maturity=maturity_state,
         )
+        convergence = converge(ranked, safety_context=safety_context)
         return from_convergence(
             convergence=convergence,
             platform_scope=self.platform_scope,
@@ -591,6 +600,9 @@ class PlatformOperationalRun:
                 "policy_state": self.policy_state,
                 "permission_state": self.permission_state,
             },
+            platform_warnings=self._platform_safety_warnings(
+                ranked, measurement_by_platform, maturity_by_platform
+            ),
             evidence=evidence,
         )
 
@@ -614,10 +626,44 @@ class PlatformOperationalRun:
         confidence = (
             "probable" if result.convergence_status == "converged" else "tentative"
         )
+        # v3.5.5: attribution AND safety follow the SELECTED evaluation.
+        # A platform-bound diagnosis persists with that platform and is
+        # validated with that platform's measurement/maturity — another
+        # platform's invalid state never vetoes it; a shared diagnosis
+        # stays cross-platform with aggregate safety (conservative).
+        from appflow_ops.decision_intelligence import (
+            SafetyContext,
+            resolve_evaluation_safety,
+        )
+        from appflow_ops.decision_intelligence.result import decision_attribution
+
+        measurement_by_platform, maturity_by_platform = self._safety_states()
+        measurement_state = self._aggregate_safety(
+            measurement_by_platform, self.platform_scope
+        )
+        maturity_state = self._aggregate_safety(
+            maturity_by_platform, self.platform_scope
+        )
+        platform, platform_scope = decision_attribution(
+            result.selected_evaluation, self.platform_scope
+        )
+        resolved_measurement, resolved_maturity = resolve_evaluation_safety(
+            result.selected_evaluation,
+            SafetyContext(
+                measurement_by_platform=measurement_by_platform,
+                maturity_by_platform=maturity_by_platform,
+                aggregate_measurement=measurement_state,
+                aggregate_maturity=maturity_state,
+            ),
+        )
         return self.record_decision(
             decision_class=decision_class,
             reason=result.reason_summary,
             diagnosis_confidence=confidence,
+            platform=platform,
+            platform_scope=platform_scope,
+            safety_measurement_state=resolved_measurement,
+            safety_maturity_state=resolved_maturity,
         )
 
     def record_decision_override(
@@ -660,6 +706,10 @@ class PlatformOperationalRun:
         review_after: str | None = None,
         execution_status: str | None = None,
         diagnosis_confidence: str = "none",
+        platform: str | None = None,
+        platform_scope: tuple[str, ...] | None = None,
+        safety_measurement_state: str | None = None,
+        safety_maturity_state: str | None = None,
     ) -> str | None:
         """Persist one operational Decision through the shared session.
 
@@ -673,15 +723,26 @@ class PlatformOperationalRun:
           persists (None + ``last_verdict``); a constrained candidate must
           never be written verbatim into state.
 
-        Platform attribution is inherited from the run's platform scope.
+        Platform attribution is inherited from the run's platform scope,
+        or overridden explicitly (v3.5.5: the DI path passes the
+        SELECTED evaluation's attribution — a platform-bound diagnosis
+        persists with that platform). ``safety_measurement_state`` /
+        ``safety_maturity_state`` override the aggregate states for
+        validation (v3.5.5: the DI path validates with the selected
+        evaluation's resolved Safety — what was evaluated is what is
+        validated).
         """
         self._require_started()
         measurement_by_platform, maturity_by_platform = self._safety_states()
-        measurement_state = self._aggregate_safety(
-            measurement_by_platform, self.platform_scope
+        measurement_state = (
+            safety_measurement_state
+            if safety_measurement_state is not None
+            else self._aggregate_safety(measurement_by_platform, self.platform_scope)
         )
-        maturity_state = self._aggregate_safety(
-            maturity_by_platform, self.platform_scope
+        maturity_state = (
+            safety_maturity_state
+            if safety_maturity_state is not None
+            else self._aggregate_safety(maturity_by_platform, self.platform_scope)
         )
         # The SAME canonical values used by the validator are persisted with
         # the Decision (What was validated must be what was persisted).
@@ -700,7 +761,20 @@ class PlatformOperationalRun:
             # rejected, or constrained without a validated candidate:
             # the original candidate is never persisted.
             return None
-        platform, platform_scope = self._decision_platform()
+        if platform_scope is None and platform is None:
+            resolved_platform, resolved_scope = self._decision_platform()
+        else:
+            resolved_platform, resolved_scope = platform, platform_scope or ()
+            if (
+                resolved_platform is not None
+                and resolved_platform != "cross_platform"
+                and self.platform_scope
+                and resolved_platform not in self.platform_scope
+            ):
+                raise ContractError(
+                    f"platform {resolved_platform!r} is outside the run's "
+                    f"platform scope {self.platform_scope}"
+                )
         policy_constraints: dict[str, Any] = {
             "permission_state": self.permission_state,
             "policy_state": self.policy_state,
@@ -720,8 +794,8 @@ class PlatformOperationalRun:
             policy_constraints=policy_constraints,
             measurement_state=measurement_state,
             maturity_state=maturity_state,
-            platform=platform,
-            platform_scope=platform_scope,
+            platform=resolved_platform,
+            platform_scope=resolved_scope,
             diagnosis_confidence=diagnosis_confidence,
         )
 
@@ -942,6 +1016,34 @@ class PlatformOperationalRun:
         if all(value in {"sufficient", "stable"} for value in relevant):
             return "sufficient" if "sufficient" in relevant else "stable"
         return relevant[-1]
+
+    @staticmethod
+    def _platform_safety_warnings(
+        ranked: tuple[RankedHypothesis, ...],
+        measurement_by_platform: Mapping[str, str],
+        maturity_by_platform: Mapping[str, str],
+    ) -> dict[str, tuple[str, ...]]:
+        """Safety warnings per NON-selected platform (v3.5.5): e.g.
+        {"meta": ("measurement_invalid",)} when Meta's measurement is
+        invalid but the selected diagnosis is Google's. The selected
+        platform's own safety is expressed by ``safety_block``, not
+        duplicated here. A warning is never a veto on an independent
+        diagnosis — it only says "this platform cannot be judged yet".
+        """
+        top = ranked[0].evaluation if ranked else None
+        selected_platform = top.platform if top is not None else None
+        warnings: dict[str, tuple[str, ...]] = {}
+        for platform in sorted(set(measurement_by_platform) | set(maturity_by_platform)):
+            if platform == selected_platform:
+                continue
+            items: list[str] = []
+            if measurement_by_platform.get(platform) == "invalid":
+                items.append("measurement_invalid")
+            if maturity_by_platform.get(platform) == "insufficient":
+                items.append("maturity_insufficient")
+            if items:
+                warnings[platform] = tuple(items)
+        return warnings
 
     def _decision_platform(self) -> tuple[str | None, tuple[str, ...]]:
         """Platform attribution inherited from the run's scope. An empty

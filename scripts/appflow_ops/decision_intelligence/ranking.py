@@ -1,4 +1,4 @@
-"""Ranking and convergence for Ads Decision Intelligence (v3.5.0).
+"""Ranking and convergence for Ads Decision Intelligence (v3.5.5).
 
 Ranking is deterministic and repeatable — never pseudo-probabilities.
 Status priority: supported > unverified > insufficient_evidence >
@@ -14,11 +14,19 @@ A materially supported runner-up (status=supported with a material
 score) is a MAJOR ALTERNATIVE: score gap alone never eliminates it —
 the runtime converges to investigate plus the next discriminating
 evidence instead of a confident action (v3.5.1).
+
+Safety follows the SELECTED evaluation's provenance (v3.5.5): a
+platform-bound top consumes that platform's own measurement/maturity
+(missing platform safety resolves to "unknown", never an aggregate
+fallback), shared and run-level tops consume the aggregate states. A
+safety block changes the convergence/action, never the ranked diagnosis
+identity.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 
 from .evaluator import SUPPORTED_THRESHOLD, HypothesisEvaluation
 
@@ -35,6 +43,57 @@ CONVERGE_SCORE_THRESHOLD = 4
 # A supported hypothesis with at least this score carries MATERIAL
 # supporting evidence (v3.5.1) — it cannot be dismissed by score gap.
 MAJOR_ALTERNATIVE_THRESHOLD = SUPPORTED_THRESHOLD
+
+
+@dataclass(frozen=True)
+class SafetyContext:
+    """Safety states resolved per evaluation scope (v3.5.5).
+
+    platform-bound evaluations consume the platform's own
+    measurement/maturity; shared and run-level evaluations consume the
+    aggregate states. A platform-bound evaluation whose platform has no
+    safety evidence resolves to "unknown" — never a silent aggregate
+    fallback (a safety problem on one platform is not a veto on an
+    independent diagnosis for another platform, and a missing platform's
+    safety is not pretended to be stable).
+    """
+
+    measurement_by_platform: Mapping[str, str] = field(default_factory=dict)
+    maturity_by_platform: Mapping[str, str] = field(default_factory=dict)
+    aggregate_measurement: str = "stable"
+    aggregate_maturity: str = "sufficient"
+
+
+def resolve_evaluation_safety(
+    evaluation: HypothesisEvaluation | None,
+    safety_context: SafetyContext,
+) -> tuple[str, str]:
+    """Safety (measurement, maturity) for the SELECTED evaluation,
+    following its scope (v3.5.5):
+
+    - evaluation_scope="platform" + a media platform → that platform's
+      own measurement/maturity (missing → "unknown");
+    - evaluation_scope="shared" → aggregate/shared Safety;
+    - evaluation_scope="run" → aggregate/run Safety.
+
+    Never infers scope from hypothesis names or string matching — the
+    ranked evaluation already carries ``platform`` and
+    ``evaluation_scope``; use them directly.
+    """
+    if evaluation is None:
+        return safety_context.aggregate_measurement, safety_context.aggregate_maturity
+    if (
+        evaluation.hypothesis.evaluation_scope == "platform"
+        and evaluation.platform
+        and evaluation.platform != "cross_platform"
+    ):
+        return (
+            safety_context.measurement_by_platform.get(
+                evaluation.platform, "unknown"
+            ),
+            safety_context.maturity_by_platform.get(evaluation.platform, "unknown"),
+        )
+    return safety_context.aggregate_measurement, safety_context.aggregate_maturity
 
 
 @dataclass(frozen=True)
@@ -60,6 +119,11 @@ class Convergence:
     material_alternatives: tuple[str, ...] = ()
     # Evidence that would separate the top hypothesis from its rival.
     next_discriminating_evidence: tuple[str, ...] = ()
+    # v3.5.5: the safety gate that blocked confident convergence
+    # (measurement_invalid | maturity_insufficient | None). The ranked
+    # diagnosis identity is preserved — a block changes the action, not
+    # the hypothesis.
+    safety_block: str | None = None
 
 
 def rank_hypotheses(
@@ -110,12 +174,28 @@ def converge(
     *,
     measurement_state: str = "stable",
     maturity_state: str = "sufficient",
+    safety_context: SafetyContext | None = None,
 ) -> Convergence:
-    """Converge to the smallest useful action (or an honest wait)."""
+    """Converge to the smallest useful action (or an honest wait).
+
+    Provenance-aware (v3.5.5): when ``safety_context`` is provided the
+    Safety used for convergence is resolved from the SELECTED
+    evaluation's scope (``resolve_evaluation_safety``) — a
+    platform-bound top uses that platform's measurement/maturity
+    (missing → unknown, never an aggregate fallback), shared/run tops
+    use the aggregate states. ``measurement_state``/``maturity_state``
+    remain for library callers without a SafetyContext (aggregate
+    semantics; the runtime-native path always passes a SafetyContext).
+    """
     top = ranked[0].evaluation if ranked else None
     if top is None:
         return Convergence(
             decision="investigate", top_hypothesis=None, rationale=("没有可用假设",)
+        )
+
+    if safety_context is not None:
+        measurement_state, maturity_state = resolve_evaluation_safety(
+            top, safety_context
         )
 
     exclusions = tuple(
@@ -126,29 +206,44 @@ def converge(
     missing = tuple(sorted({item for ev in ranked for item in ev.evaluation.missing}))
 
     # Measurement first: invalid measurement blocks confident convergence
-    # (Scenario 7) — investigate measurement before anything else.
+    # (Scenario 7) — investigate measurement before anything else. The
+    # ranked diagnosis identity is preserved: a block changes the
+    # action, not the hypothesis (v3.5.5).
     if measurement_state == "invalid":
         return Convergence(
             decision="investigate_measurement",
-            top_hypothesis="measurement_instability",
+            top_hypothesis=top.hypothesis.id,
             confidence="medium",
-            rationale=("当前 measurement 不可信，先排查数据/归因问题",),
+            rationale=(
+                (
+                    f"{top.hypothesis.label} 仍是当前最强诊断，但 measurement 不可信，"
+                    "先排查数据/归因问题"
+                ),
+            ),
             exclusions=exclusions,
             missing_evidence=missing,
             review_condition="measurement 恢复可信后再重新诊断",
+            safety_block="measurement_invalid",
             converged=False,
         )
 
-    # Insufficient maturity: honest wait (Scenario 8).
+    # Insufficient maturity: honest wait (Scenario 8). The diagnosis
+    # identity is preserved; the block gates convergence, not the rank.
     if maturity_state == "insufficient":
         return Convergence(
             decision="wait",
-            top_hypothesis=top.hypothesis.id if top.status == "supported" else None,
+            top_hypothesis=top.hypothesis.id,
             confidence="low",
-            rationale=("样本/数据成熟度不足，不能确认任何原因；先观察一个完整窗口",),
+            rationale=(
+                (
+                    f"{top.hypothesis.label} 仍是最强候选，但样本/数据成熟度不足，"
+                    "不能确认任何原因；先观察一个完整窗口"
+                ),
+            ),
             exclusions=exclusions,
             missing_evidence=missing,
             review_condition="积累足够样本后复查",
+            safety_block="maturity_insufficient",
             converged=False,
         )
 

@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.4/install.sh | bash -s -- --ref=v3.5.4
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.5/install.sh | bash -s -- --ref=v3.5.5
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -451,6 +451,22 @@ identity never implies account-level aggregation; comparability uses only
 a workspace-local opaque entity_key — raw media IDs are never persisted;
 measurement conflict signals "investigate consistency", never "shared
 measurement problem confirmed".
+
+From v3.5.5 CONVERGENCE obeys the same provenance boundary:
+`converge()` resolves Safety from the SELECTED evaluation's scope (a
+platform-bound top uses that platform's own measurement/maturity —
+missing → unknown, never an aggregate fallback; shared/run tops use
+aggregate Safety, staying conservative) — Meta's invalid measurement no
+longer rewrites Google's supported `auction_pressure` into a run-wide
+investigate measurement; `top_hypothesis` / `top_platform` /
+`evaluation_scope` always derive from the SAME selected evaluation
+(attribution can never diverge); a safety block changes the action, not
+the diagnosis identity (`investigate_measurement` ≠
+`top_hypothesis=measurement_instability`); persisted Decision
+attribution matches the selected evaluation (`auction_pressure@google_ads`
+→ `platform=google_ads`, shared stays `cross_platform`); other
+platforms' safety problems survive as `platform_warnings`, never a
+global veto.
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

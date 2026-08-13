@@ -1,9 +1,14 @@
-"""User-facing summary builder for Decision Intelligence (v3.5.1).
+"""User-facing summary builder for Decision Intelligence (v3.5.5).
 
 Produces the DEFAULT short answer — a few sentences, never the full
 ranking table. Structure: conclusion, strongest evidence, material
 exclusion/alternative, next action, review condition; when evidence is
 insufficient the answer is honestly "先别动" plus the most needed data.
+
+Diagnosis vs safety block (v3.5.5): a safety problem on one platform
+never vetoes an independent diagnosis for another — the summary keeps
+the ranked diagnosis AND names the platform whose data cannot be
+judged yet ("Google 侧可以判断，Meta 侧暂不判断").
 """
 
 from __future__ import annotations
@@ -126,8 +131,34 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
             )
         else:
             lines.append(f"更像{_label(result.top_hypothesis or '')}，先做最小动作。")
+    elif (
+        result.convergence_status == "investigate"
+        and result.safety_block == "measurement_invalid"
+    ):
+        # v3.5.5: a safety block changes the action, never the ranked
+        # diagnosis identity — keep BOTH the diagnosis and the block.
+        if result.top_platform and result.top_platform != "cross_platform":
+            lines.append(
+                f"{result.top_platform} 侧更像{_label(result.top_hypothesis or '')}，"
+                "但数据/归因不可信，先查 tracking 再下结论。"
+            )
+        elif result.top_platform == "cross_platform":
+            lines.append(
+                f"更可能是{_label(result.top_hypothesis or '')}，但现在还不能直接判定"
+                "——measurement 不可信，会影响跨平台结论。"
+            )
+        else:
+            lines.append(
+                f"更像{_label(result.top_hypothesis or '')}，但数据/归因不可信，"
+                "先查清楚再判断。"
+            )
+        if result.platform_warnings:
+            names = "、".join(result.platform_warnings)
+            lines.append(f"{names} 的数据暂不可信，那边先不下结论。")
     elif result.convergence_status == "investigate":
         lines.append("候选原因并存，先别下结论——补充证据再收敛。")
+    elif result.convergence_status == "wait" and result.safety_block:
+        lines.append("样本/数据成熟度不足，先别调，观察一个完整窗口。")
     elif result.convergence_status == "wait":
         lines.append("现在证据还不够，先别调。")
     else:

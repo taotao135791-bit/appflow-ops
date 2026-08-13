@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.4/install.sh | bash -s -- --ref=v3.5.4
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.5/install.sh | bash -s -- --ref=v3.5.5
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -298,6 +298,8 @@ v3.5.2 起 **Decision Intelligence 真正理解时间与多个媒体**：`“现
 v3.5.3 起 **Evidence 真正归属到平台、对象与时间**：provenance-aware evaluation（`auction_pressure@meta` 与 `@google_ads` 独立评估，Meta 信号绝不拼接进 Google 结论）；shared 假设只吃 shared 证据（单平台 CPM↑ 不再支撑"市场级事件"，需 ≥2 平台同涨的 `cross_cpm_up`）；历史趋势要求同一 entity/level/breakdown 才可比（Campaign A 昨天 + Campaign B 今天 ≠ CTR 下降）；"最近一次 Change"≠"当前 confounder"（只有发生在 baseline 与 current 之间的 Change 才算）；invalid+unknown 不再误标 measurement conflict；用户回答知道是"Meta 侧"还是"两个媒体共同"。
 
 v3.5.4 起 **Evaluation、Safety、Change 完全服从同一 provenance boundary**：`applicable_platforms="*"` 不再等于 flat union——每个适用平台独立评估（Meta 信号绝不拼接进 Google 结论）；Safety 与证据同源（Meta measurement invalid 不再 cap Google 诊断）；Meta 的 Change 只成为 Meta 的 confounder（Google 保持干净，temporal window 按平台自己的 baseline/current）；历史选择找"最近的可比对象"（最新不可比不阻塞更旧的可比）；identity 缺失 ≠ account aggregate（显式 account+aggregate 才可比）；可比性只用 workspace-local opaque `entity_key`——真实媒体 ID 永不持久化；measurement conflict 是"查一致性"信号，不再是 shared measurement issue 的证据。
+
+v3.5.5 起 **Convergence 也服从同一 provenance boundary**：`converge()` 按 selected evaluation 的 scope 解析 Safety（platform-bound top 用该平台自己的 measurement/maturity，缺失 → unknown，绝不 fallback aggregate；shared/run top 用 aggregate，保持保守）——Meta measurement invalid 不再把 Google 的 `auction_pressure` 全局改写成 investigate measurement；`top_hypothesis` / `top_platform` / `evaluation_scope` 永远来自同一个 selected evaluation（attribution 不可发散）；safety block 只改变 action 不改变诊断身份（`investigate_measurement` ≠ `top_hypothesis=measurement_instability`）；持久化 Decision 的 attribution 匹配 selected evaluation（`auction_pressure@google_ads` → `platform=google_ads`，shared 保持 `cross_platform`）；其他平台的 safety 问题保留为 `platform_warnings` 而非全局 veto。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

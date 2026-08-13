@@ -17,6 +17,7 @@ from appflow_ops.decision_intelligence import (
     META_HYPOTHESES,
     SIGNAL_IDS,
     TIKTOK_HYPOTHESES,
+    SafetyContext,
     build_evidence,
     build_hypothesis_set,
     converge,
@@ -335,6 +336,12 @@ def test_eval_case(case) -> None:
         for platform_metrics in current_platforms.values():
             platform_metrics.setdefault("entity_level", "account")
             platform_metrics.setdefault("aggregate_scope", "account")
+    # v3.5.5: fixtures may declare per-platform Safety
+    # (measurement_by_platform / maturity_by_platform) — the evaluator
+    # then applies platform-bound Safety exactly like the runtime;
+    # without the fields the legacy aggregate semantics apply.
+    measurement_by_platform = case.get("measurement_by_platform")
+    maturity_by_platform = case.get("maturity_by_platform")
     if current_platforms:
         recent_change_events: list[dict[str, object]] = []
         for change in case.get("recent_changes", []):
@@ -390,6 +397,8 @@ def test_eval_case(case) -> None:
             platform_scope=tuple(case.get("platform_scope", ())),
             measurement_state=case.get("measurement", "stable"),
             maturity_state=case.get("maturity", "sufficient"),
+            measurement_by_platform=measurement_by_platform,
+            maturity_by_platform=maturity_by_platform,
         )
     else:
         signals = {k: v for k, v in case.get("signals", {}).items() if v}
@@ -399,6 +408,8 @@ def test_eval_case(case) -> None:
             platform_scope=tuple(case.get("platform_scope", ())),
             measurement_state=case.get("measurement", "stable"),
             maturity_state=case.get("maturity", "sufficient"),
+            measurement_by_platform=measurement_by_platform,
+            maturity_by_platform=maturity_by_platform,
         )
     ranked = rank_hypotheses(evals)
     top = ranked[0].evaluation
@@ -450,6 +461,19 @@ def test_eval_case(case) -> None:
         ranked,
         measurement_state=case.get("measurement", "stable"),
         maturity_state=case.get("maturity", "sufficient"),
+        # v3.5.5: convergence resolves Safety from the selected
+        # evaluation's scope when per-platform Safety is declared — a
+        # platform-bound top uses that platform's own Safety.
+        safety_context=(
+            SafetyContext(
+                measurement_by_platform=measurement_by_platform or {},
+                maturity_by_platform=maturity_by_platform or {},
+                aggregate_measurement=case.get("measurement", "stable"),
+                aggregate_maturity=case.get("maturity", "sufficient"),
+            )
+            if measurement_by_platform or maturity_by_platform
+            else None
+        ),
     )
     if case.get("convergence_blocked"):
         assert result.converged is False, (
@@ -461,6 +485,35 @@ def test_eval_case(case) -> None:
     assert result.decision not in case.get("forbidden_actions", []), (
         f"{case['id']}: forbidden action {result.decision}"
     )
+    # v3.5.5: attribution integrity — the final result fields must all
+    # derive from the SAME selected evaluation (hard invariant, checked
+    # for EVERY fixture), and fixtures may pin platform/scope/block.
+    from appflow_ops.decision_intelligence.result import from_convergence
+
+    result_full = from_convergence(
+        convergence=result,
+        platform_scope=tuple(case.get("platform_scope", ())),
+        operational_domain=case.get("domain") or "general",
+        evaluations=evals,
+        ranked=ranked,
+        safety_context={},
+    )
+    assert result_full.top_hypothesis == result_full.selected_evaluation.hypothesis.id
+    if case.get("expected_top_platform") is not None:
+        assert result_full.top_platform == case["expected_top_platform"], (
+            f"{case['id']}: top platform {result_full.top_platform} != "
+            f"{case['expected_top_platform']}"
+        )
+    if case.get("expected_top_scope") is not None:
+        assert result_full.top_evaluation_scope == case["expected_top_scope"], (
+            f"{case['id']}: top scope {result_full.top_evaluation_scope} != "
+            f"{case['expected_top_scope']}"
+        )
+    if case.get("expected_safety_block") is not None:
+        assert result_full.safety_block == case["expected_safety_block"], (
+            f"{case['id']}: safety_block {result_full.safety_block} != "
+            f"{case['expected_safety_block']}"
+        )
 
 
 def test_eval_case_set_size() -> None:
