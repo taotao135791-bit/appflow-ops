@@ -2,7 +2,22 @@
 
 All notable changes to AppFlow Ops are documented here.
 
-## 3.5.0 — 2026-08-13
+## 3.5.1 — 2026-08-13
+
+### Added
+
+- **Runtime-native Decision Intelligence evaluation**: `PlatformOperationalRun.evaluate_decision_intelligence()` assembles the full pipeline internally (current observations → raw evidence → signals → hypotheses → evaluation → ranking → convergence) — callers never wire `build_hypothesis_set` / `signals_from_metrics` / `evaluate` / `rank` / `converge` manually; `record_decision_from_intelligence()` persists the DI recommendation through the existing Safety validator (Decision ≠ Change preserved; canonical SafetyContext flows unchanged into evaluation and persistence).
+- **Raw evidence → signal → hypothesis E2E**: `*_change_pct` numeric relative movement generates trend signals via material thresholds (±10% down/up, ±5% stable, ambiguous band emits nothing); `signals_from_platforms()` adds per-platform extraction with cross-level aggregations (`cross_pay_rate_drop` / `cross_cvr_drop` when ≥ 2 platforms share a drop); `measurement_stable` is positive evidence (stable is evidence, not absence).
+- **Strict ranked-top eval integrity**: `acceptable_top` is judged on RANKED results only (first non-weakened/non-excluded hypothesis) — registry order can never rescue a wrong top; `forbidden_top` rejects hypotheses that must never rank first; eval fixtures may start from raw `metrics` / `per_platform_metrics`; eval set expanded 30 → 42 real scenarios.
+- **Runtime SafetyContext propagation**: operational DI never defaults to `stable`/`sufficient` — measurement/maturity/policy/permission come from the same canonical resolvers used by `record_decision()`; measurement invalid blocks confident diagnosis (`investigate_measurement` first).
+- **`summarize_decision_intelligence(result)`**: short user-facing answer (conclusion → strongest evidence → material exclusion/alternative → next action → review condition); insufficient evidence answers “先别动” plus the most needed data.
+
+### Fixed
+
+- **Unreachable stable funnel signals**: `registration_rate_trend_stable` and `pay_rate_trend_stable` are now producible via both string-trend and numeric-change paths; signal registry consistency is asserted by tests (no declared-but-unreachable trend signal).
+- **Cross-platform hypothesis builder footgun**: multi-platform scopes automatically enable cross-platform logic (`platform_scope` is the source of truth; explicit bool is backward-compat only) and never fall back to ALL_HYPOTHESES — `applicable_platforms` really filters (Meta+Google never evaluates TikTok-only hypotheses; shared hypotheses like auction_pressure stay candidates).
+- **Supported-rival premature convergence**: a materially supported runner-up (status=supported with material score) is a MAJOR ALTERNATIVE — score gap alone no longer eliminates it; convergence answers `investigate` + `next_discriminating_evidence` instead of a confident action.
+- **Eval false-positive top-hypothesis acceptance**: removed the un-ranked `live` rescue; eval now fails loudly when the ranked top is wrong.
 
 ### Added
 

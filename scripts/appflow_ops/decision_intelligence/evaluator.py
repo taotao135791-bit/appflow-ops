@@ -27,6 +27,8 @@ _EVIDENCE_ALIASES: dict[str, tuple[str, ...]] = {
     "cross_platform_comparison": (
         "multi_creative_impacted",
         "only_one_creative_declines",
+        "cross_pay_rate_drop",
+        "cross_cvr_drop",
     ),
     "recent_change": (
         "recent_budget_change",
@@ -178,11 +180,24 @@ def evaluate_hypotheses(
     measurement_state: str = "stable",
     maturity_state: str = "sufficient",
 ) -> tuple[HypothesisEvaluation, ...]:
-    """Evaluate every hypothesis in the set (deterministic order)."""
+    """Evaluate every hypothesis in the set (deterministic order).
+
+    The canonical safety context is injected here as signals (invalid
+    measurement / insufficient maturity / stable measurement), so eval
+    fixtures and the runtime path share identical signal semantics.
+    """
+    from .evidence import add_context_signals
+
+    augmented = dict(signals)
+    add_context_signals(
+        augmented,
+        measurement_state=measurement_state,
+        maturity_state=maturity_state,
+    )
     return tuple(
         evaluate_hypothesis(
             hypothesis,
-            signals,
+            augmented,
             measurement_state=measurement_state,
             maturity_state=maturity_state,
         )

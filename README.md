@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.0/install.sh | bash -s -- --ref=v3.5.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.1/install.sh | bash -s -- --ref=v3.5.1
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -290,6 +290,8 @@ AppFlow 对证据支持的假设排序，并收敛到最小可用操作——不
 Ads Decision Intelligence 将进一步分离 **platform scope** 与 **operational diagnosis domain**，支持如 Meta + Creative、TikTok + Funnel、Google + Measurement 的场景。
 
 v3.5.0 已落地：operational-domain aware routing、evidence-backed hypothesis evaluation（Meta 14 / TikTok 8 / Cross 4 个假设家族）、排除/排序/收敛到最小可用动作、30 个真实场景 eval。
+
+v3.5.1 起 **Decision Intelligence 是 Runtime 原生的**：`run.evaluate_decision_intelligence()` 自动消费当前 Observation + 历史 State + canonical SafetyContext，从 raw metrics（如 `ctr_change_pct: -0.25`）一路走到收敛结果——调用方不再手动拼装 pipeline；raw evidence → signals → hypotheses → evaluation → ranking → convergence 全链路接通，supported rival 不再被分差轻易排除，eval 基于严格 ranked top（42 个真实场景，含 raw-evidence 与跨平台 conflict）。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

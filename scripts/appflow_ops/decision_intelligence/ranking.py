@@ -9,13 +9,18 @@ hypothesis's first (smallest) action, with material exclusions, missing
 evidence, and a review condition; when nothing is supported, the answer
 is wait/investigate with the most decisive missing evidence named —
 never a forced recommendation.
+
+A materially supported runner-up (status=supported with a material
+score) is a MAJOR ALTERNATIVE: score gap alone never eliminates it —
+the runtime converges to investigate plus the next discriminating
+evidence instead of a confident action (v3.5.1).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .evaluator import HypothesisEvaluation
+from .evaluator import SUPPORTED_THRESHOLD, HypothesisEvaluation
 
 _STATUS_ORDER: dict[str, int] = {
     "supported": 0,
@@ -27,8 +32,9 @@ _STATUS_ORDER: dict[str, int] = {
 
 # Convergence: how much evidence the top hypothesis needs.
 CONVERGE_SCORE_THRESHOLD = 4
-# For convergence, the runner-up must not be a strong rival.
-RIVAL_GAP = 2
+# A supported hypothesis with at least this score carries MATERIAL
+# supporting evidence (v3.5.1) — it cannot be dismissed by score gap.
+MAJOR_ALTERNATIVE_THRESHOLD = SUPPORTED_THRESHOLD
 
 
 @dataclass(frozen=True)
@@ -50,6 +56,10 @@ class Convergence:
     missing_evidence: tuple[str, ...] = ()
     review_condition: str | None = None
     converged: bool = False
+    # Competing hypotheses that prevented confident convergence (v3.5.1).
+    material_alternatives: tuple[str, ...] = ()
+    # Evidence that would separate the top hypothesis from its rival.
+    next_discriminating_evidence: tuple[str, ...] = ()
 
 
 def rank_hypotheses(
@@ -75,6 +85,23 @@ def _first_action(hypothesis_id: str | None, actions: tuple[str, ...]) -> str | 
     if not actions:
         return None
     return actions[0]
+
+
+def _discriminating_evidence(
+    top: HypothesisEvaluation, runner: HypothesisEvaluation
+) -> tuple[str, ...]:
+    """Evidence that would separate two supported candidates: signal ids
+    that support the runner but not the top (observing them shifts the
+    balance); fallback to required evidence the runner needs that the top
+    does not. Never chain-of-thought — only what evidence is missing."""
+    top_support = set(top.hypothesis.supporting_signals)
+    runner_support = set(runner.hypothesis.supporting_signals)
+    discriminating = runner_support - top_support
+    if discriminating:
+        return tuple(sorted(discriminating))[:3]
+    top_required = set(top.hypothesis.required_evidence)
+    runner_required = set(runner.hypothesis.required_evidence)
+    return tuple(sorted(runner_required - top_required))[:3]
 
 
 def converge(
@@ -127,27 +154,49 @@ def converge(
     if top.status == "supported" and (
         top.score >= 6 or (top.score >= CONVERGE_SCORE_THRESHOLD and not top.missing)
     ):
-        # Runner-up must not be a strong rival (score within RIVAL_GAP).
+        # A materially supported runner-up is a MAJOR ALTERNATIVE: score
+        # gap alone never eliminates it (v3.5.1). Confident convergence is
+        # only allowed when the runner-up is weakened/excluded or lacks
+        # material support.
         runner = ranked[1].evaluation if len(ranked) > 1 else None
-        if (
-            runner is None
-            or runner.score <= top.score - RIVAL_GAP
-            or runner.status == "weakened"
-        ):
-            action = _first_action(top.hypothesis.id, top.hypothesis.possible_actions)
-            if action is None:
-                action = "observe"
-            confidence = "high" if top.score >= 6 else "medium"
+        major_alternative = (
+            runner is not None
+            and runner.status == "supported"
+            and runner.score >= MAJOR_ALTERNATIVE_THRESHOLD
+        )
+        if major_alternative and runner is not None:
             return Convergence(
-                decision=action,
+                decision="investigate",
                 top_hypothesis=top.hypothesis.id,
-                confidence=confidence,
-                rationale=top.rationale,
+                confidence="medium",
+                rationale=(
+                    (
+                        f"候选原因并存：{top.hypothesis.id} 与 "
+                        f"{runner.hypothesis.id} 都有实质支持，不能仅凭分差收敛；"
+                        f"先补充区分性证据"
+                    ),
+                ),
                 exclusions=exclusions,
                 missing_evidence=missing,
-                review_condition="按约定窗口（X spend / Y impressions）复查",
-                converged=True,
+                material_alternatives=(top.hypothesis.id, runner.hypothesis.id),
+                next_discriminating_evidence=_discriminating_evidence(top, runner),
+                review_condition="补齐区分性证据后再收敛",
+                converged=False,
             )
+        action = _first_action(top.hypothesis.id, top.hypothesis.possible_actions)
+        if action is None:
+            action = "observe"
+        confidence = "high" if top.score >= 6 else "medium"
+        return Convergence(
+            decision=action,
+            top_hypothesis=top.hypothesis.id,
+            confidence=confidence,
+            rationale=top.rationale,
+            exclusions=exclusions,
+            missing_evidence=missing,
+            review_condition="按约定窗口（X spend / Y impressions）复查",
+            converged=True,
+        )
 
     # Not enough to converge: name the decisive missing evidence.
     if missing:

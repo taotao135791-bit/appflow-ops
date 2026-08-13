@@ -26,6 +26,7 @@ from .evaluator import (
 from .evidence import (
     add_context_signals,
     signals_from_metrics,
+    signals_from_platforms,
 )
 from .hypotheses import (
     ALL_HYPOTHESES,
@@ -43,22 +44,35 @@ from .ranking import (
     converge,
     rank_hypotheses,
 )
+from .result import (
+    CONVERGENCE_STATUSES,
+    DecisionIntelligenceResult,
+    convergence_status,
+)
+from .summary import (
+    SIGNAL_LABELS,
+    summarize_decision_intelligence,
+)
 
 __all__ = [
     "ALL_HYPOTHESES",
+    "CONVERGENCE_STATUSES",
     "CROSS_PLATFORM_HYPOTHESES",
     "HYPOTHESIS_STATUSES",
     "META_HYPOTHESES",
     "OPERATIONAL_DOMAINS",
     "SIGNAL_IDS",
+    "SIGNAL_LABELS",
     "TIKTOK_HYPOTHESES",
     "Convergence",
+    "DecisionIntelligenceResult",
     "HypothesisEvaluation",
     "HypothesisSpec",
     "RankedHypothesis",
     "add_context_signals",
     "build_hypothesis_set",
     "converge",
+    "convergence_status",
     "detect_operational_domain",
     "evaluate_hypotheses",
     "evaluate_hypothesis",
@@ -67,4 +81,6 @@ __all__ = [
     "primary_domain",
     "rank_hypotheses",
     "signals_from_metrics",
+    "signals_from_platforms",
+    "summarize_decision_intelligence",
 ]

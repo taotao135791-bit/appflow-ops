@@ -47,7 +47,10 @@ SIGNAL_IDS = (
     "budget_utilization_high",
     "spend_hit_cap",
     "measurement_invalid",
+    "measurement_stable",
     "maturity_insufficient",
+    "cross_pay_rate_drop",
+    "cross_cvr_drop",
     "store_loading_issue",
     "downstream_conversion_down",
     "traffic_quality_signal",
@@ -372,6 +375,8 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         applicable_platforms=("cross_platform",),
         supporting_signals=(
             "pay_rate_trend_down",
+            "cross_pay_rate_drop",
+            "cross_cvr_drop",
             "cvr_trend_down",
             "multi_creative_impacted",
             "downstream_conversion_down",
@@ -438,27 +443,54 @@ def build_hypothesis_set(
     *,
     platform_scope: tuple[str, ...] = (),
     domain: str | None = None,
-    cross_platform: bool = False,
+    cross_platform: bool | None = None,
 ) -> tuple[HypothesisSpec, ...]:
     """Candidate set for a run: platform-appropriate hypotheses, optionally
     narrowed by the operational domain (``None``/``general`` = all
-    applicable). Cross-platform runs add the cross-platform families.
+    applicable).
+
+    ``platform_scope`` is the source of truth: a multi-platform media scope
+    AUTOMATICALLY enables cross-platform logic — callers never need a
+    correctness-critical bool. The explicit ``cross_platform`` argument is
+    kept only for backward compatibility; ``None`` = derive from scope.
+
+    Multi-platform scopes never fall back to ALL_HYPOTHESES: only
+    cross-platform families, universal (``*``) hypotheses, and hypotheses
+    applicable to at least one platform IN the scope are candidates (a
+    TikTok-only hypothesis is never evaluated for a Meta+Google run).
     """
+    media_platforms = tuple(p for p in platform_scope if p != "cross_platform")
+    if cross_platform is None:
+        cross_platform = len(media_platforms) > 1
     if cross_platform or "cross_platform" in platform_scope:
         platform_key: str | None = "cross_platform"
-    elif len(platform_scope) == 1:
-        platform_key = platform_scope[0]
+    elif len(media_platforms) == 1:
+        platform_key = media_platforms[0]
     else:
         platform_key = None
-    candidates = [
-        spec
-        for spec in ALL_HYPOTHESES
-        if (
-            platform_key is None
-            or platform_key in spec.applicable_platforms
-            or "*" in spec.applicable_platforms
-        )
-    ]
+    if platform_key is None:
+        # Empty scope: no platform context at all — library fallback is
+        # the full set (runtime binds the scope before evaluating).
+        candidates: list[HypothesisSpec] = list(ALL_HYPOTHESES)
+    elif platform_key == "cross_platform":
+        candidates = [
+            spec
+            for spec in ALL_HYPOTHESES
+            if (
+                "cross_platform" in spec.applicable_platforms
+                or "*" in spec.applicable_platforms
+                or bool(set(spec.applicable_platforms) & set(media_platforms))
+            )
+        ]
+    else:
+        candidates = [
+            spec
+            for spec in ALL_HYPOTHESES
+            if (
+                platform_key in spec.applicable_platforms
+                or "*" in spec.applicable_platforms
+            )
+        ]
     # ``domain`` is a routing/context hint — it does NOT narrow the
     # evaluation set: competing hypotheses from other domains must be
     # compared (auction vs fatigue; funnel vs creative).

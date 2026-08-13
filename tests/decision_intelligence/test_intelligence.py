@@ -22,6 +22,8 @@ from appflow_ops.decision_intelligence import (
     evaluate_hypotheses,
     hypothesis_by_id,
     rank_hypotheses,
+    signals_from_metrics,
+    signals_from_platforms,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -304,7 +306,19 @@ def test_eval_case(case) -> None:
         cross_platform=case.get("cross_platform", False),
     )
     assert specs, f"{case['id']}: empty hypothesis set"
-    signals = {k: v for k, v in case["signals"].items() if v}
+    # Layer 1: raw metrics → signals (v3.5.1). Fixtures may provide raw
+    # relative movement instead of hand-polished signals; when both exist
+    # the raw extraction runs FIRST and explicit signals only fill gaps.
+    # Cross-platform fixtures may provide per-platform raw metrics, which
+    # additionally produce cross-level aggregations.
+    signals: dict[str, bool] = {}
+    if case.get("per_platform_metrics"):
+        signals.update(signals_from_platforms(case["per_platform_metrics"]))
+        signals = {k: v for k, v in signals.items() if v}
+    elif case.get("metrics"):
+        signals.update(signals_from_metrics(case["metrics"]))
+        signals = {k: v for k, v in signals.items() if v}
+    signals.update({k: v for k, v in case.get("signals", {}).items() if v})
     evals = evaluate_hypotheses(
         specs,
         signals,
@@ -314,16 +328,27 @@ def test_eval_case(case) -> None:
     ranked = rank_hypotheses(evals)
     top = ranked[0].evaluation
 
-    # acceptable top: first NON-weakened/non-excluded hypothesis (or the
-    # safety-blocked top when convergence is blocked).
-    live = [ev for ev in evals if ev.status not in ("weakened", "excluded")]
+    # acceptable top MUST be judged on RANKED results (v3.5.1): the first
+    # non-weakened/non-excluded hypothesis in rank order. Registry order is
+    # never a fallback — a wrong ranked top cannot be rescued by fixture
+    # ordering (false-green).
+    ranked_live = [
+        item.evaluation
+        for item in ranked
+        if item.evaluation.status not in ("weakened", "excluded")
+    ]
     acceptable_top = case.get("acceptable_top", [])
     if acceptable_top:
-        assert top.hypothesis.id in acceptable_top or (
-            live and live[0].hypothesis.id in acceptable_top
-        ), (
-            f"{case['id']}: top={top.hypothesis.id}({top.status}) "
-            f"not in {acceptable_top}"
+        assert ranked_live, f"{case['id']}: no live hypotheses to judge"
+        assert ranked_live[0].hypothesis.id in acceptable_top, (
+            f"{case['id']}: ranked top={ranked_live[0].hypothesis.id}"
+            f"({ranked_live[0].status}) not in {acceptable_top}"
+        )
+
+    # forbidden_top: a hypothesis that must NEVER be the ranked top.
+    for forbidden in case.get("forbidden_top", []):
+        assert not ranked_live or ranked_live[0].hypothesis.id != forbidden, (
+            f"{case['id']}: forbidden top {forbidden}"
         )
 
     # creative must not be top for funnel-degradation cases.

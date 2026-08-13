@@ -17,9 +17,9 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from .account_state import RunContext
+from .account_state import DECISION_CLASSES, RunContext
 from .platform_adapters import (
     CROSS_PLATFORM_HYPOTHESES,
     GENERIC,
@@ -38,11 +38,23 @@ from .state_store import StateStore
 from .types import ContractError
 from .workspace import Workspace
 
+if TYPE_CHECKING:
+    from appflow_ops.decision_intelligence.result import DecisionIntelligenceResult
+
 # Per-platform retrieval budget: bounded regardless of platform count.
 PER_PLATFORM_OBSERVATIONS = 3
 PER_PLATFORM_CHANGES = 2
 PER_PLATFORM_DECISIONS = 2
 PER_PLATFORM_OUTCOMES = 1
+
+# DI action classes → canonical Decision classes (v3.5.1). Decision
+# Intelligence only RECOMMENDS; the mapping keeps its vocabulary inside
+# the canonical decision classes (never an execution claim).
+_DI_ACTION_TO_DECISION: dict[str, str] = {
+    "investigate_measurement": "investigate",
+    "hold": "keep",
+    "refresh_variant": "replace",
+}
 MAX_PLATFORM_SCOPE = 4
 
 _PLATFORM_HINTS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -441,6 +453,112 @@ class PlatformOperationalRun:
             domain_hint=self.domain_hint,
             hypotheses=hypotheses,
             safety=safety,
+        )
+
+    def evaluate_decision_intelligence(self) -> DecisionIntelligenceResult:
+        """Run the native DI pipeline over this run's real evidence.
+
+        The pipeline is assembled HERE, not by callers: raw evidence from
+        current observations → signals → hypotheses → evaluation →
+        ranking → convergence. The canonical safety context computed by
+        the SAME resolvers used in ``record_decision()`` feeds both the
+        signal layer and the evaluator — never optimistic defaults.
+        """
+        self._require_started()
+        from appflow_ops.decision_intelligence import (
+            add_context_signals,
+            build_hypothesis_set,
+            converge,
+            detect_operational_domain,
+            evaluate_hypotheses,
+            rank_hypotheses,
+            signals_from_platforms,
+        )
+        from appflow_ops.decision_intelligence.result import from_convergence
+
+        measurement_by_platform, maturity_by_platform = self._safety_states()
+        measurement_state = self._aggregate_safety(
+            measurement_by_platform, self.platform_scope
+        )
+        maturity_state = self._aggregate_safety(
+            maturity_by_platform, self.platform_scope
+        )
+        operational_domain = detect_operational_domain(self.request)
+
+        # Raw evidence: current observations only (same boundary as
+        # operational_context). Missing platforms/fields stay missing —
+        # an absent comparison window never invents stable/down/up.
+        # Per-platform extraction enables cross-level aggregations
+        # (e.g. pay drop on >= 2 platforms) for cross-platform runs.
+        per_platform: dict[str, dict[str, object]] = {}
+        observed_platforms = self.platform_scope or tuple(self._current_observations)
+        for platform in observed_platforms:
+            event = self._current_observations.get(platform)
+            if event is None:
+                continue
+            facts = event.get("payload", {}).get("facts", {})
+            per_platform[platform] = facts
+
+        signals = signals_from_platforms(per_platform)
+        add_context_signals(
+            signals,
+            measurement_state=measurement_state,
+            maturity_state=maturity_state,
+        )
+        specs = build_hypothesis_set(
+            platform_scope=self.platform_scope, domain=operational_domain
+        )
+        evaluations = evaluate_hypotheses(
+            specs,
+            signals,
+            measurement_state=measurement_state,
+            maturity_state=maturity_state,
+        )
+        ranked = rank_hypotheses(evaluations)
+        convergence = converge(
+            ranked,
+            measurement_state=measurement_state,
+            maturity_state=maturity_state,
+        )
+        return from_convergence(
+            convergence=convergence,
+            platform_scope=self.platform_scope,
+            operational_domain=operational_domain,
+            evaluations=evaluations,
+            ranked=ranked,
+            safety_context={
+                "measurement_state": measurement_state,
+                "maturity_state": maturity_state,
+                "policy_state": self.policy_state,
+                "permission_state": self.permission_state,
+            },
+        )
+
+    def record_decision_from_intelligence(
+        self, *, action: str | None = None
+    ) -> str | None:
+        """Persist the DI recommendation through the existing safety path.
+
+        Only a recommendation becomes a Decision (never an execution
+        claim); the canonical safety context flows unchanged from the DI
+        evaluation into ``record_decision()``. Returns ``None`` when the
+        DI result carries no actionable recommendation or the safety
+        validator rejects it.
+        """
+        result = self.evaluate_decision_intelligence()
+        decision_class = action or result.recommended_action
+        if decision_class is None:
+            return None
+        decision_class = _DI_ACTION_TO_DECISION.get(decision_class, decision_class)
+        if decision_class not in DECISION_CLASSES:
+            return None
+        confidence = (
+            "probable" if result.convergence_status == "converged" else "tentative"
+        )
+        return self.record_decision(
+            decision_class=decision_class,
+            reason=result.reason_summary,
+            diagnosis_confidence=confidence,
         )
 
     def record_decision(

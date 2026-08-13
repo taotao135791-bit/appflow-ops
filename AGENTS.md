@@ -114,6 +114,17 @@ investigate them; explore broadly internally, answer concisely externally.
   default user-facing answer should contain only the conclusion,
   strongest evidence, material exclusions, uncertainty if necessary,
   and next action.
+- **Decision Intelligence must be exercised through the operational
+  runtime in end-to-end tests.** Manually wiring signals and evaluators
+  is not sufficient evidence of product integration.
+- **A materially supported competing hypothesis prevents confident
+  convergence unless it is weakened, excluded, or the chosen action is
+  explicitly reversible and information-gathering.** Score gap alone is
+  never enough to eliminate a supported rival.
+- **Operational Decision Intelligence must never assume stable
+  measurement or sufficient maturity when runtime safety context is
+  unavailable.** The canonical SafetyContext flows unchanged into
+  evaluation and persistence.
 
 ## Layout
 

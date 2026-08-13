@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.0/install.sh | bash -s -- --ref=v3.5.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.1/install.sh | bash -s -- --ref=v3.5.1
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -404,6 +404,16 @@ v3.5.0 ships: operational-domain aware routing, evidence-backed hypothesis
 evaluation (Meta 14 / TikTok 8 / Cross 4 hypothesis families), elimination /
 ranking / convergence to the smallest useful action, and a 30-case real
 scenario eval set.
+
+From v3.5.1 Decision Intelligence is RUNTIME-NATIVE:
+`run.evaluate_decision_intelligence()` automatically consumes current
+observations + historical state + the canonical SafetyContext, and runs the
+whole pipeline from raw metrics (e.g. `ctr_change_pct: -0.25`) to a
+converged result — callers never assemble the pipeline manually; raw
+evidence → signals → hypotheses → evaluation → ranking → convergence is
+wired end to end; supported rivals are no longer dismissed by score gap;
+eval judges strict ranked tops (42 real scenarios incl. raw-evidence and
+cross-platform measurement conflict).
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

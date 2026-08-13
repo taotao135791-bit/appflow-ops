@@ -88,3 +88,64 @@ Smallest useful action：例如素材衰减 → 先替换最弱 1-2 组旧素材
 
 默认输出：结论（1 句）→ 最强证据（2-4 条）→ 实质性排除（需要时）→
 下一步动作 → 复查条件。不是诊断报告；不展示隐藏 CoT。
+
+## Runtime-Native Integration (v3.5.1)
+
+Decision Intelligence is no longer a library you may call — it is part of
+the normal AppFlow run:
+
+```text
+run.begin(...)
+run.record_observation(...)
+result = run.evaluate_decision_intelligence()   # native pipeline
+run.record_decision_from_intelligence()         # optional: persist via Safety
+```
+
+### Library API vs Operational Runtime API
+
+| | Library API | Operational Runtime API |
+| --- | --- | --- |
+| Entry | build_hypothesis_set / signals_from_metrics / evaluate / rank / converge (manual assembly) | `run.evaluate_decision_intelligence()` (assembled by the runtime) |
+| Evidence | caller-provided signals or raw metrics | current observations only (same platform-scope boundary) |
+| Safety context | explicit arguments (defaults are unit-test convenience) | canonical context from the same resolvers used by record_decision — NEVER optimistic defaults |
+| Cross-platform | explicit bool optional; platform_scope is source of truth | automatic from multi-platform scope |
+| Output | Convergence | DecisionIntelligenceResult (light, product-shaped) |
+
+### Raw Evidence → Signals → Hypotheses → Evaluation → Ranking → Convergence
+
+1. **Raw evidence**: current observation facts per platform (trend strings
+   like `ctr_trend: "down"`, or numeric relative movement like
+   `ctr_change_pct: -0.25` — material ≥ 10%, stable band ≤ 5%, ambiguous
+   band emits nothing).
+2. **Signals**: `signals_from_platforms()` per-platform extraction +
+   cross-level aggregations (`cross_pay_rate_drop` when ≥ 2 platforms show
+   the same drop) + canonical safety signals (invalid measurement /
+   insufficient maturity / stable measurement).
+3. **Hypotheses**: platform-appropriate set; multi-platform scopes
+   AUTOMATICALLY enable cross-platform families and never fall back to
+   ALL_HYPOTHESES (`applicable_platforms` really filters).
+4. **Evaluation**: +2 support / -2 contradiction / 0 missing; stable IS
+   evidence (CPM stable weakens auction); missing stays missing.
+5. **Ranking**: deterministic (status priority, score, id).
+6. **Convergence**: a materially supported runner-up (status=supported,
+   score ≥ threshold) is a MAJOR ALTERNATIVE — score gap alone never
+   eliminates it; the runtime answers `investigate` + the next
+   discriminating evidence instead of a confident action.
+
+### Safety Contract
+
+- Operational DI never defaults to `stable`/`sufficient`; the canonical
+  SafetyContext (measurement / maturity / policy / permission) flows from
+  the runtime into signals, evaluation, and (when persisting) into
+  `record_decision` — one context, never two.
+- measurement invalid → hypotheses may still be generated but confident
+  diagnosis is blocked (`investigate_measurement` first).
+- DI only RECOMMENDS; execution claims stay in Change (Decision ≠ Change).
+
+### User-facing Output (v3.5.1)
+
+`summarize_decision_intelligence(result)` produces the default short
+answer: conclusion → strongest evidence → material exclusion/alternative →
+next action → review condition; insufficient evidence answers honestly
+"先别动" plus the most needed data. Full ranking tables are debug/eval
+only.
