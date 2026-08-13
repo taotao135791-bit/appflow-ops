@@ -2,7 +2,26 @@
 
 All notable changes to AppFlow Ops are documented here.
 
-## 3.5.1 — 2026-08-13
+## 3.5.2 — 2026-08-13
+
+### Added
+
+- **Historical State → DI evidence projection**: `evaluate_decision_intelligence()` now consumes current observations + comparable previous observations (same platform, same metric family) + recent confirmed changes + prior decisions/outcomes + canonical SafetyContext via a thin `build_evidence()` layer; evidence carries provenance (`signals_by_platform` / `shared_signals` / `historical_comparisons`).
+- **Current-vs-previous automatic trend derivation**: with no caller-supplied `change_pct`, the runtime derives trends from raw current + previous values using the SAME ±10%/±5% thresholds as explicit trends; explicit canonical trends always win; a single value without comparable history never invents a trend.
+- **Recent Decision / Change / Outcome operational context**: confirmed budget/bid changes become `recent_budget_change` / `recent_bid_change` confounder signals (a CTR drop right after budget+30% is not instantly creative fatigue); prior Decision is context (decision_class / review_condition / review_after), never factual support; Outcome is evidence, never causal proof.
+- **Per-platform and shared cross-platform signal provenance**: `signals_by_platform` preserves which platform produced which signal; `shared_signals` exist ONLY when ≥ 2 distinct platforms agree (cross_pay_rate_drop / cross_cvr_drop / cross_registration_drop / cross_install_drop / cross_platform_comparison_available / measurement_conflict); a divergent pair (Meta down + Google stable) is the single-platform decline case, not shared evidence.
+- **Explicit operator override semantics**: `record_decision_override(action, reason, result)` persists a human override with `origin="operator_override"` + the original DI action in the reason; it never masquerades as a DI recommendation and still passes all Safety gates.
+
+### Fixed
+
+- **Current-only DI behavior**: “现在呢？” now genuinely uses the previous State (E2E proves derived `ctr_trend_down` + `recent_budget_change` come from history, not hand-fed values).
+- **Silent DI action override**: `record_decision_from_intelligence()` no longer accepts an `action` parameter — the persisted action always equals `DecisionIntelligenceResult.recommended_action` (supported-rival investigate stays investigate).
+- **Single-platform evidence supporting shared funnel diagnosis**: `shared_product_funnel_issue` / `shared_measurement_issue` are supported ONLY by cross-level signals; a plain `pay_rate_trend_down` on one platform never promotes them; `cross_platform_comparison` evidence can no longer be satisfied by creative-level signals.
+- **Flattened cross-platform signal ambiguity**: flat `dict.update()` merge replaced by provenance-preserving `signals_by_platform` + `shared_signals`.
+- **cross_platform bool contradicting platform_scope**: explicit `cross_platform=False` with a multi-platform scope (or `True` with a single-platform scope) now raises ContractError — `platform_scope` is the single source of truth; the eval runner derives semantics from scope.
+- **Misleading library integration E2E naming**: `test_runtime_integration.py` renamed to `test_library_integration.py` with the pipeline-assembly test renamed; runtime E2E uses only public operational entries.
+
+Eval set expanded 42 → 52 real scenarios (historical follow-up, recent-change confounders, one-platform-only decline, shared-drop, measurement conflict, previous-decision wait, ambiguous band).
 
 ### Added
 

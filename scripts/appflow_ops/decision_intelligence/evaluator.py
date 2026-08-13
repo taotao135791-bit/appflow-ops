@@ -25,10 +25,11 @@ _EVIDENCE_ALIASES: dict[str, tuple[str, ...]] = {
     "measurement_health": ("measurement_invalid", "measurement_stable"),
     "per_platform_comparison": ("only_one_creative_declines", "delivery_mix_shifted"),
     "cross_platform_comparison": (
-        "multi_creative_impacted",
-        "only_one_creative_declines",
         "cross_pay_rate_drop",
         "cross_cvr_drop",
+        "cross_registration_drop",
+        "cross_install_drop",
+        "cross_platform_comparison_available",
     ),
     "recent_change": (
         "recent_budget_change",

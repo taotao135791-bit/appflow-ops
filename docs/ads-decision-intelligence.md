@@ -149,3 +149,55 @@ answer: conclusion → strongest evidence → material exclusion/alternative →
 next action → review condition; insufficient evidence answers honestly
 "先别动" plus the most needed data. Full ranking tables are debug/eval
 only.
+
+## Historical Evidence (v3.5.2)
+
+Evidence is CONTINUOUS, not a current snapshot:
+
+```text
+Current fact
++ Comparable previous fact (same platform, same metric family)
+= derived trend
+```
+
+- Trend precedence: explicit canonical current trend (`ctr_trend` /
+  `ctr_change_pct`) > derived current-vs-history trend > missing.
+- A single current value WITHOUT comparable history produces NO trend
+  (0.7% CTR alone never invents `ctr_trend_down`).
+- The same ±10%/±5% thresholds drive explicit and derived trends (no
+  second hand-rolled threshold set).
+- "现在呢？" really uses the previous State: the runtime reads the
+  bounded per-platform history loaded at begin(), picks the most recent
+  comparable observation, and derives trends itself — callers never
+  pre-compute change_pct.
+
+### Decision / Change / Outcome Context
+
+- **Recent confirmed Change = confounder evidence**: a budget/bid change
+  in State becomes `recent_budget_change` / `recent_bid_change` signals —
+  "CTR↓ right after budget+30%" is not immediately creative fatigue.
+- **Previous Decision = context, not fact**: `decision_context`
+  (decision_class / review_condition / review_after) informs wait/recheck
+  behavior but NEVER becomes supporting evidence for today's diagnosis.
+- **Outcome = evidence, not causal proof**: `outcome_context` records
+  what happened (improved / worsened / neutral / inconclusive) and may
+  shift retest/continue/investigate carefully — never "fatigue proven".
+
+## Cross-platform Evidence (v3.5.2)
+
+A shared hypothesis requires shared evidence from MULTIPLE distinct media
+platforms. A decline on one platform is not evidence of a shared product
+problem.
+
+- `signals_by_platform`: per-platform signals preserved (Meta pay down +
+  Google pay stable is auditable, not a flat `pay_down=true`).
+- `shared_signals`: ONLY signals true on >= 2 distinct platforms
+  (`cross_pay_rate_drop` / `cross_cvr_drop` / `cross_registration_drop` /
+  `cross_install_drop` / `cross_platform_comparison_available`).
+- `cross_platform_comparison_available` requires the SAME direction on
+  both platforms (both down, or both stable) — a divergent pair is the
+  single-platform decline case, not shared evidence.
+- `shared_product_funnel_issue` is supported ONLY by cross-level signals;
+  a plain `pay_rate_trend_down` on one platform never promotes it.
+- Measurement conflict (one platform invalid, another stable) stays
+  material: no confident shared product conclusion.

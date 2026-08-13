@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.1/install.sh | bash -s -- --ref=v3.5.1
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.2/install.sh | bash -s -- --ref=v3.5.2
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -414,6 +414,18 @@ evidence → signals → hypotheses → evaluation → ranking → convergence i
 wired end to end; supported rivals are no longer dismissed by score gap;
 eval judges strict ranked tops (42 real scenarios incl. raw-evidence and
 cross-platform measurement conflict).
+
+From v3.5.2 Decision Intelligence truly understands TIME and MULTIPLE
+MEDIA: "现在呢？" really uses the previous State — current + comparable
+previous observations derive trends automatically (no caller-supplied
+change_pct); recent confirmed Changes are confounder evidence (CTR↓ right
+after budget+30% is not instantly creative fatigue); prior
+Decision/Outcome are context, never facts; per-platform provenance is
+preserved (Meta pay↓ + Google stable is auditable, and a single-platform
+decline never promotes a shared diagnosis); a DI recommendation cannot be
+silently overridden (explicit operator overrides carry
+origin=operator_override); platform_scope is the single source of truth
+for cross-platform semantics.
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

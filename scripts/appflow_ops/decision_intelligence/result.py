@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .evaluator import HypothesisEvaluation
+from .evidence import EvidenceResult
 from .ranking import Convergence, RankedHypothesis
 
 CONVERGENCE_STATUSES = ("converged", "investigate", "wait", "insufficient_evidence")
@@ -35,6 +36,9 @@ class DecisionIntelligenceResult:
     missing_evidence: tuple[str, ...]
     next_discriminating_evidence: tuple[str, ...]
     safety_context: dict[str, str]  # measurement/maturity/policy/permission
+    # v3.5.2: evidence provenance (per-platform signals, shared signals,
+    # historical comparisons) — audit support, not default output.
+    evidence: EvidenceResult | None = None
 
 
 def convergence_status(convergence: Convergence) -> str:
@@ -56,6 +60,7 @@ def from_convergence(
     evaluations: tuple[HypothesisEvaluation, ...],
     ranked: tuple[RankedHypothesis, ...],
     safety_context: dict[str, str],
+    evidence: EvidenceResult | None = None,
 ) -> DecisionIntelligenceResult:
     """Build the public result from pipeline internals (single assembly
     point so the runtime entry and tests share identical semantics)."""
@@ -75,4 +80,5 @@ def from_convergence(
         missing_evidence=convergence.missing_evidence,
         next_discriminating_evidence=convergence.next_discriminating_evidence,
         safety_context=dict(safety_context),
+        evidence=evidence,
     )

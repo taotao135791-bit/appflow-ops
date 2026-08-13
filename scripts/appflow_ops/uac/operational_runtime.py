@@ -466,13 +466,12 @@ class PlatformOperationalRun:
         """
         self._require_started()
         from appflow_ops.decision_intelligence import (
-            add_context_signals,
+            build_evidence,
             build_hypothesis_set,
             converge,
             detect_operational_domain,
             evaluate_hypotheses,
             rank_hypotheses,
-            signals_from_platforms,
         )
         from appflow_ops.decision_intelligence.result import from_convergence
 
@@ -485,23 +484,56 @@ class PlatformOperationalRun:
         )
         operational_domain = detect_operational_domain(self.request)
 
-        # Raw evidence: current observations only (same boundary as
-        # operational_context). Missing platforms/fields stay missing —
-        # an absent comparison window never invents stable/down/up.
-        # Per-platform extraction enables cross-level aggregations
-        # (e.g. pay drop on >= 2 platforms) for cross-platform runs.
+        # Current evidence: same boundary as operational_context.
         per_platform: dict[str, dict[str, object]] = {}
         observed_platforms = self.platform_scope or tuple(self._current_observations)
+        current_event_ids: set[str] = set()
         for platform in observed_platforms:
             event = self._current_observations.get(platform)
             if event is None:
                 continue
             facts = event.get("payload", {}).get("facts", {})
             per_platform[platform] = facts
+            event_id = event.get("event_id")
+            if isinstance(event_id, str):
+                current_event_ids.add(event_id)
 
-        signals = signals_from_platforms(per_platform)
-        add_context_signals(
-            signals,
+        # Historical evidence: for each platform pick the most recent
+        # observation BEFORE the current one (same platform ⇒ comparable
+        # metric family). Only the bounded state loaded at begin() is
+        # used; absent history stays missing (never guessed).
+        historical_by_platform: dict[str, dict[str, object]] = {}
+        recent_changes: tuple[dict[str, object], ...] = ()
+        recent_decisions: tuple[dict[str, object], ...] = ()
+        recent_outcomes: tuple[dict[str, object], ...] = ()
+        by_platform = (self._platform_state or {}).get("by_platform") or {}
+        for platform in observed_platforms:
+            bucket = by_platform.get(platform) or {}
+            observations = bucket.get("observations") or ()
+            for event in observations:
+                event_id = event.get("event_id")
+                if event_id in current_event_ids:
+                    continue
+                facts = event.get("payload", {}).get("facts", {})
+                if facts:
+                    historical_by_platform[platform] = facts
+                break
+            changes = bucket.get("changes") or ()
+            if changes:
+                recent_changes = tuple(changes) + recent_changes
+            decisions = bucket.get("decisions") or ()
+            if decisions:
+                recent_decisions = tuple(decisions) + recent_decisions
+            outcomes = bucket.get("outcomes") or ()
+            if outcomes:
+                recent_outcomes = tuple(outcomes) + recent_outcomes
+
+        evidence = build_evidence(
+            per_platform=per_platform,
+            historical_by_platform=historical_by_platform,
+            recent_changes=recent_changes,
+            recent_decisions=recent_decisions,
+            recent_outcomes=recent_outcomes,
             measurement_state=measurement_state,
             maturity_state=maturity_state,
         )
@@ -510,7 +542,7 @@ class PlatformOperationalRun:
         )
         evaluations = evaluate_hypotheses(
             specs,
-            signals,
+            evidence.signals,
             measurement_state=measurement_state,
             maturity_state=maturity_state,
         )
@@ -532,21 +564,21 @@ class PlatformOperationalRun:
                 "policy_state": self.policy_state,
                 "permission_state": self.permission_state,
             },
+            evidence=evidence,
         )
 
-    def record_decision_from_intelligence(
-        self, *, action: str | None = None
-    ) -> str | None:
+    def record_decision_from_intelligence(self) -> str | None:
         """Persist the DI recommendation through the existing safety path.
 
-        Only a recommendation becomes a Decision (never an execution
-        claim); the canonical safety context flows unchanged from the DI
-        evaluation into ``record_decision()``. Returns ``None`` when the
-        DI result carries no actionable recommendation or the safety
+        The action ALWAYS comes from ``DecisionIntelligenceResult.
+        recommended_action`` — callers cannot silently swap it (v3.5.2
+        action integrity). Human overrides are explicit and attributable
+        via ``record_decision_override()``. Returns ``None`` when the DI
+        result carries no actionable recommendation or the safety
         validator rejects it.
         """
         result = self.evaluate_decision_intelligence()
-        decision_class = action or result.recommended_action
+        decision_class = result.recommended_action
         if decision_class is None:
             return None
         decision_class = _DI_ACTION_TO_DECISION.get(decision_class, decision_class)
@@ -559,6 +591,34 @@ class PlatformOperationalRun:
             decision_class=decision_class,
             reason=result.reason_summary,
             diagnosis_confidence=confidence,
+        )
+
+    def record_decision_override(
+        self,
+        *,
+        action: str,
+        reason: str,
+        result: DecisionIntelligenceResult,
+    ) -> str | None:
+        """Explicit, attributable human override of a DI recommendation.
+
+        Distinct semantics from ``record_decision_from_intelligence``:
+        ``origin="operator_override"``, and the original DI action plus
+        the override reason are persisted with the Decision — it never
+        masquerades as a DI recommendation. Safety gates (measurement /
+        maturity / policy / permission / Decision != Change) still apply.
+        """
+        decision_class = _DI_ACTION_TO_DECISION.get(action, action)
+        if decision_class not in DECISION_CLASSES:
+            return None
+        original_action = result.recommended_action or "none"
+        reason_text = f"operator override: {original_action} -> {action}; {reason}"
+        return self.record_decision(
+            decision_class=decision_class,
+            reason=reason_text,
+            origin="operator_override",
+            evidence_refs=(),
+            diagnosis_confidence="none",
         )
 
     def record_decision(

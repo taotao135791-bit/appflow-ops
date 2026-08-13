@@ -125,6 +125,17 @@ investigate them; explore broadly internally, answer concisely externally.
   measurement or sufficient maturity when runtime safety context is
   unavailable.** The canonical SafetyContext flows unchanged into
   evaluation and persistence.
+- **Historical State should affect Decision Intelligence only through
+  evidence with clear provenance.** Prior recommendations are context,
+  not factual proof; confirmed changes are confounders; outcomes are
+  evidence, never causal proof.
+- **Cross-platform hypotheses require cross-platform evidence.** Never
+  promote a single-platform signal into a shared diagnosis — shared
+  signals exist only when >= 2 distinct platforms agree; per-platform
+  provenance is preserved in every evidence projection.
+- **A normal Decision Intelligence persistence path must preserve the
+  action produced by convergence.** Human overrides must be explicit and
+  attributable (origin=operator_override with the original DI action).
 
 ## Layout
 

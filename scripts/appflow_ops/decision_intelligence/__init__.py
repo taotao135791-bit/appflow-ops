@@ -24,7 +24,10 @@ from .evaluator import (
     evaluate_hypothesis,
 )
 from .evidence import (
+    EvidenceResult,
     add_context_signals,
+    build_evidence,
+    derive_change_pcts,
     signals_from_metrics,
     signals_from_platforms,
 )
@@ -66,13 +69,16 @@ __all__ = [
     "TIKTOK_HYPOTHESES",
     "Convergence",
     "DecisionIntelligenceResult",
+    "EvidenceResult",
     "HypothesisEvaluation",
     "HypothesisSpec",
     "RankedHypothesis",
     "add_context_signals",
+    "build_evidence",
     "build_hypothesis_set",
     "converge",
     "convergence_status",
+    "derive_change_pcts",
     "detect_operational_domain",
     "evaluate_hypotheses",
     "evaluate_hypothesis",

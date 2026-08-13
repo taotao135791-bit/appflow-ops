@@ -84,7 +84,12 @@ CONFIDENCE_LEVELS = ("high", "medium", "low")
 #   runtime (measurement/maturity/policy/permission/numeric bounds). This is
 #   the common real-world case.
 # - "operator": the human operator's own decision.
-DECISION_ORIGINS = ("deterministic", "agent_constrained", "operator")
+DECISION_ORIGINS = (
+    "deterministic",
+    "agent_constrained",
+    "operator",
+    "operator_override",
+)
 
 _EVENT_ID_RE = re.compile(r"^event_[0-9]{8,}$")
 _RUN_ID_RE = re.compile(

@@ -518,6 +518,7 @@ class StateStore:
                 "deterministic": "deterministic_engine",
                 "agent_constrained": "agent",
                 "operator": "manual",
+                "operator_override": "manual",  # human input semantics
             }[origin],
             evidence_status="inferred",
             refs=tuple(evidence_refs),

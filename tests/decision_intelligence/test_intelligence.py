@@ -17,13 +17,12 @@ from appflow_ops.decision_intelligence import (
     META_HYPOTHESES,
     SIGNAL_IDS,
     TIKTOK_HYPOTHESES,
+    build_evidence,
     build_hypothesis_set,
     converge,
     evaluate_hypotheses,
     hypothesis_by_id,
     rank_hypotheses,
-    signals_from_metrics,
-    signals_from_platforms,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -303,20 +302,45 @@ def test_eval_case(case) -> None:
     specs = build_hypothesis_set(
         platform_scope=tuple(case.get("platform_scope", ())),
         domain=case.get("domain"),
-        cross_platform=case.get("cross_platform", False),
+        # v3.5.2: cross semantics are DERIVED from platform_scope; the
+        # legacy fixture field is no longer correctness-critical (None =
+        # derive, and an explicit value contradicting the scope fails).
+        cross_platform=case.get("cross_platform"),
     )
     assert specs, f"{case['id']}: empty hypothesis set"
-    # Layer 1: raw metrics → signals (v3.5.1). Fixtures may provide raw
+    # Layer 1-2: raw metrics → signals (v3.5.1), with optional comparable
+    # previous metrics deriving trends (v3.5.2). Fixtures may provide raw
     # relative movement instead of hand-polished signals; when both exist
     # the raw extraction runs FIRST and explicit signals only fill gaps.
-    # Cross-platform fixtures may provide per-platform raw metrics, which
-    # additionally produce cross-level aggregations.
     signals: dict[str, bool] = {}
-    if case.get("per_platform_metrics"):
-        signals.update(signals_from_platforms(case["per_platform_metrics"]))
-        signals = {k: v for k, v in signals.items() if v}
-    elif case.get("metrics"):
-        signals.update(signals_from_metrics(case["metrics"]))
+    current_platforms = case.get("per_platform_metrics") or (
+        {"meta": case["metrics"]} if case.get("metrics") else None
+    )
+    previous_platforms = case.get("previous_per_platform_metrics") or (
+        {"meta": case["previous_metrics"]} if case.get("previous_metrics") else None
+    )
+    if current_platforms:
+        recent_change_events: list[dict[str, object]] = []
+        for change in case.get("recent_changes", []):
+            change_type = str(change)
+            recent_change_events.append(
+                {
+                    "payload": {
+                        # fixture syntax "budget_increase" → canonical
+                        # change_type "budget" + direction.
+                        "change_type": change_type.split("_")[0],
+                        "direction": "increase"
+                        if change_type.endswith("increase")
+                        else "decrease",
+                    }
+                }
+            )
+        evidence = build_evidence(
+            per_platform=current_platforms,
+            historical_by_platform=previous_platforms or None,
+            recent_changes=tuple(recent_change_events),
+        )
+        signals.update(evidence.signals)
         signals = {k: v for k, v in signals.items() if v}
     signals.update({k: v for k, v in case.get("signals", {}).items() if v})
     evals = evaluate_hypotheses(

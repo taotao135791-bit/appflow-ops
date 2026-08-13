@@ -94,6 +94,11 @@ _COMMON_METRIC_KEYS = (
     "daily_budget",
     "measurement_state",
     "maturity_state",
+    # v3.5.2: rate fields participate in current-vs-history trend
+    # derivation (same platform, same metric family).
+    "install_rate",
+    "registration_rate",
+    "pay_rate",
     # Decision Intelligence evidence bridge (v3.5.1): explicit trend
     # strings, numeric relative movement, and boolean operational facts
     # pass through observation projection so raw evidence can reach the

@@ -1,4 +1,9 @@
-"""v3.5.0 Phase A (late-bound scope rebind) + runtime integration tests."""
+"""v3.5.0 Phase A (late-bound scope rebind) + LIBRARY integration tests.
+
+These tests assemble the DI pipeline manually (build/evaluate/rank/converge)
+to validate the library layer. They are NOT runtime E2E — runtime E2E lives
+in test_runtime_native_e2e.py and uses only public operational entries.
+"""
 
 from __future__ import annotations
 
@@ -119,7 +124,7 @@ def test_runtime_domain_hint_uses_full_domain_detector(tmp_path) -> None:
     run.finish()
 
 
-def test_end_to_end_meta_fatigue_diagnosis(tmp_path) -> None:
+def test_library_pipeline_meta_fatigue_diagnosis(tmp_path) -> None:
     workspace = _workspace(tmp_path)
     run = PlatformOperationalRun(workspace)
     run.begin(request_text="Meta 素材是不是衰减了？")

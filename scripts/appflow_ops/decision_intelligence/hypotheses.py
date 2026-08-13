@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from appflow_ops.uac.types import ContractError
+
 # Signal vocabulary (evidence.py extracts these from metrics/context).
 # A signal id is present (True) when the phenomenon is observed.
 SIGNAL_IDS = (
@@ -48,9 +50,14 @@ SIGNAL_IDS = (
     "spend_hit_cap",
     "measurement_invalid",
     "measurement_stable",
+    "measurement_conflict",
     "maturity_insufficient",
     "cross_pay_rate_drop",
+    "cross_pay_rate_stable",
     "cross_cvr_drop",
+    "cross_registration_drop",
+    "cross_install_drop",
+    "cross_platform_comparison_available",
     "store_loading_issue",
     "downstream_conversion_down",
     "traffic_quality_signal",
@@ -374,14 +381,13 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         domain="funnel",
         applicable_platforms=("cross_platform",),
         supporting_signals=(
-            "pay_rate_trend_down",
             "cross_pay_rate_drop",
             "cross_cvr_drop",
-            "cvr_trend_down",
-            "multi_creative_impacted",
-            "downstream_conversion_down",
+            "cross_registration_drop",
+            "cross_install_drop",
+            "cross_platform_comparison_available",
         ),
-        contradicting_signals=("cvr_trend_stable",),
+        contradicting_signals=("cvr_trend_stable", "cross_pay_rate_stable"),
         required_evidence=("cross_platform_comparison", "measurement_health"),
         possible_actions=("investigate", "observe"),
     ),
@@ -392,8 +398,9 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         applicable_platforms=("cross_platform",),
         supporting_signals=(
             "measurement_invalid",
-            "pay_rate_trend_down",
-            "cvr_trend_down",
+            "measurement_conflict",
+            "cross_pay_rate_drop",
+            "cross_cvr_drop",
         ),
         required_evidence=("measurement_health",),
         possible_actions=("investigate_measurement", "wait"),
@@ -462,6 +469,16 @@ def build_hypothesis_set(
     media_platforms = tuple(p for p in platform_scope if p != "cross_platform")
     if cross_platform is None:
         cross_platform = len(media_platforms) > 1
+    elif media_platforms:
+        # platform_scope is the source of truth: an explicit bool that
+        # CONTRADICTS the scope describes a different world and fails
+        # loudly instead of silently changing semantics (v3.5.2).
+        derived_cross = len(media_platforms) > 1
+        if cross_platform != derived_cross:
+            raise ContractError(
+                f"cross_platform={cross_platform} contradicts platform_scope "
+                f"{platform_scope}; platform_scope is the source of truth"
+            )
     if cross_platform or "cross_platform" in platform_scope:
         platform_key: str | None = "cross_platform"
     elif len(media_platforms) == 1:
