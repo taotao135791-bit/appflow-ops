@@ -99,10 +99,13 @@ _COMMON_METRIC_KEYS = (
     "install_rate",
     "registration_rate",
     "pay_rate",
-    # v3.5.3: comparability provenance — same entity scope is required
-    # for derived trends (absent fields default to account-level).
+    # v3.5.3/4: comparability provenance — same entity scope is required
+    # for derived trends; entity_key is a workspace-local OPAQUE
+    # identifier (raw external campaign/ad IDs are never persisted —
+    # privacy contract).
     "entity_level",
-    "entity_id",
+    "entity_key",
+    "aggregate_scope",
     "breakdown_scope",
     # Decision Intelligence evidence bridge (v3.5.1): explicit trend
     # strings, numeric relative movement, and boolean operational facts

@@ -84,28 +84,44 @@ _HISTORY_METRIC_KEYS: dict[str, str] = {
     "pay_rate": "pay_rate_trend",
 }
 
-# Comparable identity (v3.5.3): same platform does NOT imply comparable
-# observations. Derived trends additionally require the same entity level,
-# entity id, and breakdown scope. Absent fields default to "account" level
-# with no entity/breakdown — matching v3.5.2 behavior when no provenance
-# fields are recorded.
-_ENTITY_KEYS = ("entity_level", "entity_id", "breakdown_scope")
+# Comparable identity (v3.5.3 → v3.5.4): same platform does NOT imply
+# comparable observations. Three explicit states:
+#   - explicit account aggregate (entity_level="account" AND
+#     aggregate_scope present): comparable to the same aggregate scope;
+#   - explicit entity (entity_level + entity_key): comparable only to the
+#     same entity;
+#   - identity UNKNOWN (no level/key/aggregate metadata): NOT comparable
+#     to anything — missing identity is never evidence of account-level
+#     aggregation (v3.5.4).
+# ``entity_key`` is a workspace-local opaque identifier; raw external IDs
+# are never persisted (privacy contract).
+_ENTITY_KEYS = ("entity_level", "entity_key", "breakdown_scope", "aggregate_scope")
 
 
-def comparable_identity(facts: Mapping[str, object]) -> tuple[object, ...]:
-    """Thin provenance key: (level, entity_id, breakdown)."""
-    return (
-        facts.get("entity_level", "account"),
-        facts.get("entity_id"),
-        facts.get("breakdown_scope"),
-    )
+def comparable_identity(facts: Mapping[str, object]) -> tuple[object, ...] | None:
+    """Thin provenance key; None = identity UNKNOWN (never comparable)."""
+    level = facts.get("entity_level")
+    key = facts.get("entity_key") or facts.get("entity_id")  # legacy read
+    breakdown = facts.get("breakdown_scope")
+    aggregate = facts.get("aggregate_scope")
+    if level is None and key is None and aggregate is None:
+        return None
+    if aggregate is not None and level in (None, "account"):
+        # Explicit account aggregate: comparable to the same aggregate
+        # scope (entity_key must match when both present).
+        return ("account", aggregate, key or None, breakdown)
+    return (str(level or "unknown_level"), key, breakdown)
 
 
 def observations_comparable(
     current: Mapping[str, object], previous: Mapping[str, object]
 ) -> bool:
     """True only when both observations carry the same entity scope."""
-    return comparable_identity(current) == comparable_identity(previous)
+    current_id = comparable_identity(current)
+    previous_id = comparable_identity(previous)
+    if current_id is None or previous_id is None:
+        return False  # unknown identity is never comparable
+    return current_id == previous_id
 
 
 # Facts keys that map to a signal id directly.
@@ -128,6 +144,10 @@ _BOOL_KEYS: dict[str, str] = {
     "traffic_quality_signal": "traffic_quality_signal",
     "click_quality_signal": "click_quality_signal",
     "no_recent_change": "no_recent_change",
+    "recent_creative_change": "recent_creative_change",
+    "recent_audience_change": "recent_audience_change",
+    "recent_campaign_change": "recent_campaign_change",
+    "recent_campaign_restart": "recent_campaign_restart",
 }
 
 # Cross-aggregated signals: a raw per-platform signal counts as a
@@ -322,6 +342,13 @@ def build_evidence(
     if len(down_platforms) >= 2 or len(stable_platforms) >= 2:
         signals["cross_platform_comparison_available"] = True
         shared_signals["cross_platform_comparison_available"] = True
+    # Run-level divergence (v3.5.4): at least one platform declining
+    # while at least one is stable on the same downstream metric — the
+    # explicit run-level fact for platform_specific_independent_issues
+    # (never assembled from a flat union).
+    if down_platforms and stable_platforms:
+        signals["platform_divergence"] = True
+        shared_signals["platform_divergence"] = True
 
     # Measurement conflict (v3.5.3): exactly one platform EXPLICITLY
     # invalid while another EXPLICITLY stable. invalid + unknown is NOT a
@@ -358,11 +385,6 @@ def build_evidence(
     # off (age metadata is still retained for audit).
     recent_change_context: dict[str, bool] = {}
     change_context: dict[str, object] = {}
-    baseline_time = (
-        next(iter(historical_observed_at.values()), None)
-        if historical_observed_at
-        else None
-    )
     for event in recent_changes:
         payload = event.get("payload")
         if not isinstance(payload, Mapping):
@@ -370,50 +392,69 @@ def build_evidence(
         change_type = payload.get("change_type")
         direction = payload.get("direction")
         effective = payload.get("effective_at") or event.get("observed_at")
+        # Change provenance (v3.5.4): a Change is a confounder ONLY for
+        # the platform it affected (event platform / target_platform).
+        # Changes without any platform attribution keep the legacy
+        # broadcast behavior for backward compatibility.
+        change_platform = event.get("platform") or payload.get("target_platform")
+        if not isinstance(change_platform, str) or not change_platform:
+            change_platform = None
+        # Temporal window uses THAT platform's baseline/current.
+        baseline_time = (
+            historical_observed_at.get(change_platform)
+            if change_platform and historical_observed_at
+            else (
+                next(iter(historical_observed_at.values()), None)
+                if historical_observed_at
+                else None
+            )
+        )
         current_time = (
-            next(iter(current_observed_at.values()), None)
-            if current_observed_at
-            else None
+            current_observed_at.get(change_platform)
+            if change_platform and current_observed_at
+            else (
+                next(iter(current_observed_at.values()), None)
+                if current_observed_at
+                else None
+            )
         )
         intervening = False
         if effective and current_time:
             if baseline_time is None or str(baseline_time) < str(effective):
                 if str(effective) <= str(current_time):
                     intervening = True
+        signal_name: str | None = None
         if change_type == "budget":
-            if intervening:
-                recent_change_context["recent_budget_change"] = True
-            change_context["last_budget_change_effective_at"] = effective
+            signal_name = "recent_budget_change"
         elif change_type == "bid":
-            if intervening:
-                recent_change_context["recent_bid_change"] = True
-            change_context["last_bid_change_effective_at"] = effective
+            signal_name = "recent_bid_change"
         elif change_type == "creative":
-            if intervening:
-                recent_change_context["recent_creative_change"] = True
-            change_context["last_creative_change_effective_at"] = effective
+            signal_name = "recent_creative_change"
         elif change_type == "audience":
-            if intervening:
-                recent_change_context["recent_audience_change"] = True
-            change_context["last_audience_change_effective_at"] = effective
+            signal_name = "recent_audience_change"
         elif change_type == "campaign":
-            if intervening:
-                recent_change_context["recent_campaign_change"] = True
-            change_context["last_campaign_change_effective_at"] = effective
+            signal_name = "recent_campaign_change"
         elif change_type == "campaign_restart":
-            if intervening:
-                recent_change_context["recent_campaign_restart"] = True
-            change_context["last_campaign_restart_effective_at"] = effective
+            signal_name = "recent_campaign_restart"
+        if signal_name is not None:
+            change_context[f"last_{change_type}_change_effective_at"] = effective
+            if intervening and signal_name in _BOOL_KEYS.values():
+                recent_change_context[signal_name] = True
+                if change_platform is None or not signals_by_platform:
+                    # Legacy unscoped Change: aggregate + every platform
+                    # (backward compatible).
+                    signals[signal_name] = True
+                    for platform_signals in signals_by_platform.values():
+                        platform_signals[signal_name] = True
+                else:
+                    # Provenance: only the affected platform sees it
+                    # (aggregate union view still reflects it).
+                    signals[signal_name] = True
+                    signals_by_platform[change_platform][signal_name] = True
         if direction:
             change_context["last_change_direction"] = direction
         change_context["change_effective_at"] = effective
-    for signal_id in recent_change_context:
-        if signal_id in _BOOL_KEYS.values():
-            signals[signal_id] = True
-            # Confounders are runtime-wide facts: visible to every
-            # platform-bound evaluation (v3.5.3 provenance semantics).
-            for platform_signals in signals_by_platform.values():
-                platform_signals[signal_id] = True
+        change_context["change_platform"] = change_platform
 
     # Prior recommendation and outcome are CONTEXT, never factual support.
     # Global latest is chosen by canonical timestamp (effective_at /

@@ -45,6 +45,8 @@ def _day1_meta_observation(run, day="2026-08-12T09:00:00Z") -> None:
             "cvr": 0.08,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
+            "entity_level": "account",
+            "aggregate_scope": "account",
         },
         platform="meta",
         observed_at=day,
@@ -60,6 +62,8 @@ def _day2_meta_observation(run, day="2026-08-13T09:00:00Z") -> None:
             "cvr": 0.081,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
+            "entity_level": "account",
+            "aggregate_scope": "account",
         },
         platform="meta",
         observed_at=day,
@@ -360,13 +364,16 @@ def test_single_platform_decline_does_not_support_shared(workspace) -> None:
         if ev.hypothesis.id == "shared_product_funnel_issue"
     )
     assert shared.status != "supported"
-    # Meta-specific funnel hypotheses stay visible.
+    # Meta-specific funnel hypotheses stay visible; the run-level
+    # divergence conclusion (platform_specific_independent_issues) is the
+    # honest top for a single-platform decline (v3.5.4).
     ranked_live = [
         item.evaluation
         for item in result.ranked_hypotheses
         if item.evaluation.status not in ("weakened", "excluded")
     ]
     assert ranked_live[0].hypothesis.id in (
+        "platform_specific_independent_issues",
         "conversion_funnel_degradation",
         "post_click_friction",
         "traffic_quality_shift",
@@ -417,6 +424,8 @@ def test_cross_historical_derivation_detects_shared_drop(workspace) -> None:
             "pay_rate": 0.05,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
+            "entity_level": "account",
+            "aggregate_scope": "account",
         },
         platform="meta",
         observed_at="2026-08-12T09:00:00Z",
@@ -426,6 +435,8 @@ def test_cross_historical_derivation_detects_shared_drop(workspace) -> None:
             "pay_rate": 0.04,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
+            "entity_level": "account",
+            "aggregate_scope": "account",
         },
         platform="google_ads",
         observed_at="2026-08-12T09:00:00Z",
@@ -440,6 +451,8 @@ def test_cross_historical_derivation_detects_shared_drop(workspace) -> None:
             "pay_rate": 0.03,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
+            "entity_level": "account",
+            "aggregate_scope": "account",
         },
         platform="meta",
         observed_at="2026-08-13T09:00:00Z",
@@ -449,6 +462,8 @@ def test_cross_historical_derivation_detects_shared_drop(workspace) -> None:
             "pay_rate": 0.025,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
+            "entity_level": "account",
+            "aggregate_scope": "account",
         },
         platform="google_ads",
         observed_at="2026-08-13T09:00:00Z",

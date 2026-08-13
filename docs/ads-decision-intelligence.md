@@ -232,10 +232,16 @@ problem.
 > Same platform does not imply comparable observations. Derived trends
 > require compatible entity and aggregation scope.
 
-- Comparable identity = (platform, entity_level, entity_id,
-  breakdown_scope). Absent fields default to account-level; when
-  present, a mismatch (Campaign A vs Campaign B, account vs campaign,
-  gender vs all) produces NO derived trend — fail conservative.
+- Comparable identity = (platform, entity_level, entity_key,
+  breakdown_scope, aggregate_scope). Three explicit states (v3.5.4):
+  explicit account aggregate (entity_level=account + aggregate_scope),
+  explicit entity (entity_level + entity_key), or identity UNKNOWN —
+  missing identity is NEVER evidence of account-level aggregation and
+  produces NO derived trend. A mismatch (Campaign A vs Campaign B,
+  account vs campaign, gender vs all) fails conservative.
+- entity_key is a workspace-local OPAQUE identifier: raw external
+  campaign/ad IDs are never persisted (privacy contract); legacy
+  entity_id records stay readable for comparability.
 - Explicit canonical trends still override derived trends.
 
 ## Change Temporal Semantics (v3.5.3)
@@ -255,3 +261,38 @@ problem.
 - Latest Decision/Outcome context is chosen by canonical timestamp
   (effective_at / observed_at, deterministic event_id tie-break), with
   per-platform latest retained alongside.
+
+## Evaluation Scope (v3.5.4)
+
+> Applicable platform != evaluation scope.
+
+- `evaluation_scope="platform"` (default; INCLUDING applicable_platforms
+  "*"): evaluated separately on EVERY applicable platform — Meta signals
+  can never be spliced into a Google evaluation, and a wildcard
+  hypothesis is never a flat union of all platforms.
+- `evaluation_scope="shared"`: `shared_product_funnel_issue` /
+  `market_wide_event` / `shared_measurement_issue` consume
+  `shared_signals` + aggregate Safety only.
+- `evaluation_scope="run"`: run-level facts (e.g. `platform_divergence` —
+  one platform declining while another is stable) only; never assembled
+  from a flat union.
+
+> A platform-bound hypothesis must use that platform's measurement and
+> maturity state. Aggregate safety is reserved for shared/run-level
+> conclusions.
+
+Meta measurement invalid never caps Google's diagnosis; aggregate invalid
+never creates measurement instability on a stable platform.
+
+> A confirmed Change is a confounder only for the platform it affected
+> and only when it falls inside the relevant comparison/review window.
+
+Meta budget+30% is `recent_budget_change@meta` only; Google stays clean.
+Temporal relevance uses the affected platform's own baseline/current.
+
+> Missing entity identity does not imply account-level comparability.
+
+Comparable identity never requires real media IDs — a workspace-local
+opaque `entity_key` (stable within workspace, non-reversible, not
+globally meaningful) is enough to tell "same entity" from "different
+entity".

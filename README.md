@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.3/install.sh | bash -s -- --ref=v3.5.3
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.4/install.sh | bash -s -- --ref=v3.5.4
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -296,6 +296,8 @@ v3.5.1 起 **Decision Intelligence 是 Runtime 原生的**：`run.evaluate_decis
 v3.5.2 起 **Decision Intelligence 真正理解时间与多个媒体**：`“现在呢？”` 真的使用之前的 State——当前 Observation + 可比的上一 Observation 自动推导趋势（不要求 caller 传 `change_pct`）；recent confirmed Change 成为 confounder 证据（刚加预算后的 CTR↓ 不再直接判素材衰减）；previous Decision/Outcome 只作为 context 而非事实；per-platform provenance 保留（Meta pay↓ + Google stable 可审计，单平台下降绝不支撑 shared 诊断）；DI recommendation 不可被无痕覆盖（operator override 显式且可追溯，`origin=operator_override`）；`platform_scope` 是 cross-platform 唯一 source of truth。
 
 v3.5.3 起 **Evidence 真正归属到平台、对象与时间**：provenance-aware evaluation（`auction_pressure@meta` 与 `@google_ads` 独立评估，Meta 信号绝不拼接进 Google 结论）；shared 假设只吃 shared 证据（单平台 CPM↑ 不再支撑"市场级事件"，需 ≥2 平台同涨的 `cross_cpm_up`）；历史趋势要求同一 entity/level/breakdown 才可比（Campaign A 昨天 + Campaign B 今天 ≠ CTR 下降）；"最近一次 Change"≠"当前 confounder"（只有发生在 baseline 与 current 之间的 Change 才算）；invalid+unknown 不再误标 measurement conflict；用户回答知道是"Meta 侧"还是"两个媒体共同"。
+
+v3.5.4 起 **Evaluation、Safety、Change 完全服从同一 provenance boundary**：`applicable_platforms="*"` 不再等于 flat union——每个适用平台独立评估（Meta 信号绝不拼接进 Google 结论）；Safety 与证据同源（Meta measurement invalid 不再 cap Google 诊断）；Meta 的 Change 只成为 Meta 的 confounder（Google 保持干净，temporal window 按平台自己的 baseline/current）；历史选择找"最近的可比对象"（最新不可比不阻塞更旧的可比）；identity 缺失 ≠ account aggregate（显式 account+aggregate 才可比）；可比性只用 workspace-local opaque `entity_key`——真实媒体 ID 永不持久化；measurement conflict 是"查一致性"信号，不再是 shared measurement issue 的证据。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

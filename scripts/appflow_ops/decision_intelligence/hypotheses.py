@@ -64,6 +64,7 @@ SIGNAL_IDS = (
     "recent_audience_change",
     "recent_campaign_change",
     "recent_campaign_restart",
+    "platform_divergence",
     "store_loading_issue",
     "downstream_conversion_down",
     "traffic_quality_signal",
@@ -89,6 +90,11 @@ class HypothesisSpec:
     exclusion_conditions: tuple[str, ...] = ()
     # Candidate actions, ordered smallest-first for convergence.
     possible_actions: tuple[str, ...] = ()
+    # v3.5.4: evaluation scope — "platform" (default: evaluate separately
+    # on every applicable platform), "shared" (consume shared signals
+    # only), or "run" (run-level facts only). applicable_platforms="*"
+    # means "may be evaluated on any supported platform", NOT flat union.
+    evaluation_scope: str = "platform"
 
 
 # ── Meta ─────────────────────────────────────────────────────────────────
@@ -396,6 +402,7 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         contradicting_signals=("cvr_trend_stable", "cross_pay_rate_stable"),
         required_evidence=("cross_platform_comparison", "measurement_health"),
         possible_actions=("investigate", "observe"),
+        evaluation_scope="shared",
     ),
     HypothesisSpec(
         id="shared_measurement_issue",
@@ -404,12 +411,15 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         applicable_platforms=("cross_platform",),
         supporting_signals=(
             "cross_measurement_invalid",
-            "measurement_conflict",
             "cross_pay_rate_drop",
             "cross_cvr_drop",
         ),
+        # v3.5.4: measurement_conflict (Meta invalid + Google stable) is a
+        # reliability DIVERGENCE — it indicates "investigate measurement
+        # consistency", never "shared measurement problem confirmed".
         required_evidence=("measurement_health",),
         possible_actions=("investigate_measurement", "wait"),
+        evaluation_scope="shared",
     ),
     HypothesisSpec(
         id="platform_specific_independent_issues",
@@ -419,10 +429,11 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         # own independent problem" from per-platform signals — it is not a
         # shared diagnosis and must not consume shared evidence only.
         applicable_platforms=("*",),
-        supporting_signals=("delivery_mix_shifted", "only_one_creative_declines"),
+        supporting_signals=("platform_divergence",),
         contradicting_signals=("multi_creative_impacted",),
         required_evidence=("per_platform_comparison",),
         possible_actions=("observe", "investigate"),
+        evaluation_scope="run",
     ),
     HypothesisSpec(
         id="market_wide_event",
@@ -436,6 +447,7 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         contradicting_signals=("cross_pay_rate_stable",),
         required_evidence=("cross_platform_comparison",),
         possible_actions=("wait", "observe"),
+        evaluation_scope="shared",
     ),
 )
 

@@ -434,9 +434,6 @@
   - meta
   domain: general
   cross_platform: true
-  signals:
-    only_one_creative_declines: true
-    delivery_mix_shifted: true
   measurement: stable
   maturity: sufficient
   acceptable_top:
@@ -449,6 +446,15 @@
   - increase
   required_considerations:
   - shared_product_funnel_issue
+  per_platform_metrics:
+    meta:
+      pay_rate_change_pct: -0.3
+      measurement_state: stable
+      maturity_state: sufficient
+    google_ads:
+      pay_rate_change_pct: 0.01
+      measurement_state: stable
+      maturity_state: sufficient
 - id: di_cross_market
   platform_scope:
   - google_ads
@@ -1352,3 +1358,210 @@
   - decrease
   - scale
   convergence_blocked: true
+- id: di_meta_wildcard_no_splice
+  platform_scope:
+  - meta
+  - google_ads
+  domain: funnel
+  per_platform_metrics:
+    meta:
+      cvr_change_pct: -0.3
+      measurement_state: stable
+      maturity_state: sufficient
+    google_ads:
+      multi_creative_impacted: true
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - conversion_funnel_degradation
+  - post_click_friction
+  - audience_quality_shift
+  acceptable_actions:
+  - investigate
+  - wait
+  - observe
+  forbidden_actions:
+  - increase
+- id: di_cross_safety_isolation
+  platform_scope:
+  - google_ads
+  - meta
+  domain: general
+  per_platform_metrics:
+    meta:
+      measurement_state: invalid
+      maturity_state: sufficient
+    google_ads:
+      cpm_change_pct: 0.3
+      ctr_change_pct: 0.01
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top:
+  - auction_pressure
+  - measurement_instability
+  acceptable_actions:
+  - investigate_measurement
+  - wait
+  - observe
+  - investigate
+  forbidden_actions:
+  - increase
+  - decrease
+- id: di_meta_change_isolated
+  platform_scope:
+  - google_ads
+  - meta
+  domain: general
+  per_platform_metrics:
+    meta:
+      ctr_change_pct: -0.22
+      cpm_change_pct: 0.25
+      measurement_state: stable
+      maturity_state: sufficient
+    google_ads:
+      ctr_change_pct: 0.01
+      cpm_change_pct: 0.0
+      measurement_state: stable
+      maturity_state: sufficient
+  recent_changes:
+  - budget_increase
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - recent_budget_bid_interference
+  - delivery_mix_shift
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  forbidden_actions:
+  - replace
+- id: di_meta_identity_unknown
+  platform_scope:
+  - meta
+  domain: general
+  previous_metrics:
+    ctr: 0.009
+    cpm: 12.0
+  metrics:
+    ctr: 0.007
+    cpm: 12.1
+  measurement: stable
+  maturity: sufficient
+  acceptable_actions:
+  - wait
+  - observe
+  forbidden_actions:
+  - increase
+  - decrease
+  - replace
+  - pause
+  convergence_blocked: true
+- id: di_meta_account_aggregate_comparable
+  platform_scope:
+  - meta
+  domain: creative
+  previous_metrics:
+    ctr: 0.009
+    cpm: 12.0
+    entity_level: account
+    aggregate_scope: account
+  metrics:
+    ctr: 0.007
+    cpm: 12.1
+    entity_level: account
+    aggregate_scope: account
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - creative_fatigue
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  - replace
+  - retest
+  forbidden_actions:
+  - increase
+- id: di_meta_entity_key_comparable
+  platform_scope:
+  - meta
+  domain: creative
+  previous_metrics:
+    ctr: 0.009
+    entity_level: campaign
+    entity_key: campaign_a
+  metrics:
+    ctr: 0.007
+    entity_level: campaign
+    entity_key: campaign_a
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - creative_fatigue
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  - replace
+  - retest
+  forbidden_actions:
+  - increase
+- id: di_cross_conflict_not_shared_issue
+  platform_scope:
+  - google_ads
+  - meta
+  domain: measurement
+  per_platform_metrics:
+    meta:
+      pay_rate_change_pct: -0.2
+      measurement_state: invalid
+      maturity_state: sufficient
+    google_ads:
+      pay_rate_change_pct: -0.2
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: invalid
+  maturity: sufficient
+  forbidden_top:
+  - shared_measurement_issue
+  acceptable_top:
+  - measurement_instability
+  - shared_product_funnel_issue
+  acceptable_actions:
+  - investigate_measurement
+  - investigate
+  - wait
+  forbidden_actions:
+  - increase
+  - decrease
+  - scale
+  convergence_blocked: true
+- id: di_meta_newest_incomparable_older_comparable
+  platform_scope:
+  - meta
+  domain: creative
+  previous_metrics:
+    ctr: 0.009
+    entity_level: campaign
+    entity_key: campaign_a
+  metrics:
+    ctr: 0.007
+    entity_level: campaign
+    entity_key: campaign_a
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - creative_fatigue
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  - replace
+  - retest
+  forbidden_actions:
+  - increase

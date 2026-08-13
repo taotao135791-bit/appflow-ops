@@ -146,6 +146,17 @@ investigate them; explore broadly internally, answer concisely externally.
 - **“Latest stored change” and “recent causal confounder” are not
   synonyms.** A Change is a confounder only when it intervened between
   the comparable baseline and the current observation.
+- **“Applicable to all platforms” means evaluate separately on each
+  platform** unless a hypothesis is explicitly shared or run-level.
+  Wildcard hypotheses are never a flat union of all platforms.
+- **Safety provenance must match evidence provenance.** Platform-bound
+  hypotheses use that platform's measurement/maturity state; aggregate
+  Safety is reserved for shared/run-level conclusions.
+- **A Change from one media platform must never become another
+  platform's confounder.**
+- **Missing identity is not evidence of account-level aggregation.**
+  Comparable identity uses workspace-local opaque entity_key — raw
+  external IDs are never persisted.
 
 ## Layout
 

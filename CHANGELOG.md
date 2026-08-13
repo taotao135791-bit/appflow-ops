@@ -2,7 +2,29 @@
 
 All notable changes to AppFlow Ops are documented here.
 
-## 3.5.3 — 2026-08-13
+## 3.5.4 — 2026-08-13
+
+### Added
+
+- **Explicit hypothesis evaluation scopes**: `HypothesisSpec.evaluation_scope` (platform / shared / run). `applicable_platforms="*"` now means "evaluate separately on every applicable platform" — a wildcard hypothesis is NEVER a flat union of all platforms; `conversion_funnel_degradation@meta` and `@google_ads` are independent evaluations consuming only their own platform's signals.
+- **Per-platform Safety provenance**: platform-bound evaluations use that platform's `measurement_by_platform` / `maturity_by_platform` — Meta measurement invalid never caps Google's auction diagnosis, and aggregate invalid never creates measurement instability on a stable platform; aggregate Safety is reserved for shared/run-level conclusions.
+- **Platform-bound Change confounders**: a Change is a confounder ONLY for the platform it affected (event platform / target_platform); temporal relevance uses THAT platform's baseline/current window; Meta budget+30% never becomes Google's recent budget interference.
+- **Newest-comparable historical selection**: the runtime walks the bounded per-platform history and picks the newest COMPARABLE baseline — a newer incomparable record (Campaign B) never blocks an older comparable one (Campaign A).
+- **Explicit unknown-vs-account identity semantics**: missing entity identity is NEVER evidence of account-level aggregation (no derived trend); explicit `entity_level=account` + `aggregate_scope=account` (or explicit entity + entity_key) enables comparison.
+- **Privacy-safe comparable entity identity**: `entity_key` (workspace-local opaque identifier) replaces raw `entity_id` on the write path — raw external campaign/ad IDs are never persisted; legacy `entity_id` records stay readable for comparability.
+- **Run-level evidence**: `platform_divergence` (≥ 1 platform declining while ≥ 1 stable on the same metric) is the explicit run-level fact for `platform_specific_independent_issues` — never assembled from a flat union.
+
+### Fixed
+
+- **Wildcard hypothesis cross-platform signal splicing**: Meta CVR↓ + Google multi_creative_impacted can no longer be combined into one funnel evaluation.
+- **Aggregate Safety suppressing healthy-platform diagnosis**: Google auction stays evaluable while Meta is invalid.
+- **Aggregate measurement signals supporting wrong platform**: measurement_instability is supported only where that platform is actually invalid.
+- **Meta Change contaminating Google/TikTok hypotheses**: change signals are platform-scoped (legacy unscoped Changes keep broadcast for backward compatibility).
+- **Newest-but-incomparable history hiding valid older baseline**: bounded search continues past incomparable records.
+- **Missing entity identity treated as account aggregate**: identity unknown → no derived trend (explicit markers required).
+- **Measurement conflict supporting shared measurement issue**: `measurement_conflict` (Meta invalid + Google stable) signals "investigate consistency", never "shared measurement problem confirmed"; `cross_measurement_invalid` (≥ 2 platforms invalid) is the shared evidence.
+
+Eval set expanded 60 → 68 real scenarios (wildcard splicing, Safety isolation, Change isolation, unknown identity, account-aggregate comparability, entity_key comparability, conflict-vs-shared-issue).
 
 ### Added
 

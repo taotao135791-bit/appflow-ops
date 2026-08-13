@@ -511,20 +511,32 @@ class PlatformOperationalRun:
         recent_changes: tuple[dict[str, object], ...] = ()
         recent_decisions: tuple[dict[str, object], ...] = ()
         recent_outcomes: tuple[dict[str, object], ...] = ()
+        from appflow_ops.decision_intelligence.evidence import (
+            observations_comparable,
+        )
+
         by_platform = (self._platform_state or {}).get("by_platform") or {}
         for platform in observed_platforms:
             bucket = by_platform.get(platform) or {}
             observations = bucket.get("observations") or ()
+            current_facts = per_platform.get(platform) or {}
+            # Newest-comparable selection (v3.5.4): the newest observation
+            # may be a different entity — keep walking the bounded list to
+            # find the newest COMPARABLE baseline; incomparable records
+            # never block an older comparable one.
             for event in observations:
                 event_id = event.get("event_id")
                 if event_id in current_event_ids:
                     continue
                 facts = event.get("payload", {}).get("facts", {})
-                if facts:
-                    historical_by_platform[platform] = facts
-                    observed = event.get("observed_at")
-                    if isinstance(observed, str):
-                        historical_observed_at[platform] = observed
+                if not facts:
+                    continue
+                if not observations_comparable(current_facts, facts):
+                    continue
+                historical_by_platform[platform] = facts
+                observed = event.get("observed_at")
+                if isinstance(observed, str):
+                    historical_observed_at[platform] = observed
                 break
             changes = bucket.get("changes") or ()
             if changes:
@@ -556,6 +568,10 @@ class PlatformOperationalRun:
             platform_scope=self.platform_scope,
             measurement_state=measurement_state,
             maturity_state=maturity_state,
+            # v3.5.4: Safety follows evidence provenance — platform-bound
+            # evaluations use THAT platform's measurement/maturity.
+            measurement_by_platform=measurement_by_platform,
+            maturity_by_platform=maturity_by_platform,
         )
         ranked = rank_hypotheses(evaluations)
         convergence = converge(

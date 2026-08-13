@@ -323,6 +323,18 @@ def test_eval_case(case) -> None:
         if case.get("previous_metrics") and case.get("platform_scope")
         else None
     )
+    # v3.5.4 identity contract: a fixture's previous/current raw metrics
+    # are EXPLICIT account-aggregate observations (entity_level=account +
+    # aggregate_scope=account). Without this explicit marker, unknown
+    # identity would legitimately block trend derivation.
+    if previous_platforms:
+        for platform_metrics in previous_platforms.values():
+            platform_metrics.setdefault("entity_level", "account")
+            platform_metrics.setdefault("aggregate_scope", "account")
+    if current_platforms:
+        for platform_metrics in current_platforms.values():
+            platform_metrics.setdefault("entity_level", "account")
+            platform_metrics.setdefault("aggregate_scope", "account")
     if current_platforms:
         recent_change_events: list[dict[str, object]] = []
         for change in case.get("recent_changes", []):

@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.3/install.sh | bash -s -- --ref=v3.5.3
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.4/install.sh | bash -s -- --ref=v3.5.4
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -438,6 +438,19 @@ CTR decline); "latest stored change" ≠ "current confounder" (only a
 change intervening between baseline and current counts); invalid+unknown
 is never mislabeled as measurement conflict; the user answer knows whether
 the conclusion is "Meta-side" or "shared across both media".
+
+From v3.5.4 Evaluation, Safety and Change all obey the SAME provenance
+boundary: applicable_platforms="*" no longer means flat union — every
+applicable platform is evaluated separately (Meta signals are never
+spliced into Google conclusions); Safety matches evidence provenance
+(Meta's invalid measurement never caps Google's diagnosis); a Meta Change
+is a confounder only for Meta (platform-specific temporal windows);
+historical selection picks the newest COMPARABLE baseline (a newer
+incomparable record never blocks an older comparable one); missing
+identity never implies account-level aggregation; comparability uses only
+a workspace-local opaque entity_key — raw media IDs are never persisted;
+measurement conflict signals "investigate consistency", never "shared
+measurement problem confirmed".
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward
