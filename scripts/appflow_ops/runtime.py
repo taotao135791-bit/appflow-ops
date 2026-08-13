@@ -8,6 +8,13 @@ migration until at least Meta + TikTok operational runtimes are stable.
 
 from __future__ import annotations
 
+from .decision_intelligence import (
+    build_hypothesis_set,
+    converge,
+    detect_operational_domain,
+    evaluate_hypotheses,
+    rank_hypotheses,
+)
 from .uac.account_state import RunContext
 from .uac.operational_runtime import (
     PER_PLATFORM_CHANGES,
@@ -58,10 +65,15 @@ __all__ = [
     "StateAccess",
     "StateSession",
     "adapter_for",
+    "build_hypothesis_set",
     "build_operational_context",
     "build_state_context",
     "classify_request",
     "classify_state_access",
+    "converge",
     "detect_domain",
+    "detect_operational_domain",
     "detect_platforms",
+    "evaluate_hypotheses",
+    "rank_hypotheses",
 ]

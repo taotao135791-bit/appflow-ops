@@ -102,6 +102,18 @@ investigate them; explore broadly internally, answer concisely externally.
   domain_hint=creative). Creative adapter stays registered for
   backward compatibility; the domain separation migration belongs to
   Ads Decision Intelligence.
+- **Runtime / State / Safety / Platform Scope infrastructure is
+  considered stable. Do not expand it without a concrete correctness,
+  security, or product requirement.**
+- **Do not conclude from a metric movement alone. Always consider
+  plausible confounders and competing hypotheses before convergence.**
+- **A hypothesis may be supported, weakened, excluded, or remain
+  unverified. Missing evidence is not evidence for another hypothesis.**
+- **The default product output is a decision, not a diagnostic report.**
+  Ads Decision Intelligence may explore broadly internally, but the
+  default user-facing answer should contain only the conclusion,
+  strongest evidence, material exclusions, uncertainty if necessary,
+  and next action.
 
 ## Layout
 

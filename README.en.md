@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.6/install.sh | bash -s -- --ref=v3.4.6
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.0/install.sh | bash -s -- --ref=v3.5.0
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -399,6 +399,11 @@ the true cause.
 Ads Decision Intelligence will separate platform scope from operational
 diagnosis domain, supporting cases such as Meta + Creative, TikTok +
 Funnel, Google + Measurement.
+
+v3.5.0 ships: operational-domain aware routing, evidence-backed hypothesis
+evaluation (Meta 14 / TikTok 8 / Cross 4 hypothesis families), elimination /
+ranking / convergence to the smallest useful action, and a 30-case real
+scenario eval set.
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

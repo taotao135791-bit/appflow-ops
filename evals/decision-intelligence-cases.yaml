@@ -1,0 +1,441 @@
+# Ads Decision Intelligence eval cases (v3.5.0)
+#
+# Each case is a real-world ad question with acceptable/forbidden outcomes.
+# A case passes when:
+#   - top ranked hypothesis (excluding weakened/excluded) is in acceptable_top
+#   - converged decision is in acceptable_actions (or forbidden_actions not hit)
+#   - every required_consideration appears among evaluated hypotheses
+#   - measurement/maturity conflict blocks confident convergence
+
+- id: di_meta_fatigue
+  platform_scope: [meta]
+  domain: creative
+  signals:
+    ctr_trend_down: true
+    cpm_trend_stable: true
+    cvr_trend_stable: true
+    frequency_trend_up: true
+    old_creative_worse: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [creative_fatigue]
+  acceptable_actions: [replace, retest, observe]
+  forbidden_actions: [increase, decrease, scale, pause]
+  required_considerations: [auction_pressure, audience_saturation]
+
+- id: di_meta_auction
+  platform_scope: [meta]
+  domain: general
+  signals:
+    cpm_trend_up: true
+    ctr_trend_stable: true
+    cvr_trend_stable: true
+    frequency_trend_stable: true
+    multi_creative_impacted: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [auction_pressure]
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, pause]
+  required_considerations: [creative_fatigue]
+
+- id: di_meta_budget_confounder
+  platform_scope: [meta]
+  domain: delivery
+  signals:
+    recent_budget_change: true
+    ctr_trend_down: true
+    cpm_trend_up: true
+    delivery_mix_shifted: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [recent_budget_bid_interference, delivery_mix_shift]
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace]
+  required_considerations: [creative_fatigue]
+
+- id: di_meta_saturation
+  platform_scope: [meta]
+  domain: audience
+  signals:
+    frequency_trend_up: true
+    reach_growth_slowing: true
+    ctr_trend_down: true
+    delivery_concentrated: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [audience_saturation]
+  acceptable_actions: [refresh_variant, observe]
+  forbidden_actions: [replace]
+  required_considerations: [creative_fatigue]
+
+- id: di_meta_message_mismatch
+  platform_scope: [meta]
+  domain: creative
+  signals:
+    ctr_trend_down: true
+    multi_creative_impacted: true
+    cpm_trend_up: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [creative_message_mismatch]
+  acceptable_actions: [replace, retest]
+  forbidden_actions: [increase]
+  required_considerations: [creative_fatigue, auction_pressure]
+
+- id: di_meta_learning
+  platform_scope: [meta]
+  domain: delivery
+  signals:
+    learning_reset: true
+    ctr_trend_down: true
+    cpm_trend_up: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [learning_or_relearning]
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, pause]
+  required_considerations: [creative_fatigue]
+
+- id: di_meta_measurement_invalid
+  platform_scope: [meta]
+  domain: measurement
+  signals:
+    measurement_invalid: true
+    cvr_trend_down: true
+    pay_rate_trend_down: true
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top: [measurement_instability]
+  acceptable_actions: [investigate_measurement, wait]
+  forbidden_actions: [replace, increase, decrease]
+  required_considerations: [conversion_funnel_degradation]
+  convergence_blocked: true
+
+- id: di_meta_funnel
+  platform_scope: [meta]
+  domain: funnel
+  signals:
+    ctr_trend_stable: true
+    cvr_trend_down: true
+    click_volume_trend_stable: true
+    downstream_conversion_down: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [post_click_friction, conversion_funnel_degradation]
+  acceptable_actions: [investigate, observe]
+  forbidden_actions: [replace, increase]
+  required_considerations: [creative_fatigue]
+
+- id: di_meta_insufficient_maturity
+  platform_scope: [meta]
+  domain: general
+  signals:
+    ctr_trend_down: true
+    maturity_insufficient: true
+  measurement: stable
+  maturity: insufficient
+  acceptable_top: []
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, increase, decrease]
+  convergence_blocked: true
+
+- id: di_meta_budget_constraint
+  platform_scope: [meta]
+  domain: bid_budget
+  signals:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    no_recent_change: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [budget_constraint]
+  acceptable_actions: [increase, wait]
+  forbidden_actions: [decrease, pause]
+  required_considerations: [recent_budget_bid_interference]
+
+- id: di_tt_click_to_install
+  platform_scope: [tiktok]
+  domain: funnel
+  signals:
+    ctr_trend_stable: true
+    click_volume_trend_stable: true
+    install_rate_trend_down: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [click_to_install_friction]
+  acceptable_actions: [investigate, observe]
+  forbidden_actions: [replace, pause]
+  required_considerations: [creative_fatigue, traffic_quality_shift, install_measurement_issue]
+  creative_not_top: true
+
+- id: di_tt_pay_down
+  platform_scope: [tiktok]
+  domain: funnel
+  signals:
+    install_rate_trend_stable: true
+    registration_rate_trend_stable: true
+    pay_rate_trend_down: true
+    click_volume_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [pay_funnel_degradation]
+  acceptable_actions: [investigate, observe]
+  forbidden_actions: [replace, pause]
+  required_considerations: [creative_fatigue]
+  creative_not_top: true
+
+- id: di_tt_hook_quality
+  platform_scope: [tiktok]
+  domain: creative
+  signals:
+    ctr_trend_down: true
+    click_volume_trend_down: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [hook_or_click_quality, creative_fatigue]
+  acceptable_actions: [replace, retest, observe]
+  forbidden_actions: [increase]
+  required_considerations: [traffic_quality_shift]
+
+- id: di_tt_traffic_quality
+  platform_scope: [tiktok]
+  domain: delivery
+  signals:
+    traffic_quality_signal: true
+    ctr_trend_stable: true
+    install_rate_trend_down: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [traffic_quality_shift]
+  acceptable_actions: [observe, investigate]
+  forbidden_actions: [replace]
+  required_considerations: [click_to_install_friction]
+
+- id: di_tt_measurement
+  platform_scope: [tiktok]
+  domain: measurement
+  signals:
+    measurement_invalid: true
+    install_rate_trend_down: true
+    click_volume_trend_stable: true
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top: [install_measurement_issue, measurement_instability]
+  acceptable_actions: [investigate_measurement, wait]
+  forbidden_actions: [replace, increase]
+  convergence_blocked: true
+
+- id: di_tt_registration
+  platform_scope: [tiktok]
+  domain: funnel
+  signals:
+    install_rate_trend_stable: true
+    registration_rate_trend_down: true
+    click_volume_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [registration_friction]
+  acceptable_actions: [investigate, observe]
+  forbidden_actions: [replace]
+  required_considerations: [pay_funnel_degradation]
+
+- id: di_tt_delivery_shift
+  platform_scope: [tiktok]
+  domain: delivery
+  signals:
+    delivery_mix_shifted: true
+    cpm_trend_up: true
+    ctr_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [delivery_shift]
+  acceptable_actions: [observe, wait]
+  forbidden_actions: [replace]
+  required_considerations: [creative_fatigue]
+
+- id: di_tt_fatigue
+  platform_scope: [tiktok]
+  domain: creative
+  signals:
+    ctr_trend_down: true
+    old_creative_worse: true
+    frequency_trend_up: true
+    install_rate_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [creative_fatigue]
+  acceptable_actions: [replace, retest, observe]
+  forbidden_actions: [increase]
+  required_considerations: [click_to_install_friction]
+
+- id: di_cross_shared_product
+  platform_scope: [google_ads, meta]
+  domain: funnel
+  cross_platform: true
+  signals:
+    pay_rate_trend_down: true
+    cvr_trend_down: true
+    multi_creative_impacted: true
+    downstream_conversion_down: true
+    ctr_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [shared_product_funnel_issue]
+  acceptable_actions: [investigate, observe]
+  forbidden_actions: [replace, increase]
+  required_considerations: [shared_measurement_issue, platform_specific_independent_issues]
+
+- id: di_cross_measurement_conflict
+  platform_scope: [google_ads, meta]
+  domain: measurement
+  cross_platform: true
+  signals:
+    measurement_invalid: true
+    pay_rate_trend_down: true
+    cvr_trend_down: true
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top: [shared_measurement_issue, measurement_instability]
+  acceptable_actions: [investigate_measurement, wait]
+  forbidden_actions: [increase, replace]
+  convergence_blocked: true
+
+- id: di_cross_single_platform
+  platform_scope: [google_ads, meta]
+  domain: general
+  cross_platform: true
+  signals:
+    only_one_creative_declines: true
+    delivery_mix_shifted: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [platform_specific_independent_issues]
+  acceptable_actions: [wait, observe, investigate]
+  forbidden_actions: [increase]
+  required_considerations: [shared_product_funnel_issue]
+
+- id: di_cross_market
+  platform_scope: [google_ads, meta]
+  domain: delivery
+  cross_platform: true
+  signals:
+    cpm_trend_up: true
+    ctr_trend_stable: true
+    multi_creative_impacted: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [market_wide_event]
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, increase]
+  required_considerations: [shared_product_funnel_issue]
+
+- id: di_cross_coincidence
+  platform_scope: [google_ads, meta]
+  domain: general
+  cross_platform: true
+  signals:
+    ctr_trend_down: true
+    only_one_creative_declines: true
+    cvr_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [platform_specific_independent_issues]
+  acceptable_actions: [wait, observe, investigate]
+  forbidden_actions: [increase, replace]
+  convergence_blocked: true
+
+- id: di_vague_now
+  platform_scope: [meta]
+  domain: general
+  signals:
+    ctr_trend_down: true
+    cpm_trend_stable: true
+    old_creative_worse: true
+    frequency_trend_up: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [creative_fatigue]
+  acceptable_actions: [replace, retest, observe]
+  forbidden_actions: [increase]
+
+- id: di_vague_can_run
+  platform_scope: [meta]
+  domain: creative
+  signals:
+    ctr_trend_stable: true
+    cvr_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: []
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, pause, increase]
+  convergence_blocked: true
+
+- id: di_vague_add_budget
+  platform_scope: [meta]
+  domain: bid_budget
+  signals:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    no_recent_change: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: [budget_constraint]
+  acceptable_actions: [increase, wait]
+  forbidden_actions: [decrease, pause]
+
+- id: di_vague_fatigue_question
+  platform_scope: [meta]
+  domain: creative
+  signals:
+    ctr_trend_down: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: []
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, increase]
+  convergence_blocked: true
+  required_considerations: [auction_pressure]
+
+- id: di_gen_small_sample
+  platform_scope: [tiktok]
+  domain: general
+  signals:
+    ctr_trend_down: true
+    maturity_insufficient: true
+  measurement: stable
+  maturity: insufficient
+  acceptable_top: []
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, increase, decrease]
+  convergence_blocked: true
+
+- id: di_gen_missing_cpm
+  platform_scope: [meta]
+  domain: general
+  signals:
+    ctr_trend_down: true
+    old_creative_worse: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: []
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, increase]
+  convergence_blocked: true
+  required_considerations: [auction_pressure]
+
+- id: di_gen_missing_frequency
+  platform_scope: [meta]
+  domain: general
+  signals:
+    ctr_trend_down: true
+    old_creative_worse: true
+    cpm_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top: []
+  acceptable_actions: [wait, observe]
+  forbidden_actions: [replace, increase]
+  convergence_blocked: true
+  required_considerations: [audience_saturation]

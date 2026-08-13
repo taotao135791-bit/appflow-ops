@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.6/install.sh | bash -s -- --ref=v3.4.6
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.0/install.sh | bash -s -- --ref=v3.5.0
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -288,6 +288,8 @@ Platform Operational Runtime 与 Safety Kernel 已作为稳定基础收口。下
 AppFlow 对证据支持的假设排序，并收敛到最小可用操作——不承诺 AI 总能识别真实原因。
 
 Ads Decision Intelligence 将进一步分离 **platform scope** 与 **operational diagnosis domain**，支持如 Meta + Creative、TikTok + Funnel、Google + Measurement 的场景。
+
+v3.5.0 已落地：operational-domain aware routing、evidence-backed hypothesis evaluation（Meta 14 / TikTok 8 / Cross 4 个假设家族）、排除/排序/收敛到最小可用动作、30 个真实场景 eval。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

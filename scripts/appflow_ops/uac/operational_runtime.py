@@ -53,11 +53,10 @@ _PLATFORM_HINTS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("tiktok", re.compile(r"tiktok|(?:^|[^a-z])tt(?:[^a-z]|$)", re.IGNORECASE)),
 )
 
-# Operational domains are NOT media platforms: "creative" keywords shape
-# the diagnosis domain, never the platform scope (v3.4.6 boundary).
-_DOMAIN_HINTS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("creative", re.compile(r"素材|creative|广告创意", re.IGNORECASE)),
-)
+# Operational domains are NOT media platforms: keywords shape the
+# diagnosis domain, never the platform scope (v3.4.6 boundary). The full
+# domain vocabulary lives in decision_intelligence.domains; begin()
+# stores a lightweight domain hint via detect_domain().
 
 
 def detect_platforms(text: str) -> tuple[str, ...]:
@@ -73,11 +72,14 @@ def detect_platforms(text: str) -> tuple[str, ...]:
 
 def detect_domain(text: str) -> str | None:
     """Operational domain hint (creative / funnel / measurement / ...) for
-    routing and context only — never part of the platform scope."""
-    for domain, pattern in _DOMAIN_HINTS:
-        if pattern.search(text):
-            return domain
-    return None
+    routing and context only — never part of the platform scope. Delegates
+    to the Ads Decision Intelligence domain detector (v3.5.0)."""
+    from appflow_ops.decision_intelligence.domains import (
+        detect_operational_domain,
+    )
+
+    domain = detect_operational_domain(text)
+    return None if domain == "general" else domain
 
 
 def canonicalize_platform_scope(
@@ -358,6 +360,15 @@ class PlatformOperationalRun:
                 )
         else:
             self.platform_scope = canonicalize_platform_scope((platform,))
+            # Late-bound scope: the historical snapshot loaded at begin()
+            # (state_access REQUIRED) was probed from an EMPTY scope and
+            # may contain other platforms. Rebind it to the bound scope
+            # BEFORE persisting the current observation, so historical and
+            # current evidence share the same platform boundary.
+            if self.state_access == StateAccess.REQUIRED and self._platform_state:
+                self._platform_state = _platform_bounded_state(
+                    self.session, self.platform_scope
+                )
         facts = adapter.project_observation(metrics)
         funnel = adapter.project_funnel(metrics)
         facts.update(funnel)

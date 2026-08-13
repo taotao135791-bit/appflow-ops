@@ -2,6 +2,56 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.5.0 — 2026-08-13
+
+### Added
+
+- **Ads Decision Intelligence Foundation**: AppFlow enters the product
+  phase — real ad problems get candidate causes, verification,
+  elimination, ranking, and convergence to the smallest useful action.
+  - **Operational domains**: `detect_operational_domain()` distinguishes
+    creative / funnel / measurement / bid_budget / delivery / auction /
+    audience / cross_platform / general; platform scope and domain are
+    separated ("Meta 素材是不是衰减" → scope=[meta] + domain=creative).
+  - **Structured HypothesisSpecs** (not name lists): supporting /
+    contradicting signals, required evidence, exclusion conditions,
+    smallest-first possible actions. Meta 14 families, TikTok 8 funnel
+    hypotheses, Cross-platform 4 families.
+  - **Evidence evaluation**: deterministic scoring (+2 support, -2
+    contradiction, 0 missing); missing evidence is never evidence for
+    another hypothesis; safety caps (invalid measurement → only the
+    measurement hypothesis may be supported; insufficient maturity →
+    nothing may be supported).
+  - **Ranking & convergence**: status-priority deterministic ranking;
+    convergence requires a strong top hypothesis with weakened/excluded
+    rivals — otherwise an honest "wait" naming the decisive missing
+    evidence. Budget/bid actions only when justified; recent changes
+    confound creative diagnosis (exclusion conditions).
+  - **Eval set**: 30 real scenario fixtures
+    (`evals/decision-intelligence-cases.yaml`) with acceptable_top /
+    acceptable_actions / forbidden_actions / required_considerations /
+    convergence_blocked assertions, covering Meta, TikTok, cross-platform,
+    vague queries, measurement conflict and maturity gaps.
+  - **Facade**: `appflow_ops.runtime` re-exports
+    detect_operational_domain / build_hypothesis_set /
+    evaluate_hypotheses / rank_hypotheses / converge.
+  - **Docs**: `docs/ads-decision-intelligence.md` (platform vs domain,
+    hypothesis specs, evidence semantics, elimination/ranking,
+    convergence, answer contract).
+
+### Fixed
+
+- **Late-bound scope now rebinds historical state**: an empty-scope run
+  that preloaded multi-platform history rebinds `state_context` to the
+  bound platform the moment its first observation binds the scope (bind →
+  rebind → persist), so a Meta-bound run never exposes TikTok history.
+
+### Changed
+
+- **Core is frozen**: Runtime / State / Safety / Platform Scope
+  infrastructure is stable; AGENTS.md forbids expansion without a
+  concrete correctness, security, or product requirement.
+
 ## 3.4.6 — 2026-08-12
 
 ### Fixed
