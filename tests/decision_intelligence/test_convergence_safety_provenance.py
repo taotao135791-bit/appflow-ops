@@ -72,7 +72,9 @@ def _safety_context(
     )
 
 
-def _evaluation(hypothesis_id: str, platform: str, scope: str = "platform") -> HypothesisEvaluation:
+def _evaluation(
+    hypothesis_id: str, platform: str, scope: str = "platform"
+) -> HypothesisEvaluation:
     """Minimal real evaluation: pick the spec and evaluate with no signals."""
     specs = build_hypothesis_set(platform_scope=("google_ads", "meta"))
     spec = next(s for s in specs if s.id == hypothesis_id)
@@ -287,7 +289,10 @@ def test_run_top_uses_aggregate_safety() -> None:
         for item in ranked
         if item.evaluation.hypothesis.evaluation_scope == "run"
     ]
-    assert run_evals and run_evals[0].hypothesis.id == "platform_specific_independent_issues"
+    assert (
+        run_evals
+        and run_evals[0].hypothesis.id == "platform_specific_independent_issues"
+    )
     result = converge(
         ranked,
         safety_context=_safety_context(
@@ -411,9 +416,7 @@ def test_safety_block_never_rewrites_diagnosis_identity() -> None:
 def _run_scenario1(workspace) -> tuple[PlatformOperationalRun, object]:
     """Meta invalid + Google stable CPM↑/CTR stable (spec §26 Scenario 1)."""
     run = PlatformOperationalRun(workspace)
-    run.begin(
-        request_text="Google 越来越贵？", platform_scope=("google_ads", "meta")
-    )
+    run.begin(request_text="Google 越来越贵？", platform_scope=("google_ads", "meta"))
     run.record_observation(
         {"measurement_state": "invalid", "maturity_state": "sufficient"},
         platform="meta",
@@ -450,9 +453,7 @@ def test_runtime_e2e_meta_invalid_google_auction_survives(workspace) -> None:
 def test_runtime_e2e_meta_insufficient_google_mature_survives(workspace) -> None:
     # Spec §27 Scenario 2: Meta immature must not block mature Google.
     run = PlatformOperationalRun(workspace)
-    run.begin(
-        request_text="Google 越来越贵？", platform_scope=("google_ads", "meta")
-    )
+    run.begin(request_text="Google 越来越贵？", platform_scope=("google_ads", "meta"))
     run.record_observation(
         {"measurement_state": "stable", "maturity_state": "insufficient"},
         platform="meta",

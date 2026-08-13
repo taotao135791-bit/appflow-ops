@@ -1033,7 +1033,9 @@ class PlatformOperationalRun:
         top = ranked[0].evaluation if ranked else None
         selected_platform = top.platform if top is not None else None
         warnings: dict[str, tuple[str, ...]] = {}
-        for platform in sorted(set(measurement_by_platform) | set(maturity_by_platform)):
+        for platform in sorted(
+            set(measurement_by_platform) | set(maturity_by_platform)
+        ):
             if platform == selected_platform:
                 continue
             items: list[str] = []

@@ -88,9 +88,7 @@ def resolve_evaluation_safety(
         and evaluation.platform != "cross_platform"
     ):
         return (
-            safety_context.measurement_by_platform.get(
-                evaluation.platform, "unknown"
-            ),
+            safety_context.measurement_by_platform.get(evaluation.platform, "unknown"),
             safety_context.maturity_by_platform.get(evaluation.platform, "unknown"),
         )
     return safety_context.aggregate_measurement, safety_context.aggregate_maturity
