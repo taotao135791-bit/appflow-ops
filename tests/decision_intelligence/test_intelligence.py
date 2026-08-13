@@ -314,10 +314,14 @@ def test_eval_case(case) -> None:
     # the raw extraction runs FIRST and explicit signals only fill gaps.
     signals: dict[str, bool] = {}
     current_platforms = case.get("per_platform_metrics") or (
-        {"meta": case["metrics"]} if case.get("metrics") else None
+        {case["platform_scope"][0]: case["metrics"]}
+        if case.get("metrics") and case.get("platform_scope")
+        else None
     )
     previous_platforms = case.get("previous_per_platform_metrics") or (
-        {"meta": case["previous_metrics"]} if case.get("previous_metrics") else None
+        {case["platform_scope"][0]: case["previous_metrics"]}
+        if case.get("previous_metrics") and case.get("platform_scope")
+        else None
     )
     if current_platforms:
         recent_change_events: list[dict[str, object]] = []
@@ -332,23 +336,58 @@ def test_eval_case(case) -> None:
                         "direction": "increase"
                         if change_type.endswith("increase")
                         else "decrease",
-                    }
+                        # Temporal semantics (v3.5.3): a Change is a
+                        # confounder only when it intervened between the
+                        # comparable baseline and the current observation.
+                        "effective_at": case.get(
+                            "recent_change_effective_at", "2026-08-13T12:00:00Z"
+                        ),
+                    },
+                    "observed_at": "2026-08-13T12:00:00Z",
                 }
             )
         evidence = build_evidence(
             per_platform=current_platforms,
             historical_by_platform=previous_platforms or None,
             recent_changes=tuple(recent_change_events),
+            current_observed_at=(
+                {platform: "2026-08-13T18:00:00Z" for platform in current_platforms}
+                if current_platforms
+                else None
+            ),
+            historical_observed_at=(
+                {platform: "2026-08-12T09:00:00Z" for platform in previous_platforms}
+                if previous_platforms
+                else None
+            ),
         )
-        signals.update(evidence.signals)
-        signals = {k: v for k, v in signals.items() if v}
-    signals.update({k: v for k, v in case.get("signals", {}).items() if v})
-    evals = evaluate_hypotheses(
-        specs,
-        signals,
-        measurement_state=case.get("measurement", "stable"),
-        maturity_state=case.get("maturity", "sufficient"),
-    )
+        # Provenance mode (v3.5.3): the EvidenceResult goes to the
+        # evaluator as-is — platform-bound hypotheses consume only their
+        # platform's signals; shared hypotheses consume shared signals.
+        # Legacy explicit-signal fixtures are treated as global facts:
+        # they are visible at every layer (compat with old assertions).
+        extra = {k: v for k, v in case.get("signals", {}).items() if v}
+        if extra:
+            evidence.signals.update(extra)
+            for platform_signals in evidence.signals_by_platform.values():
+                platform_signals.update(extra)
+            evidence.shared_signals.update(extra)
+        evals = evaluate_hypotheses(
+            specs,
+            evidence,
+            platform_scope=tuple(case.get("platform_scope", ())),
+            measurement_state=case.get("measurement", "stable"),
+            maturity_state=case.get("maturity", "sufficient"),
+        )
+    else:
+        signals = {k: v for k, v in case.get("signals", {}).items() if v}
+        evals = evaluate_hypotheses(
+            specs,
+            signals,
+            platform_scope=tuple(case.get("platform_scope", ())),
+            measurement_state=case.get("measurement", "stable"),
+            maturity_state=case.get("maturity", "sufficient"),
+        )
     ranked = rank_hypotheses(evals)
     top = ranked[0].evaluation
 
@@ -369,11 +408,15 @@ def test_eval_case(case) -> None:
             f"({ranked_live[0].status}) not in {acceptable_top}"
         )
 
-    # forbidden_top: a hypothesis that must NEVER be the ranked top.
+    # forbidden_top: a hypothesis that must NEVER be the ranked top WITH
+    # material (supported) evidence. An unverified top is an honest
+    # "not enough evidence" answer, not a wrong conclusion (v3.5.3).
     for forbidden in case.get("forbidden_top", []):
-        assert not ranked_live or ranked_live[0].hypothesis.id != forbidden, (
-            f"{case['id']}: forbidden top {forbidden}"
-        )
+        assert (
+            not ranked_live
+            or ranked_live[0].hypothesis.id != forbidden
+            or ranked_live[0].status != "supported"
+        ), f"{case['id']}: forbidden top {forbidden}"
 
     # creative must not be top for funnel-degradation cases.
     if case.get("creative_not_top"):

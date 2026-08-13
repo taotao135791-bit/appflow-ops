@@ -16,6 +16,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 
+from .evidence import EvidenceResult
 from .hypotheses import HypothesisSpec
 
 # Evidence keys whose presence can be satisfied by multiple signal ids.
@@ -73,6 +74,10 @@ class HypothesisEvaluation:
     missing: tuple[str, ...]
     rationale: tuple[str, ...]
     safety_capped: bool = False
+    # v3.5.3: evidence attribution — the platform this evaluation is
+    # bound to ("cross_platform" for shared hypotheses, a media platform
+    # for platform-bound evaluations, None for generic "*" hypotheses).
+    platform: str | None = None
 
 
 def _evidence_present(evidence: str, signals: Mapping[str, bool]) -> bool:
@@ -90,11 +95,13 @@ def evaluate_hypothesis(
     *,
     measurement_state: str = "stable",
     maturity_state: str = "sufficient",
+    platform: str | None = None,
 ) -> HypothesisEvaluation:
     """Evaluate one hypothesis. Deterministic and repeatable.
 
     Order: exclusion → support/contradiction scoring → missing-evidence
     cap → safety cap (invalid measurement / insufficient maturity).
+    ``platform`` records the evidence attribution of this evaluation.
     """
     supporting = tuple(
         signal for signal in hypothesis.supporting_signals if signals.get(signal)
@@ -122,6 +129,7 @@ def evaluate_hypothesis(
             rationale=(
                 f"{hypothesis.label}：{contradicting[0] if contradicting else '排除条件命中'}",
             ),
+            platform=platform,
         )
 
     score = SUPPORT_WEIGHT * len(supporting) + CONTRADICTION_WEIGHT * len(contradicting)
@@ -171,36 +179,118 @@ def evaluate_hypothesis(
         missing=missing,
         rationale=tuple(rationale),
         safety_capped=safety_capped,
+        platform=platform,
     )
 
 
 def evaluate_hypotheses(
     hypotheses: tuple[HypothesisSpec, ...],
-    signals: Mapping[str, bool],
+    signals_or_evidence: Mapping[str, bool] | EvidenceResult,
     *,
+    platform_scope: tuple[str, ...] = (),
     measurement_state: str = "stable",
     maturity_state: str = "sufficient",
 ) -> tuple[HypothesisEvaluation, ...]:
     """Evaluate every hypothesis in the set (deterministic order).
 
-    The canonical safety context is injected here as signals (invalid
+    Provenance-aware (v3.5.3): when an ``EvidenceResult`` is passed,
+    every hypothesis only consumes the evidence that is semantically
+    valid for it —
+
+    - cross-platform hypotheses (applicable_platforms contains
+      "cross_platform") consume ``shared_signals`` only;
+    - generic "*" hypotheses consume the aggregate union (generic cases);
+    - platform-bound hypotheses are evaluated PER PLATFORM against that
+      platform's own ``signals_by_platform`` — Meta signals can never be
+      spliced into a Google evaluation (or vice versa).
+
+    The canonical safety context is injected as signals (invalid
     measurement / insufficient maturity / stable measurement), so eval
     fixtures and the runtime path share identical signal semantics.
     """
     from .evidence import add_context_signals
 
-    augmented = dict(signals)
-    add_context_signals(
-        augmented,
-        measurement_state=measurement_state,
-        maturity_state=maturity_state,
-    )
-    return tuple(
-        evaluate_hypothesis(
-            hypothesis,
-            augmented,
-            measurement_state=measurement_state,
-            maturity_state=maturity_state,
-        )
-        for hypothesis in hypotheses
-    )
+    if isinstance(signals_or_evidence, EvidenceResult):
+        evidence: EvidenceResult = signals_or_evidence
+    else:
+        # Plain-dict mode (unit tests / library callers): no per-platform
+        # provenance exists, so platform-bound hypotheses fall back to the
+        # aggregate union exactly like the pre-v3.5.3 behavior.
+        evidence = EvidenceResult(signals=dict(signals_or_evidence))
+
+    evaluations: list[HypothesisEvaluation] = []
+    for hypothesis in hypotheses:
+        applicable = hypothesis.applicable_platforms
+        if "cross_platform" in applicable:
+            augmented = dict(evidence.shared_signals)
+            add_context_signals(
+                augmented,
+                measurement_state=measurement_state,
+                maturity_state=maturity_state,
+            )
+            evaluations.append(
+                evaluate_hypothesis(
+                    hypothesis,
+                    augmented,
+                    measurement_state=measurement_state,
+                    maturity_state=maturity_state,
+                    platform="cross_platform",
+                )
+            )
+        elif "*" in applicable:
+            augmented = dict(evidence.signals)
+            add_context_signals(
+                augmented,
+                measurement_state=measurement_state,
+                maturity_state=maturity_state,
+            )
+            evaluations.append(
+                evaluate_hypothesis(
+                    hypothesis,
+                    augmented,
+                    measurement_state=measurement_state,
+                    maturity_state=maturity_state,
+                    platform=None,
+                )
+            )
+        else:
+            if evidence.signals_by_platform:
+                # Provenance mode: evaluate the hypothesis PER PLATFORM
+                # against that platform's own signals only.
+                for platform in platform_scope:
+                    if platform not in applicable:
+                        continue
+                    augmented = dict(evidence.signals_by_platform.get(platform, {}))
+                    add_context_signals(
+                        augmented,
+                        measurement_state=measurement_state,
+                        maturity_state=maturity_state,
+                    )
+                    evaluations.append(
+                        evaluate_hypothesis(
+                            hypothesis,
+                            augmented,
+                            measurement_state=measurement_state,
+                            maturity_state=maturity_state,
+                            platform=platform,
+                        )
+                    )
+            else:
+                # Plain-dict / no-provenance mode (unit tests, library
+                # callers): legacy aggregate evaluation, unbound.
+                augmented = dict(evidence.signals)
+                add_context_signals(
+                    augmented,
+                    measurement_state=measurement_state,
+                    maturity_state=maturity_state,
+                )
+                evaluations.append(
+                    evaluate_hypothesis(
+                        hypothesis,
+                        augmented,
+                        measurement_state=measurement_state,
+                        maturity_state=maturity_state,
+                        platform=None,
+                    )
+                )
+    return tuple(evaluations)

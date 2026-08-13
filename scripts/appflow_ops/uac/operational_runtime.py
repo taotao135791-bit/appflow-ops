@@ -488,6 +488,8 @@ class PlatformOperationalRun:
         per_platform: dict[str, dict[str, object]] = {}
         observed_platforms = self.platform_scope or tuple(self._current_observations)
         current_event_ids: set[str] = set()
+        current_observed_at: dict[str, str] = {}
+        historical_observed_at: dict[str, str] = {}
         for platform in observed_platforms:
             event = self._current_observations.get(platform)
             if event is None:
@@ -497,6 +499,9 @@ class PlatformOperationalRun:
             event_id = event.get("event_id")
             if isinstance(event_id, str):
                 current_event_ids.add(event_id)
+            observed = event.get("observed_at")
+            if isinstance(observed, str):
+                current_observed_at[platform] = observed
 
         # Historical evidence: for each platform pick the most recent
         # observation BEFORE the current one (same platform ⇒ comparable
@@ -517,6 +522,9 @@ class PlatformOperationalRun:
                 facts = event.get("payload", {}).get("facts", {})
                 if facts:
                     historical_by_platform[platform] = facts
+                    observed = event.get("observed_at")
+                    if isinstance(observed, str):
+                        historical_observed_at[platform] = observed
                 break
             changes = bucket.get("changes") or ()
             if changes:
@@ -536,13 +544,16 @@ class PlatformOperationalRun:
             recent_outcomes=recent_outcomes,
             measurement_state=measurement_state,
             maturity_state=maturity_state,
+            current_observed_at=current_observed_at,
+            historical_observed_at=historical_observed_at,
         )
         specs = build_hypothesis_set(
             platform_scope=self.platform_scope, domain=operational_domain
         )
         evaluations = evaluate_hypotheses(
             specs,
-            evidence.signals,
+            evidence,
+            platform_scope=self.platform_scope,
             measurement_state=measurement_state,
             maturity_state=maturity_state,
         )

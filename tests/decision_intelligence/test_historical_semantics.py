@@ -149,7 +149,12 @@ def test_recent_budget_change_becomes_confounder_evidence(workspace) -> None:
     _day1_meta_observation(run1)
     # Confirmed budget +30% change.
     run1.record_confirmed_change(
-        change_type="budget", direction="increase", magnitude=0.3
+        change_type="budget",
+        direction="increase",
+        magnitude=0.3,
+        # Between Day1 baseline (08-12T09:00) and Day2 current (08-13T09:00):
+        # a genuine intervening confounder.
+        effective_at="2026-08-12T18:00:00Z",
     )
     run1.finish()
 

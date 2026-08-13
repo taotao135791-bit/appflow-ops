@@ -136,6 +136,16 @@ investigate them; explore broadly internally, answer concisely externally.
 - **A normal Decision Intelligence persistence path must preserve the
   action produced by convergence.** Human overrides must be explicit and
   attributable (origin=operator_override with the original DI action).
+- **Never combine supporting signals from different platforms into a
+  single platform-specific hypothesis.** Platform-bound evaluations
+  consume only their platform's signals; shared hypotheses consume
+  shared signals only.
+- **Never derive a time trend across different entities, levels, or
+  incompatible breakdown scopes.** Same platform alone never implies
+  comparable observations.
+- **“Latest stored change” and “recent causal confounder” are not
+  synonyms.** A Change is a confounder only when it intervened between
+  the comparable baseline and the current observation.
 
 ## Layout
 

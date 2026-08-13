@@ -201,3 +201,57 @@ problem.
   a plain `pay_rate_trend_down` on one platform never promotes it.
 - Measurement conflict (one platform invalid, another stable) stays
   material: no confident shared product conclusion.
+
+## Evidence Attribution (v3.5.3)
+
+> Evidence is only valid for the platform, entity scope, and time
+> comparison that produced it.
+
+- **Provenance-aware evaluation**: `evaluate_hypotheses()` consumes an
+  `EvidenceResult`, not a flat dict. Platform-bound hypotheses
+  (applicable_platforms lists concrete media) are evaluated PER PLATFORM
+  against that platform's own `signals_by_platform` — Meta signals can
+  never be spliced into a Google evaluation (or vice versa); the result
+  carries `platform` attribution (`auction_pressure@meta`).
+- **Shared hypotheses require shared evidence**: `shared_product_funnel_issue`
+  / `market_wide_event` / `shared_measurement_issue` consume
+  `shared_signals` only — a single-platform `pay_rate_trend_down` or
+  `cpm_trend_up` never promotes them. `market_wide_event` needs
+  `cross_cpm_up` (≥ 2 platforms rising); `shared_measurement_issue` needs
+  `cross_measurement_invalid` (≥ 2 platforms invalid) or a real conflict.
+- **Measurement conflict**: exactly `invalid + stable` is a conflict;
+  `invalid + unknown` is incomplete coverage (conservative via aggregate
+  invalid), never a conflict.
+
+> Shared hypotheses require shared evidence. Platform-specific signals
+> from different media must never be stitched together to simulate one
+> platform or a shared condition.
+
+## Historical Comparability (v3.5.3)
+
+> Same platform does not imply comparable observations. Derived trends
+> require compatible entity and aggregation scope.
+
+- Comparable identity = (platform, entity_level, entity_id,
+  breakdown_scope). Absent fields default to account-level; when
+  present, a mismatch (Campaign A vs Campaign B, account vs campaign,
+  gender vs all) produces NO derived trend — fail conservative.
+- Explicit canonical trends still override derived trends.
+
+## Change Temporal Semantics (v3.5.3)
+
+> A stored Change is not automatically recent. A Change is a current
+> confounder only when its timing is relevant to the comparison window
+> or review condition.
+
+- Intervening confounder: `baseline_observed_at < change_effective_at
+  <= current_observed_at`. Changes before the baseline were already part
+  of the baseline state; a two-month-old budget change is never
+  `recent_budget_change` (age metadata is retained for audit).
+- Change types are separated: `recent_budget_change` / `recent_bid_change`
+  / `recent_creative_change` / `recent_audience_change` /
+  `recent_campaign_change` / `recent_campaign_restart` — an audience
+  change never masquerades as a creative change.
+- Latest Decision/Outcome context is chosen by canonical timestamp
+  (effective_at / observed_at, deterministic event_id tie-break), with
+  per-platform latest retained alongside.

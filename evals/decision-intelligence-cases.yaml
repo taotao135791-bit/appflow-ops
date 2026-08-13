@@ -1145,3 +1145,210 @@
   - increase
   - replace
   - decrease
+- id: di_cross_splicing_regression
+  platform_scope:
+  - meta
+  - tiktok
+  domain: funnel
+  per_platform_metrics:
+    meta:
+      pay_rate_change_pct: -0.3
+      measurement_state: stable
+      maturity_state: sufficient
+    tiktok:
+      install_rate_change_pct: 0.01
+      registration_rate_change_pct: 0.0
+      pay_rate_change_pct: 0.01
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  forbidden_top:
+  - pay_funnel_degradation
+  acceptable_actions:
+  - investigate
+  - wait
+  - observe
+  forbidden_actions:
+  - increase
+- id: di_cross_market_false_positive
+  platform_scope:
+  - google_ads
+  - meta
+  domain: general
+  per_platform_metrics:
+    meta:
+      cpm_change_pct: 0.35
+      measurement_state: stable
+      maturity_state: sufficient
+    google_ads:
+      cpm_change_pct: -0.01
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  forbidden_top:
+  - market_wide_event
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  forbidden_actions:
+  - increase
+- id: di_cross_market_true
+  platform_scope:
+  - google_ads
+  - meta
+  domain: delivery
+  per_platform_metrics:
+    meta:
+      cpm_change_pct: 0.35
+      ctr_change_pct: 0.01
+      measurement_state: stable
+      maturity_state: sufficient
+    google_ads:
+      cpm_change_pct: 0.3
+      ctr_change_pct: 0.0
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - market_wide_event
+  - auction_pressure
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  forbidden_actions:
+  - replace
+  - increase
+  - pause
+- id: di_meta_entity_not_comparable
+  platform_scope:
+  - meta
+  domain: general
+  previous_metrics:
+    ctr: 0.009
+    entity_id: campaign_a
+  metrics:
+    ctr: 0.007
+    entity_id: campaign_b
+  measurement: stable
+  maturity: sufficient
+  acceptable_actions:
+  - wait
+  - observe
+  forbidden_actions:
+  - increase
+  - decrease
+  - replace
+  - pause
+  convergence_blocked: true
+- id: di_meta_entity_comparable
+  platform_scope:
+  - meta
+  domain: creative
+  previous_metrics:
+    ctr: 0.009
+    entity_id: campaign_a
+  metrics:
+    ctr: 0.007
+    entity_id: campaign_a
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - creative_fatigue
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  - replace
+  - retest
+  forbidden_actions:
+  - increase
+- id: di_meta_old_change_not_confounder
+  platform_scope:
+  - meta
+  domain: general
+  previous_metrics:
+    ctr: 0.009
+    cpm: 12.0
+    cvr: 0.08
+  metrics:
+    ctr: 0.007
+    cpm: 12.1
+    cvr: 0.081
+  recent_changes:
+  - budget_increase
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - creative_fatigue
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  - replace
+  - retest
+  forbidden_actions:
+  - increase
+  recent_change_effective_at: '2026-08-10T09:00:00Z'
+- id: di_cross_invalid_unknown
+  platform_scope:
+  - google_ads
+  - meta
+  domain: funnel
+  per_platform_metrics:
+    meta:
+      pay_rate_change_pct: -0.25
+      measurement_state: invalid
+      maturity_state: sufficient
+    google_ads:
+      pay_rate_change_pct: -0.2
+      measurement_state: unknown
+      maturity_state: sufficient
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top:
+  - shared_measurement_issue
+  - shared_product_funnel_issue
+  - measurement_instability
+  acceptable_actions:
+  - investigate_measurement
+  - investigate
+  - wait
+  forbidden_actions:
+  - increase
+  - decrease
+  - scale
+  convergence_blocked: true
+- id: di_cross_invalid_stable
+  platform_scope:
+  - google_ads
+  - meta
+  domain: funnel
+  per_platform_metrics:
+    meta:
+      pay_rate_change_pct: -0.25
+      measurement_state: invalid
+      maturity_state: sufficient
+    google_ads:
+      pay_rate_change_pct: -0.2
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top:
+  - shared_measurement_issue
+  - measurement_instability
+  - shared_product_funnel_issue
+  acceptable_actions:
+  - investigate_measurement
+  - investigate
+  - wait
+  forbidden_actions:
+  - increase
+  - decrease
+  - scale
+  convergence_blocked: true

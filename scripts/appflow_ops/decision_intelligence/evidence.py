@@ -84,6 +84,30 @@ _HISTORY_METRIC_KEYS: dict[str, str] = {
     "pay_rate": "pay_rate_trend",
 }
 
+# Comparable identity (v3.5.3): same platform does NOT imply comparable
+# observations. Derived trends additionally require the same entity level,
+# entity id, and breakdown scope. Absent fields default to "account" level
+# with no entity/breakdown — matching v3.5.2 behavior when no provenance
+# fields are recorded.
+_ENTITY_KEYS = ("entity_level", "entity_id", "breakdown_scope")
+
+
+def comparable_identity(facts: Mapping[str, object]) -> tuple[object, ...]:
+    """Thin provenance key: (level, entity_id, breakdown)."""
+    return (
+        facts.get("entity_level", "account"),
+        facts.get("entity_id"),
+        facts.get("breakdown_scope"),
+    )
+
+
+def observations_comparable(
+    current: Mapping[str, object], previous: Mapping[str, object]
+) -> bool:
+    """True only when both observations carry the same entity scope."""
+    return comparable_identity(current) == comparable_identity(previous)
+
+
 # Facts keys that map to a signal id directly.
 _BOOL_KEYS: dict[str, str] = {
     "old_creative_worse": "old_creative_worse",
@@ -115,6 +139,7 @@ _CROSS_AGGREGATIONS: dict[str, str] = {
     "cvr_trend_down": "cross_cvr_drop",
     "registration_rate_trend_down": "cross_registration_drop",
     "install_rate_trend_down": "cross_install_drop",
+    "cpm_trend_up": "cross_cpm_up",
 }
 
 
@@ -164,11 +189,14 @@ def derive_change_pcts(
 ) -> dict[str, float]:
     """Current-vs-previous relative movement for comparable raw metrics.
 
-    Comparability = the same metric key exists in BOTH observations (the
-    runtime guarantees same-platform selection); an absent or zero previous
-    value produces NO change (never guessed). The returned change_pct
-    values are consumed by the same thresholds as explicit change_pct.
+    Comparability (v3.5.3) = same platform AND same entity scope (level /
+    entity_id / breakdown); the same metric key must exist in BOTH
+    observations; an absent or zero previous value produces NO change
+    (never guessed). The returned change_pct values are consumed by the
+    same thresholds as explicit change_pct.
     """
+    if not observations_comparable(current, previous):
+        return {}
     changes: dict[str, float] = {}
     for metric, trend_key in _HISTORY_METRIC_KEYS.items():
         current_value = current.get(metric)
@@ -215,8 +243,13 @@ class EvidenceResult:
     shared_signals: dict[str, bool] = field(default_factory=dict)
     historical_comparisons: dict[str, dict[str, float]] = field(default_factory=dict)
     recent_change_context: dict[str, bool] = field(default_factory=dict)
+    # v3.5.3: temporal metadata of the latest relevant change (audit).
+    change_context: dict[str, object] = field(default_factory=dict)
     decision_context: dict[str, object] = field(default_factory=dict)
     outcome_context: dict[str, object] = field(default_factory=dict)
+    # v3.5.3: per-platform latest context retained alongside global latest.
+    decisions_by_platform: dict[str, dict[str, object]] = field(default_factory=dict)
+    outcomes_by_platform: dict[str, dict[str, object]] = field(default_factory=dict)
 
 
 def build_evidence(
@@ -228,6 +261,8 @@ def build_evidence(
     recent_outcomes: tuple[Mapping[str, object], ...] = (),
     measurement_state: str = "unknown",
     maturity_state: str = "unknown",
+    current_observed_at: Mapping[str, str] | None = None,
+    historical_observed_at: Mapping[str, str] | None = None,
 ) -> EvidenceResult:
     """Assemble runtime evidence with provenance.
 
@@ -288,16 +323,25 @@ def build_evidence(
         signals["cross_platform_comparison_available"] = True
         shared_signals["cross_platform_comparison_available"] = True
 
-    # Measurement conflict: >= 1 platform invalid while >= 1 is not.
+    # Measurement conflict (v3.5.3): exactly one platform EXPLICITLY
+    # invalid while another EXPLICITLY stable. invalid + unknown is NOT a
+    # conflict — it is incomplete coverage and stays conservative via the
+    # aggregate invalid semantics instead.
     measurement_states = {
-        platform: (metrics.get("measurement_state") or "unknown")
+        platform: str(metrics.get("measurement_state") or "unknown")
         for platform, metrics in per_platform.items()
     }
-    if any(s == "invalid" for s in measurement_states.values()) and any(
-        s != "invalid" for s in measurement_states.values()
+    if (
+        "invalid" in measurement_states.values()
+        and "stable" in measurement_states.values()
     ):
         signals["measurement_conflict"] = True
         shared_signals["measurement_conflict"] = True
+    # Shared measurement problem needs >= 2 platforms invalid (not the
+    # aggregate invalid of one platform + one unknown).
+    if sum(s == "invalid" for s in measurement_states.values()) >= 2:
+        signals["cross_measurement_invalid"] = True
+        shared_signals["cross_measurement_invalid"] = True
 
     add_context_signals(
         signals,
@@ -305,48 +349,129 @@ def build_evidence(
         maturity_state=maturity_state,
     )
 
-    # Recent confirmed changes → confounder evidence (v3.5.2). Only facts
-    # already present in Change events are projected; no invented taxonomy.
+    # Recent confirmed changes → confounder evidence (v3.5.3 temporal
+    # semantics): a stored Change is NOT automatically recent. It is a
+    # current confounder only when baseline_observed_at < effective_at
+    # <= current_observed_at (the change intervened between the comparable
+    # baseline and today). Changes before the baseline were already part
+    # of the baseline state. Without usable timestamps the signal stays
+    # off (age metadata is still retained for audit).
     recent_change_context: dict[str, bool] = {}
+    change_context: dict[str, object] = {}
+    baseline_time = (
+        next(iter(historical_observed_at.values()), None)
+        if historical_observed_at
+        else None
+    )
     for event in recent_changes:
         payload = event.get("payload")
         if not isinstance(payload, Mapping):
             payload = {}
         change_type = payload.get("change_type")
         direction = payload.get("direction")
+        effective = payload.get("effective_at") or event.get("observed_at")
+        current_time = (
+            next(iter(current_observed_at.values()), None)
+            if current_observed_at
+            else None
+        )
+        intervening = False
+        if effective and current_time:
+            if baseline_time is None or str(baseline_time) < str(effective):
+                if str(effective) <= str(current_time):
+                    intervening = True
         if change_type == "budget":
-            recent_change_context["recent_budget_change"] = True
+            if intervening:
+                recent_change_context["recent_budget_change"] = True
+            change_context["last_budget_change_effective_at"] = effective
         elif change_type == "bid":
-            recent_change_context["recent_bid_change"] = True
-        elif change_type in ("creative", "audience", "campaign"):
-            recent_change_context["recent_creative_change"] = True
+            if intervening:
+                recent_change_context["recent_bid_change"] = True
+            change_context["last_bid_change_effective_at"] = effective
+        elif change_type == "creative":
+            if intervening:
+                recent_change_context["recent_creative_change"] = True
+            change_context["last_creative_change_effective_at"] = effective
+        elif change_type == "audience":
+            if intervening:
+                recent_change_context["recent_audience_change"] = True
+            change_context["last_audience_change_effective_at"] = effective
+        elif change_type == "campaign":
+            if intervening:
+                recent_change_context["recent_campaign_change"] = True
+            change_context["last_campaign_change_effective_at"] = effective
+        elif change_type == "campaign_restart":
+            if intervening:
+                recent_change_context["recent_campaign_restart"] = True
+            change_context["last_campaign_restart_effective_at"] = effective
         if direction:
-            recent_change_context["last_change_direction"] = True
+            change_context["last_change_direction"] = direction
+        change_context["change_effective_at"] = effective
     for signal_id in recent_change_context:
         if signal_id in _BOOL_KEYS.values():
             signals[signal_id] = True
+            # Confounders are runtime-wide facts: visible to every
+            # platform-bound evaluation (v3.5.3 provenance semantics).
+            for platform_signals in signals_by_platform.values():
+                platform_signals[signal_id] = True
 
     # Prior recommendation and outcome are CONTEXT, never factual support.
+    # Global latest is chosen by canonical timestamp (effective_at /
+    # observed_at) with deterministic event_id tie-break, NOT by tuple
+    # order (v3.5.3); per-platform latest is retained alongside.
+    def _event_timestamp(event: Mapping[str, object]) -> str:
+        payload = event.get("payload")
+        if isinstance(payload, Mapping):
+            effective = payload.get("effective_at")
+            if isinstance(effective, str):
+                return effective
+        observed = event.get("observed_at")
+        return str(observed) if isinstance(observed, str) else ""
+
+    def _sort_key(event: Mapping[str, object]) -> tuple[str, str]:
+        return (_event_timestamp(event), str(event.get("event_id", "")))
+
+    def _latest_by_platform(
+        events: tuple[Mapping[str, object], ...],
+    ) -> tuple[dict[str, dict[str, object]], Mapping[str, object] | None]:
+        by_platform: dict[str, dict[str, object]] = {}
+        for event in events:
+            platform = event.get("platform")
+            if not isinstance(platform, str) or platform in by_platform:
+                continue
+            payload = event.get("payload")
+            by_platform[platform] = {
+                "event_id": event.get("event_id"),
+                "observed_at": event.get("observed_at"),
+                **(dict(payload) if isinstance(payload, Mapping) else {}),
+            }
+        global_latest: Mapping[str, object] | None = (
+            max(events, key=_sort_key) if events else None
+        )
+        return by_platform, global_latest
+
+    decisions_by_platform, latest_decision = _latest_by_platform(recent_decisions)
     decision_context: dict[str, object] = {}
-    if recent_decisions:
-        latest = recent_decisions[0]
-        payload = latest.get("payload")
+    if latest_decision is not None:
+        payload = latest_decision.get("payload")
         if not isinstance(payload, Mapping):
             payload = {}
         decision_context["decision_class"] = payload.get("decision_class")
         decision_context["review_condition"] = payload.get("review_condition")
         decision_context["review_after"] = payload.get("review_after")
         decision_context["confidence"] = payload.get("confidence")
+        decision_context["observed_at"] = latest_decision.get("observed_at")
+    outcomes_by_platform, latest_outcome = _latest_by_platform(recent_outcomes)
     outcome_context: dict[str, object] = {}
-    if recent_outcomes:
-        latest = recent_outcomes[0]
-        payload = latest.get("payload")
+    if latest_outcome is not None:
+        payload = latest_outcome.get("payload")
         if not isinstance(payload, Mapping):
             payload = {}
         outcome_context["outcome_class"] = payload.get("outcome_class")
         outcome_context["evidence_status"] = payload.get("evidence_status")
-        outcome_context["linked_decision"] = latest.get("decision_id")
-        outcome_context["linked_change"] = latest.get("change_id")
+        outcome_context["linked_decision"] = latest_outcome.get("decision_id")
+        outcome_context["linked_change"] = latest_outcome.get("change_id")
+        outcome_context["observed_at"] = latest_outcome.get("observed_at")
 
     return EvidenceResult(
         signals=signals,
@@ -354,8 +479,11 @@ def build_evidence(
         shared_signals=shared_signals,
         historical_comparisons=historical_comparisons,
         recent_change_context=recent_change_context,
+        change_context=change_context,
         decision_context=decision_context,
         outcome_context=outcome_context,
+        decisions_by_platform=decisions_by_platform,
+        outcomes_by_platform=outcomes_by_platform,
     )
 
 

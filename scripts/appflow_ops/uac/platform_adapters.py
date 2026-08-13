@@ -99,6 +99,11 @@ _COMMON_METRIC_KEYS = (
     "install_rate",
     "registration_rate",
     "pay_rate",
+    # v3.5.3: comparability provenance — same entity scope is required
+    # for derived trends (absent fields default to account-level).
+    "entity_level",
+    "entity_id",
+    "breakdown_scope",
     # Decision Intelligence evidence bridge (v3.5.1): explicit trend
     # strings, numeric relative movement, and boolean operational facts
     # pass through observation projection so raw evidence can reach the

@@ -2,7 +2,28 @@
 
 All notable changes to AppFlow Ops are documented here.
 
-## 3.5.2 — 2026-08-13
+## 3.5.3 — 2026-08-13
+
+### Added
+
+- **Provenance-aware hypothesis evaluation**: `evaluate_hypotheses()` consumes an `EvidenceResult` instead of a flat dict; platform-bound hypotheses are evaluated PER PLATFORM against that platform's own `signals_by_platform` (e.g. `auction_pressure@meta` vs `auction_pressure@google_ads`); every evaluation carries `platform` attribution; `DecisionIntelligenceResult.top_platform` tells the user output whether the conclusion is Meta-side or shared.
+- **Shared-only cross-platform evidence**: `market_wide_event` requires `cross_cpm_up` (≥ 2 platforms rising) instead of a single platform's `cpm_trend_up`; `shared_measurement_issue` requires `cross_measurement_invalid` (≥ 2 platforms invalid) or a real conflict — a single platform's aggregate invalid no longer promotes it.
+- **Historical comparable-identity checks**: derived trends require the same (entity_level, entity_id, breakdown_scope) — same platform alone never implies comparable observations; different entity/level/breakdown fails conservative (no trend).
+- **Temporal Change relevance**: a stored Change is a confounder only when `baseline_observed_at < effective_at <= current_observed_at` (intervening); changes before the baseline or very old changes are never `recent_*`; age metadata (`last_budget_change_effective_at` etc.) retained for audit.
+- **Distinct creative/audience/campaign change context**: `recent_creative_change` / `recent_audience_change` / `recent_campaign_change` / `recent_campaign_restart` replace the merged semantics.
+- **Global temporal context ordering**: latest previous Decision/Outcome chosen by canonical timestamp (effective_at / observed_at) with deterministic event_id tie-break; per-platform latest retained (`decisions_by_platform` / `outcomes_by_platform`).
+
+### Fixed
+
+- **Cross-platform signal splicing**: Meta pay↓ + TikTok stable can no longer support TikTok `pay_funnel_degradation`; a platform-bound evaluation never consumes another platform's signals.
+- **Single-platform evidence supporting shared hypotheses**: one-platform CPM↑ no longer supports `market_wide_event`; one-platform pay↓ never promotes `shared_product_funnel_issue`.
+- **False market-wide evidence**: `market_wide_event` needs true cross-platform CPM evidence.
+- **Non-comparable historical trend derivation**: Campaign A → Campaign B no longer derives `ctr_trend_down`.
+- **Stale Change permanently treated as recent**: two-month-old budget changes are no longer confounders.
+- **invalid+unknown misclassified as measurement conflict**: only explicit invalid+stable is a conflict; incomplete coverage stays conservative.
+- **Cross-platform context latest-event ordering**: tuple order no longer decides the latest Decision/Outcome.
+
+Eval set expanded 52 → 60 real scenarios (splicing regression, market-wide FP, comparability, temporal confounder, change types, invalid+unknown vs invalid+stable).
 
 ### Added
 

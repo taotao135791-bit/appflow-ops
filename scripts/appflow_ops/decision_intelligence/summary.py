@@ -113,7 +113,19 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
     lines: list[str] = []
 
     if result.convergence_status == "converged":
-        lines.append(f"更像{_label(result.top_hypothesis or '')}，先做最小动作。")
+        # v3.5.3: the top evaluation carries platform attribution — the
+        # answer says WHICH platform the conclusion applies to.
+        if result.top_platform and result.top_platform != "cross_platform":
+            lines.append(
+                f"更像 {result.top_platform} 侧的{_label(result.top_hypothesis or '')}，"
+                "先做最小动作。"
+            )
+        elif result.top_platform == "cross_platform":
+            lines.append(
+                f"更像两个媒体共同的{_label(result.top_hypothesis or '')}，先做最小动作。"
+            )
+        else:
+            lines.append(f"更像{_label(result.top_hypothesis or '')}，先做最小动作。")
     elif result.convergence_status == "investigate":
         lines.append("候选原因并存，先别下结论——补充证据再收敛。")
     elif result.convergence_status == "wait":

@@ -58,6 +58,12 @@ SIGNAL_IDS = (
     "cross_registration_drop",
     "cross_install_drop",
     "cross_platform_comparison_available",
+    "cross_cpm_up",
+    "cross_measurement_invalid",
+    "recent_creative_change",
+    "recent_audience_change",
+    "recent_campaign_change",
+    "recent_campaign_restart",
     "store_loading_issue",
     "downstream_conversion_down",
     "traffic_quality_signal",
@@ -397,7 +403,7 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         domain="measurement",
         applicable_platforms=("cross_platform",),
         supporting_signals=(
-            "measurement_invalid",
+            "cross_measurement_invalid",
             "measurement_conflict",
             "cross_pay_rate_drop",
             "cross_cvr_drop",
@@ -409,7 +415,10 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         id="platform_specific_independent_issues",
         label="平台各自独立问题",
         domain="general",
-        applicable_platforms=("cross_platform",),
+        # Generic fallback (v3.5.3): it concludes "some platform has its
+        # own independent problem" from per-platform signals — it is not a
+        # shared diagnosis and must not consume shared evidence only.
+        applicable_platforms=("*",),
         supporting_signals=("delivery_mix_shifted", "only_one_creative_declines"),
         contradicting_signals=("multi_creative_impacted",),
         required_evidence=("per_platform_comparison",),
@@ -421,12 +430,11 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         domain="delivery",
         applicable_platforms=("cross_platform",),
         supporting_signals=(
-            "cpm_trend_up",
-            "multi_creative_impacted",
-            "ctr_trend_stable",
+            "cross_cpm_up",
+            "cross_platform_comparison_available",
         ),
-        contradicting_signals=("cpm_trend_stable",),
-        required_evidence=("market_context",),
+        contradicting_signals=("cross_pay_rate_stable",),
+        required_evidence=("cross_platform_comparison",),
         possible_actions=("wait", "observe"),
     ),
 )

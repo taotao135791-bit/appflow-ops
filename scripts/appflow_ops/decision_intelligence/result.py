@@ -36,6 +36,8 @@ class DecisionIntelligenceResult:
     missing_evidence: tuple[str, ...]
     next_discriminating_evidence: tuple[str, ...]
     safety_context: dict[str, str]  # measurement/maturity/policy/permission
+    # v3.5.3: platform attribution of the top evaluation (None = generic).
+    top_platform: str | None = None
     # v3.5.2: evidence provenance (per-platform signals, shared signals,
     # historical comparisons) — audit support, not default output.
     evidence: EvidenceResult | None = None
@@ -66,6 +68,7 @@ def from_convergence(
     point so the runtime entry and tests share identical semantics)."""
     top = ranked[0].evaluation if ranked else None
     return DecisionIntelligenceResult(
+        top_platform=top.platform if top is not None else None,
         platform_scope=platform_scope,
         operational_domain=operational_domain,
         evaluations=evaluations,

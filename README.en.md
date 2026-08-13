@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.2/install.sh | bash -s -- --ref=v3.5.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.3/install.sh | bash -s -- --ref=v3.5.3
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -426,6 +426,18 @@ decline never promotes a shared diagnosis); a DI recommendation cannot be
 silently overridden (explicit operator overrides carry
 origin=operator_override); platform_scope is the single source of truth
 for cross-platform semantics.
+
+From v3.5.3 evidence is truly ATTACHED to the platform, entity and time that
+produced it: provenance-aware evaluation (auction_pressure@meta and
+@google_ads are evaluated independently; Meta signals are never spliced
+into Google conclusions); shared hypotheses consume shared evidence only
+(a single-platform CPM rise never supports market_wide_event — it needs
+cross_cpm_up from ≥ 2 platforms); derived trends require the same
+entity/level/breakdown (Campaign A yesterday + Campaign B today is not a
+CTR decline); "latest stored change" ≠ "current confounder" (only a
+change intervening between baseline and current counts); invalid+unknown
+is never mislabeled as measurement conflict; the user answer knows whether
+the conclusion is "Meta-side" or "shared across both media".
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

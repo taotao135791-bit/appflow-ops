@@ -72,6 +72,7 @@ def rank_hypotheses(
             _STATUS_ORDER.get(ev.status, 5),
             -ev.score,
             ev.hypothesis.id,
+            ev.platform or "",
         ),
     )
     return tuple(
