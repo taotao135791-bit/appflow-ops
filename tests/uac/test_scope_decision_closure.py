@@ -394,7 +394,7 @@ def test_diagnosis_confidence_persisted_with_decision(workspace) -> None:
 def test_cross_platform_mixed_measurement_no_confirmed_diagnosis(workspace) -> None:
     _set_permission(workspace, ["budget", "bid"])
     run = PlatformOperationalRun(workspace)
-    run.begin()
+    run.begin(platform_scope=("google_ads", "meta"))
     run.record_observation(
         _google_metrics(measurement_state="stable"),
         platform="google_ads",

@@ -51,16 +51,66 @@ _PLATFORM_HINTS: tuple[tuple[str, re.Pattern[str]], ...] = (
     # tt must not match inside English words ("attention"), but must match
     # "TT还是没量" where the boundary is CJK.
     ("tiktok", re.compile(r"tiktok|(?:^|[^a-z])tt(?:[^a-z]|$)", re.IGNORECASE)),
+)
+
+# Operational domains are NOT media platforms: "creative" keywords shape
+# the diagnosis domain, never the platform scope (v3.4.6 boundary).
+_DOMAIN_HINTS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("creative", re.compile(r"素材|creative|广告创意", re.IGNORECASE)),
 )
 
 
 def detect_platforms(text: str) -> tuple[str, ...]:
     """Lightweight platform-scope detection from a request (Router may
-    override with an explicit ``platform_scope``). Unknown stays empty."""
+    override with an explicit ``platform_scope``). Unknown stays empty.
+    Creative/domain keywords are deliberately NOT platforms here — a
+    "Meta 素材是不是衰减" request yields (meta,) with domain_hint=creative.
+    """
     return tuple(
         platform for platform, pattern in _PLATFORM_HINTS if pattern.search(text)
     )
+
+
+def detect_domain(text: str) -> str | None:
+    """Operational domain hint (creative / funnel / measurement / ...) for
+    routing and context only — never part of the platform scope."""
+    for domain, pattern in _DOMAIN_HINTS:
+        if pattern.search(text):
+            return domain
+    return None
+
+
+def canonicalize_platform_scope(
+    scope: tuple[str, ...] | None,
+) -> tuple[str, ...]:
+    """Single canonicalization + validation for EVERY platform scope
+    entering the runtime (explicit and router-detected alike):
+
+    - registered platforms only (from the adapter registry; an unknown
+      platform is rejected BEFORE begin completes)
+    - duplicates removed (("meta", "meta") is ONE platform, never a
+      cross-platform run)
+    - deterministic ordering (sorted)
+    - bounded by MAX_PLATFORM_SCOPE (oversized scope is rejected, never
+      silently truncated)
+    """
+    if not scope:
+        return ()
+    seen: list[str] = []
+    for platform in scope:
+        if adapter_for(platform) is None:
+            raise ContractError(
+                f"unknown platform in platform_scope {platform!r}: no adapter "
+                "registered"
+            )
+        if platform not in seen:
+            seen.append(platform)
+    if len(seen) > MAX_PLATFORM_SCOPE:
+        raise ContractError(
+            f"platform_scope exceeds MAX_PLATFORM_SCOPE={MAX_PLATFORM_SCOPE}: "
+            f"{len(seen)} unique platforms {seen}"
+        )
+    return tuple(sorted(seen))
 
 
 @dataclass(frozen=True)
@@ -100,6 +150,7 @@ class OperationalContext:
     state_context: dict[str, Any] | None
     current_observation: dict[str, Any] | None = None
     current_observations: dict[str, Any] = field(default_factory=dict)
+    domain_hint: str | None = None
     hypotheses: tuple[str, ...] = ()
     safety: PlatformSafetyContext = field(default_factory=PlatformSafetyContext)
 
@@ -219,11 +270,18 @@ class PlatformOperationalRun:
         self.request = request_text or ""
         self.session = StateSession(self.context)  # new run_id + empty dedupe
         self.store = StateStore(self.context)
-        self.platform_scope = tuple(
-            platform_scope or self.explicit_platform_scope or ()
+        # EVERY scope entering the runtime is canonicalized here (explicit
+        # and router-detected alike): registered-only, unique, sorted,
+        # bounded by MAX_PLATFORM_SCOPE. Failures happen at the run
+        # boundary, never later inside persistence.
+        self.platform_scope = canonicalize_platform_scope(
+            platform_scope or self.explicit_platform_scope
         )
         if not self.platform_scope and request_text:
-            self.platform_scope = detect_platforms(request_text)
+            self.platform_scope = canonicalize_platform_scope(
+                detect_platforms(request_text)
+            )
+        self.domain_hint = detect_domain(self.request)
         self.policy_state = self._resolve_policy_state(policy_state)
         self.permission_state = self._permission_state()
         self.state_access = StateAccess.NOT_NEEDED
@@ -286,6 +344,20 @@ class PlatformOperationalRun:
             raise ContractError(
                 "the 'generic' adapter requires allow_generic=True (explicit opt-in)"
             )
+        # Platform Scope Boundary: evidence must obey the run's scope. A
+        # scoped run rejects out-of-scope observations BEFORE anything is
+        # persisted or enters current context. An EMPTY run binds to its
+        # first valid platform observation (from then on it is a
+        # single-platform run and can never silently expand).
+        if self.platform_scope:
+            if platform not in self.platform_scope:
+                raise ContractError(
+                    f"observation_platform_outside_run_scope: platform "
+                    f"{platform!r} is not in the run's platform scope "
+                    f"{self.platform_scope}"
+                )
+        else:
+            self.platform_scope = canonicalize_platform_scope((platform,))
         facts = adapter.project_observation(metrics)
         funnel = adapter.project_funnel(metrics)
         facts.update(funnel)
@@ -341,15 +413,13 @@ class PlatformOperationalRun:
             single = self.platform_scope[0] if self.platform_scope else None
             found = adapter_for(single) if single else None
             hypotheses = found.hypothesis_families if found else ()
+        # Single-platform current observation is EXACT-platform only — a
+        # Meta run never falls back to another platform's evidence (no
+        # arbitrary "last" substitution). Cross-platform runs keep the
+        # per-platform map; the scalar convenience is None.
         current_observation = None
-        if self._current_observations:
-            last = list(self._current_observations.values())[-1]
-            if len(self.platform_scope) == 1:
-                current_observation = self._current_observations.get(
-                    self.platform_scope[0], last
-                )
-            else:
-                current_observation = last
+        if len(self.platform_scope) == 1:
+            current_observation = self._current_observations.get(self.platform_scope[0])
         return OperationalContext(
             request=self.request,
             workspace=self.workspace,
@@ -357,6 +427,7 @@ class PlatformOperationalRun:
             state_context=self._platform_state,
             current_observation=current_observation,
             current_observations=dict(self._current_observations),
+            domain_hint=self.domain_hint,
             hypotheses=hypotheses,
             safety=safety,
         )
@@ -657,16 +728,14 @@ class PlatformOperationalRun:
         return relevant[-1]
 
     def _decision_platform(self) -> tuple[str | None, tuple[str, ...]]:
-        """Platform attribution inherited from the run's scope; when the
-        scope is empty but this run recorded exactly one platform's
-        observation, that platform is inherited (never guessed from
-        history)."""
+        """Platform attribution inherited from the run's scope. An empty
+        scope run has NO platform (the first observation binds the scope,
+        so there is no observation-only inference fallback — attribution,
+        safety, retrieval and context all share the same boundary)."""
         if len(self.platform_scope) == 1:
             return self.platform_scope[0], ()
         if len(self.platform_scope) > 1:
             return "cross_platform", self.platform_scope
-        if len(self._current_observations) == 1:
-            return next(iter(self._current_observations)), ()
         return None, ()
 
     def _resolve_policy_state(self, explicit: str | None) -> str:

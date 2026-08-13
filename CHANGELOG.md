@@ -2,6 +2,40 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.4.6 — 2026-08-12
+
+### Fixed
+
+- **Observations can no longer escape the active run platform scope**: a
+  scoped run rejects out-of-scope observations
+  (`observation_platform_outside_run_scope`) before anything is persisted
+  or enters current context — a Meta run can never absorb TikTok
+  evidence, and cross-platform runs reject third platforms.
+- **Explicit platform scopes are canonicalized and bounded at begin**: one
+  `canonicalize_platform_scope()` for explicit and router-detected scopes
+  alike — registered platforms only (adapter registry), duplicates
+  removed (("meta", "meta") is ONE platform, never cross-platform),
+  deterministic sorted order, and > MAX_PLATFORM_SCOPE rejected (never
+  silently truncated). Unknown platforms fail at the run boundary.
+- **Empty runs bind consistently to the first valid platform
+  observation**: begin() with no scope binds (meta,); safety, decision
+  attribution and persistence all use the same bound boundary; a bound
+  single-platform run never silently expands to another platform
+  (multi-platform requires an explicit scope).
+- **Single-platform current observation no longer falls back to another
+  platform**: `current_observation` is the run platform's own evidence or
+  None — the arbitrary "last observation" substitution is gone; the
+  `_decision_platform` observation-only inference fallback was removed as
+  unreachable.
+
+### Changed
+
+- **Documented distinction between media platform scope and operational
+  domain routing**: creative/funnel/measurement keywords produce a
+  lightweight `operational_domain_hint` (context-only); the creative
+  adapter stays registered and backward compatible — the domain
+  separation migration belongs to Ads Decision Intelligence.
+
 ## 3.4.5 — 2026-08-12
 
 ### Fixed

@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.5/install.sh | bash -s -- --ref=v3.4.5
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.4.6/install.sh | bash -s -- --ref=v3.4.6
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -395,6 +395,10 @@ Runtime / State / Safety infrastructure.
 AppFlow ranks evidence-backed hypotheses and converges to the smallest
 useful operational action — it does not promise AI can always identify
 the true cause.
+
+Ads Decision Intelligence will separate platform scope from operational
+diagnosis domain, supporting cases such as Meta + Creative, TikTok +
+Funnel, Google + Measurement.
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

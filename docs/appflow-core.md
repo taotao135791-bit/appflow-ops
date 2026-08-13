@@ -215,6 +215,33 @@ component; this runtime does not replace it.
   scope — a ghost event invisible to every platform filter) are rejected;
   legacy events stay readable.
 
+### Platform Scope Boundary (v3.4.6)
+
+A platform-scoped operational run must never reason from another
+platform's evidence. The run's platform scope is a hard operational
+boundary:
+
+- **Canonicalized at begin**: every scope entering the runtime (explicit
+  and router-detected alike) passes `canonicalize_platform_scope()` —
+  registered platforms only (adapter registry), unique, deterministic
+  (sorted), bounded by MAX_PLATFORM_SCOPE (oversized scopes are rejected,
+  never truncated).
+- **Observations obey scope**: a scoped run rejects out-of-scope
+  observations (`observation_platform_outside_run_scope`) BEFORE
+  persistence or context; rejected evidence never enters
+  `_current_observations`.
+- **Empty runs bind**: an empty run binds to its first valid platform
+  observation and becomes a single-platform run; it can never silently
+  expand to another platform (multi-platform requires an explicit scope).
+- **Current evidence is exact-platform only**: a single-platform run's
+  `current_observation` is the run platform's own evidence or None — no
+  arbitrary last-observation fallback across platforms.
+- **Domains are not platforms**: creative/funnel/measurement keywords
+  produce an `operational_domain_hint` for routing/context only, never
+  platform scope entries; the creative adapter remains registered for
+  backward compatibility (domain separation is Ads Decision Intelligence
+  work).
+
 ## PlatformAdapter (thin contract)
 
 Keep the contract minimal — projections and vocabulary, no framework:

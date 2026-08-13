@@ -88,6 +88,20 @@ investigate them; explore broadly internally, answer concisely externally.
   it.
 - **Cross-platform aggregation must treat missing safety state for an
   in-scope platform as `unknown`, not silently ignore that platform.**
+- **A run's platform scope is a hard operational boundary.**
+  Platform-bound observations outside that scope must be rejected
+  (never persisted, never entering current context).
+- **An empty run may bind to its first valid platform observation, but a
+  bound single-platform run must never silently expand to another
+  platform.** Explicit scopes are canonicalized at begin (registered-only,
+  unique, sorted, ≤ MAX_PLATFORM_SCOPE).
+
+- **Operational domains are not media platforms.** Creative/funnel/
+  measurement keywords shape the diagnosis domain hint, never the
+  platform scope (a "Meta 素材" request is platform_scope=[meta] with
+  domain_hint=creative). Creative adapter stays registered for
+  backward compatibility; the domain separation migration belongs to
+  Ads Decision Intelligence.
 
 ## Layout
 

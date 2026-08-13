@@ -19,6 +19,7 @@ from .uac.operational_runtime import (
     PlatformOperationalRun,
     PlatformSafetyContext,
     build_operational_context,
+    detect_domain,
     detect_platforms,
 )
 from .uac.platform_adapters import (
@@ -61,5 +62,6 @@ __all__ = [
     "build_state_context",
     "classify_request",
     "classify_state_access",
+    "detect_domain",
     "detect_platforms",
 ]

@@ -25,6 +25,7 @@ from appflow_ops.runtime import (
     META,
     TIKTOK,
     PlatformOperationalRun,
+    detect_domain,
     detect_platforms,
 )
 from appflow_ops.uac.account_state import RunContext
@@ -80,7 +81,9 @@ def _tiktok_metrics(**overrides: float | str) -> dict:
 def test_detect_platforms() -> None:
     assert detect_platforms("Meta 这两天为什么越来越贵？") == ("meta",)
     assert detect_platforms("TT还是没量") == ("tiktok",)
-    assert detect_platforms("这个素材还能跑吗？") == ("creative",)
+    assert detect_platforms("这个素材还能跑吗？") == ()
+    assert detect_domain("这个素材还能跑吗？") == "creative"
+    assert detect_domain("Meta 素材是不是衰减") == "creative"
     assert detect_platforms("Google 和 Meta 都掉了") == ("google_ads", "meta")
     assert detect_platforms("CTR 是什么？") == ()
 
@@ -90,7 +93,7 @@ def test_detect_platforms() -> None:
 
 def test_cross_platform_retrieval_does_not_starve_google(workspace) -> None:
     run = PlatformOperationalRun(workspace)
-    run.begin()
+    run.begin(platform_scope=("google_ads", "meta"))
     # Meta writes 10 recent observations; Google only 2, both OLDER.
     for index in range(10):
         run.record_observation(
@@ -98,9 +101,8 @@ def test_cross_platform_retrieval_does_not_starve_google(workspace) -> None:
             platform="meta",
             observed_at=f"2026-08-0{index + 1}T09:00:00Z",
         )
-    run.record_observation(
-        _tiktok_metrics(), platform="tiktok", observed_at="2026-08-01T09:00:00Z"
-    )
+    # (out-of-scope evidence is rejected by the scope boundary; only
+    # in-scope platforms are written here)
     run.record_observation(
         {"spend": 900.0, "installs": 120, "measurement_state": "stable"},
         platform="google_ads",
@@ -126,15 +128,19 @@ def test_cross_platform_retrieval_does_not_starve_google(workspace) -> None:
 
 
 def test_single_platform_request_only_loads_that_platform(workspace) -> None:
-    run = PlatformOperationalRun(workspace)
-    run.begin()
-    run.record_observation(
+    # History is written per-platform by scoped runs.
+    meta_run = PlatformOperationalRun(workspace)
+    meta_run.begin(request_text="Meta 这两天为什么越来越贵？")
+    meta_run.record_observation(
         _meta_metrics(), platform="meta", observed_at="2026-08-01T09:00:00Z"
     )
-    run.record_observation(
+    meta_run.finish()
+    tiktok_run = PlatformOperationalRun(workspace)
+    tiktok_run.begin(request_text="TT还是没量")
+    tiktok_run.record_observation(
         _tiktok_metrics(), platform="tiktok", observed_at="2026-08-01T09:00:00Z"
     )
-    run.finish()
+    tiktok_run.finish()
 
     followup = PlatformOperationalRun(workspace)
     followup.begin(request_text="Meta 这两天为什么越来越贵？")
@@ -416,7 +422,7 @@ def test_creative_insufficient_evidence_converges_to_observe(workspace) -> None:
 
 def test_cross_platform_e2e_both_platforms_evidence(workspace) -> None:
     run = PlatformOperationalRun(workspace)
-    run.begin()
+    run.begin(platform_scope=("google_ads", "meta"))
     run.record_observation(
         _meta_metrics(ctr=0.008), platform="meta", observed_at="2026-08-10T09:00:00Z"
     )

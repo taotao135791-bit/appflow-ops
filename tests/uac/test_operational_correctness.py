@@ -133,7 +133,7 @@ def test_meta_previous_decision_retrieved_platform_filtered(workspace) -> None:
     run.finish()
     # TikTok run: its own decision stays separate.
     run = PlatformOperationalRun(workspace)
-    run.begin(request_text="TT还是没量")
+    run.begin(request_text="TT还是没量", platform_scope=("tiktok",))
     run.record_observation(
         _tiktok_metrics(), platform="tiktok", observed_at="2026-08-10T09:00:00Z"
     )
@@ -179,7 +179,7 @@ def test_next_day_meta_followup_finds_previous_decision(workspace) -> None:
 
 def test_tiktok_measurement_cannot_pollute_meta(workspace) -> None:
     run = PlatformOperationalRun(workspace)
-    run.begin()
+    run.begin(platform_scope=("tiktok", "meta"))
     run.record_observation(
         _tiktok_metrics(measurement_state="stable"),
         platform="tiktok",
@@ -203,7 +203,7 @@ def test_tiktok_measurement_cannot_pollute_meta(workspace) -> None:
 
 def test_cross_platform_mixed_safety_not_flattened(workspace) -> None:
     run = PlatformOperationalRun(workspace)
-    run.begin()
+    run.begin(platform_scope=("google_ads", "meta"))
     run.record_observation(
         {"spend": 900.0, "installs": 120, "measurement_state": "stable"},
         platform="google_ads",
