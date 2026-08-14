@@ -30,7 +30,15 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from .calibration import SCALE_ACTIONS, scale_eligibility
+from .calibration import (
+    SCALE_ACTIONS,
+    evaluate_action_readiness,
+    evaluate_descale_candidate,
+    resolve_action_lever,
+    resolve_action_magnitude,
+    resolve_creative_action,
+    scale_eligibility,
+)
 from .evaluator import SUPPORTED_THRESHOLD, HypothesisEvaluation
 
 _STATUS_ORDER: dict[str, int] = {
@@ -145,6 +153,24 @@ class Convergence:
     # action but matter as context (market-wide event, ...) — warning
     # and aggressiveness influence, never a veto.
     material_context: tuple[MaterialContext, ...] = ()
+    # v3.6.4: action readiness (ready | wait | needs_more_evidence |
+    # not_eligible | None) — eligibility is NOT readiness: an action may
+    # be eligible in principle but not ready because the previous
+    # material change has not accumulated enough new evidence.
+    action_readiness: str | None = None
+    # v3.6.4: why a material action was deferred (e.g.
+    # recent_change_unsettled) — wait must explain itself.
+    wait_reason: str | None = None
+    # v3.6.4: what evidence should trigger the next review (e.g.
+    # more_pay_outcomes) — wait decisions always name the trigger.
+    next_review_trigger: str | None = None
+    # v3.6.4: small | normal | none — reversible magnitude; numeric
+    # Safety remains the final cap.
+    action_magnitude: str | None = None
+    # v3.6.4: the ONE material lever the action moves
+    # (budget | bid | creative | measurement | None) — sequencing means
+    # never moving two levers in one decision.
+    action_lever: str | None = None
 
 
 def rank_hypotheses(
@@ -286,6 +312,7 @@ def converge(
     maturity_state: str = "sufficient",
     safety_context: SafetyContext | None = None,
     action_context: Mapping[str, object] | None = None,
+    window_context: Mapping[str, object] | None = None,
 ) -> Convergence:
     """Converge to the smallest useful action (or an honest wait).
 
@@ -303,6 +330,16 @@ def converge(
     is gated by ``scale_eligibility`` — a budget/bid constraint is a
     DIAGNOSIS, not permission to scale; bad efficiency or an unsettled
     recent change downgrades the action to hold/wait.
+
+    Timing-aware (v3.6.4): when ``window_context`` carries the last
+    material Change and the current observation time, scale actions are
+    additionally gated by ``evaluate_action_readiness`` — eligibility
+    is NOT readiness; a second material action needs enough NEW evidence
+    (elapsed time + KPI-matched window outcomes) since the change.
+    Creative hypotheses are sequenced into refresh / retest / pause /
+    hold; a mature persistent deterioration can justify a small decrease
+    (descale) instead of an endless wait; the result carries magnitude
+    and the single lever being moved.
     """
     top = ranked[0].evaluation if ranked else None
     if top is None:
@@ -437,6 +474,20 @@ def converge(
         action = _first_action(top.hypothesis.id, top.hypothesis.possible_actions)
         if action is None:
             action = "observe"
+        # v3.6.4 §K/L: creative sequencing — fatigue is refresh / retest /
+        # pause / hold, not only replace; a creative issue never
+        # automatically causes a budget change.
+        if (
+            top.hypothesis.id
+            in (
+                "creative_fatigue",
+                "creative_message_mismatch",
+            )
+            and action_context is not None
+        ):
+            action = resolve_creative_action(
+                top.hypothesis.id, top.supporting, action_context
+            )
         # v3.6.0: Diagnosis != Action. A scaling action (increase/scale) is
         # only emitted when scale is actually eligible — a budget
         # constraint proves the cap, not that adding budget is wise.
@@ -444,12 +495,68 @@ def converge(
         # sufficient (headroom, outcome volume, sample, recent change).
         eligibility: str | None = None
         eligibility_reason: str | None = None
+        # v3.6.4: readiness fields — eligibility is NOT readiness.
+        action_readiness: str | None = None
+        wait_reason: str | None = None
+        next_review_trigger: str | None = None
         if action in SCALE_ACTIONS and action_context is not None:
             eligibility, eligibility_reason = scale_eligibility(action_context)
+            # v3.6.4 §B/G: readiness is evaluated whenever the potential
+            # action is a scale action — a recent material change must
+            # have accumulated enough NEW evidence (elapsed time + KPI-
+            # matched window outcomes). Eligibility and readiness are
+            # independent: pending change → hold even when eligible.
+            action_readiness, wait_reason, next_review_trigger = (
+                evaluate_action_readiness(action_context, window_context)
+            )
+            if (
+                action_readiness == "ready"
+                and eligibility_reason == "recent_change"
+                and window_context is not None
+            ):
+                # v3.6.4: the recent Change has been FULLY evaluated
+                # (elapsed time + KPI-matched new outcomes sufficient) —
+                # it is no longer an unsettled blocker. RE-EVALUATE
+                # eligibility without the recent-change confounder so
+                # the real KPI headroom decides (a bad KPI still blocks
+                # scale). Without a window context (library calls) the
+                # conservative recent_change gate stays.
+                rechecked = {
+                    key: value
+                    for key, value in action_context.items()
+                    if key not in ("recent_budget_change", "recent_bid_change")
+                }
+                eligibility, eligibility_reason = scale_eligibility(rechecked)
             if eligibility == "not_eligible":
                 action = "hold"
             elif eligibility == "needs_more_evidence":
                 action = "wait"
+            if action_readiness != "ready":
+                # Eligibility != readiness: the previous change is not
+                # settled — hold/wait with the timing reason, which is
+                # more specific than the eligibility reason.
+                if action in SCALE_ACTIONS or eligibility in (
+                    "eligible",
+                    "not_eligible",
+                ):
+                    action = "hold"
+                else:
+                    action = "wait"
+        elif action in ("wait", "observe") and action_context is not None:
+            # v3.6.4 §I: descale timing — a mature persistent
+            # deterioration can justify a small decrease instead of an
+            # endless wait (never right after a change, never on a tiny
+            # sample, never without a negative trend in the evidence).
+            if evaluate_descale_candidate(action_context, top.supporting):
+                action = "decrease"
+                eligibility = "eligible"
+                action_readiness = "ready"
+        # v3.6.4 §H/J: magnitude (small/normal/none) and the ONE lever.
+        material_context_ids = tuple(m.hypothesis_id for m in material_contexts)
+        magnitude = resolve_action_magnitude(
+            action, action_context or {}, material_context_ids
+        )
+        lever = resolve_action_lever(top.hypothesis.id)
         confidence = "high" if top.score >= 6 else "medium"
         return Convergence(
             decision=action,
@@ -463,6 +570,11 @@ def converge(
             eligibility_reason=eligibility_reason,
             parallel_issues=tuple(parallel_issues),
             material_context=tuple(material_contexts),
+            action_readiness=action_readiness,
+            wait_reason=wait_reason,
+            next_review_trigger=next_review_trigger,
+            action_magnitude=magnitude,
+            action_lever=lever,
             converged=True,
         )
 

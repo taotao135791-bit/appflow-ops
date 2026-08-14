@@ -485,7 +485,10 @@ def test_eval_case(case) -> None:
         ),
         # v3.6.0: action eligibility context — fixtures may declare
         # KPI/efficiency facts (cpa/target_cpa/...) to gate scale actions.
+        # v3.6.4: fixtures may also declare window_context (last change /
+        # current time) to gate action READINESS.
         action_context=case.get("action_context"),
+        window_context=case.get("window_context"),
     )
     if case.get("convergence_blocked"):
         assert result.converged is False, (
@@ -567,6 +570,28 @@ def test_eval_case(case) -> None:
         assert observed_context == set(case["expected_material_context"]), (
             f"{case['id']}: material_context {observed_context} != "
             f"{case['expected_material_context']}"
+        )
+    # v3.6.4: timing assertions — eligibility != readiness; wait must
+    # carry a reason and a next-review trigger; magnitude is small/normal.
+    if case.get("expected_action_readiness") is not None:
+        assert result.action_readiness == case["expected_action_readiness"], (
+            f"{case['id']}: action_readiness {result.action_readiness} != "
+            f"{case['expected_action_readiness']}"
+        )
+    if case.get("expected_wait_reason") is not None:
+        assert result.wait_reason == case["expected_wait_reason"], (
+            f"{case['id']}: wait_reason {result.wait_reason} != "
+            f"{case['expected_wait_reason']}"
+        )
+    if case.get("expected_next_review_trigger") is not None:
+        assert result.next_review_trigger == case["expected_next_review_trigger"], (
+            f"{case['id']}: next_review_trigger {result.next_review_trigger} != "
+            f"{case['expected_next_review_trigger']}"
+        )
+    if case.get("expected_action_magnitude") is not None:
+        assert result.action_magnitude == case["expected_action_magnitude"], (
+            f"{case['id']}: action_magnitude {result.action_magnitude} != "
+            f"{case['expected_action_magnitude']}"
         )
 
 

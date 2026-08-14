@@ -94,6 +94,7 @@ _ACTION_LABELS: dict[str, str] = {
     "wait": "先观察",
     "observe": "保持观察",
     "replace": "替换最弱的素材",
+    "refresh": "补新素材（保留旧赢家）",
     "retest": "小规模重测",
     "refresh_variant": "刷新变体",
     "increase": "小幅加量",
@@ -102,6 +103,28 @@ _ACTION_LABELS: dict[str, str] = {
     "keep": "保持现状",
     "pause": "暂停",
     "scale": "扩量",
+}
+
+# KPI type → user-facing name (v3.6.4 §A.5): the summary must name the
+# ACTUAL primary KPI, not always write "CPA".
+_KPI_LABELS: dict[str, str] = {
+    "cpi": "CPI",
+    "cpa": "CPA",
+    "registration_cpa": "Registration CPA",
+    "pay_cpa": "Pay CPA",
+    "purchase_cpa": "Purchase CPA",
+    "roas": "ROAS",
+}
+
+# wait_reason / next_review_trigger → user-facing phrase (v3.6.4 §M).
+_REVIEW_TRIGGER_LABELS: dict[str, str] = {
+    "more_outcomes": "积累更多转化",
+    "more_installs": "积累更多安装",
+    "more_registrations": "积累更多注册",
+    "more_pay_outcomes": "积累更多付费",
+    "more_purchase_outcomes": "积累更多购买",
+    "more_revenue_outcomes": "积累更多收入",
+    "more_evidence": "补充更多证据",
 }
 
 
@@ -146,7 +169,19 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
         # v3.6.0: Diagnosis != Action — a correct diagnosis does not make
         # its most obvious intervention eligible. Say it explicitly when a
         # scale action was blocked by eligibility.
-        if result.action_eligibility == "not_eligible" and (
+        # v3.6.4 §M/N: wait must say what it is waiting for — the
+        # previous material change has not accumulated enough NEW
+        # evidence; name the next review trigger. This is MORE specific
+        # than the generic eligibility reasons, so it comes first.
+        if result.action_readiness == "wait" and result.wait_reason:
+            trigger = _REVIEW_TRIGGER_LABELS.get(
+                result.next_review_trigger or "", "积累更多证据"
+            )
+            lines.append(
+                f"先别动。上次调整后的新样本还不够，暂时不能确认当前表现是新稳定水平"
+                f"——等{trigger}或进入下一个稳定窗口再判断。"
+            )
+        elif result.action_eligibility == "not_eligible" and (
             result.recommended_action in ("hold", "wait")
         ):
             if result.top_hypothesis in ("budget_constraint", "bid_constraint"):
@@ -202,10 +237,20 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
             "budget_constraint",
             "bid_constraint",
         ):
-            lines.append(
-                "可以考虑小幅加。预算/出价已经受限，CPA 明显低于目标，转化量和数据"
-                "稳定性都够——建议分阶段加，不要一次放太多。"
-            )
+            # v3.6.4 §A.5: name the ACTUAL primary KPI — CPI / Pay CPA /
+            # Purchase CPA / ROAS, never a hardcoded "CPA". ROAS is
+            # "明显高于目标"; cost KPIs are "明显低于目标".
+            kpi_label = _KPI_LABELS.get(result.primary_kpi or "", "CPA")
+            if result.primary_kpi == "roas":
+                lines.append(
+                    f"可以考虑小幅加。预算/出价已经受限，{kpi_label} 明显高于目标，"
+                    "转化量和数据稳定性都够——建议分阶段加，不要一次放太多。"
+                )
+            else:
+                lines.append(
+                    f"可以考虑小幅加。预算/出价已经受限，{kpi_label} 明显低于目标，"
+                    "转化量和数据稳定性都够——建议分阶段加，不要一次放太多。"
+                )
             # v3.6.1: cross-platform isolation — the selected platform scales
             # on its own evidence; other platforms' warnings are not vetoes.
             if result.top_platform and result.platform_warnings:
@@ -244,6 +289,58 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
                     f"另外{context_names}还在，不建议一次放太多——先小幅增加并观察成本"
                     "是否还能守住。"
                 )
+            # v3.6.4 §J: the ONE lever — budget vs bid sequencing is
+            # explicit in the user answer.
+            if result.action_lever == "budget":
+                lines.append(
+                    "先动预算，不动出价。当前主要是预算打满，而不是 bid 卡住；"
+                    "同时改两项会让下一轮无法判断到底哪个动作起作用。"
+                )
+            elif result.action_lever == "bid":
+                lines.append(
+                    "先动出价，不动预算。当前主要是 bid 受限；同时改两项会让下一轮"
+                    "无法判断到底哪个动作起作用。"
+                )
+        elif result.recommended_action == "decrease":
+            # v3.6.4 §I: real descale — mature persistent deterioration.
+            lines.append(
+                "现在可以收一点。数据已经成熟，成本持续明显高于目标，而且不是刚调整"
+                "造成的短期波动。建议先小幅降低，不要一次砍太多。"
+            )
+        elif result.recommended_action in ("refresh", "retest", "pause", "hold") and (
+            result.action_lever == "creative"
+        ):
+            # v3.6.4 §K: creative sequencing — a creative issue never
+            # automatically causes a budget change.
+            if result.recommended_action == "refresh":
+                lines.append(
+                    "先补新素材，不动预算。当前更像老素材疲劳，但整体 CPA 还能守住。"
+                    "优先 refresh，而不是因为素材问题先砍量。"
+                )
+            elif result.recommended_action == "retest":
+                lines.append(
+                    "素材证据还不够明确（可能受近期调整影响），先小规模重测，不要直接停。"
+                )
+            elif result.recommended_action == "pause":
+                lines.append(
+                    "这个素材的数据已经足够，且持续明显更差——可以先暂停它，不动预算。"
+                )
+            elif result.recommended_action == "hold":
+                lines.append(
+                    "先别停。新素材的数据还太少，现在判输赢太早。继续跑到一个有效测试"
+                    "窗口再看。"
+                )
+        elif result.action_readiness == "wait" and result.wait_reason:
+            # v3.6.4 §M/N: wait must say what it is waiting for — the
+            # previous material change has not accumulated enough NEW
+            # evidence; name the next review trigger.
+            trigger = _REVIEW_TRIGGER_LABELS.get(
+                result.next_review_trigger or "", "积累更多证据"
+            )
+            lines.append(
+                f"先别动。上次调整后的新样本还不够，暂时不能确认当前表现是新稳定水平"
+                f"——等{trigger}或进入下一个稳定窗口再判断。"
+            )
     elif (
         result.convergence_status == "investigate"
         and result.safety_block == "measurement_invalid"

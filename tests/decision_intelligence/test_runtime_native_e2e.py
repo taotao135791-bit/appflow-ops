@@ -76,7 +76,10 @@ def test_scenario1_meta_fatigue_raw_evidence(tmp_path) -> None:
     )
     assert auction.status == "weakened"
     assert result.convergence_status == "converged"
-    assert result.recommended_action in ("replace", "retest")
+    # v3.6.4: creative sequencing — fatigue with acceptable overall KPI
+    # is refresh (补新素材不动预算), not a blind replace.
+    assert result.recommended_action == "refresh"
+    assert result.action_lever == "creative"
     run.finish()
 
 

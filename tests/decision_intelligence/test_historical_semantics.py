@@ -255,13 +255,13 @@ def test_normal_di_persistence_preserves_recommended_action(workspace) -> None:
         observed_at="2026-08-13T09:00:00Z",
     )
     result = run.evaluate_decision_intelligence()
-    assert result.recommended_action in ("replace", "retest")
+    assert result.recommended_action in ("refresh", "replace", "retest")
     # The persisted Decision must carry the DI action — no swap possible.
     decision_id = run.record_decision_from_intelligence()
     if decision_id is not None:
         store = StateStore(RunContext.from_workspace(workspace))
         decision = store.get_event(decision_id)
-        assert decision["payload"]["decision_class"] in ("replace", "retest")
+        assert decision["payload"]["decision_class"] in ("refresh", "replace", "retest")
     run.finish()
 
 

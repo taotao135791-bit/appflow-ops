@@ -621,3 +621,67 @@ Generic conversions are NOT automatically revenue-generating outcomes.
 ROAS outcome volume prefers `purchases`; `conversions` count only when
 the declared conversion event maps to purchase/pay/revenue — unknown
 conversion meaning → `missing_outcome_volume` → needs_more_evidence.
+
+## Optimization Timing & Action Sequencing (v3.6.4)
+
+> WHEN TO ACT / WHICH ACTION FIRST. An action may be eligible in
+> principle but not ready now because the previous change has not
+> accumulated enough new evidence.
+
+### Action Eligibility vs Action Readiness
+
+> An action may be eligible in principle but not ready now because the
+> previous change has not accumulated enough new evidence.
+
+`evaluate_action_readiness()` gates scale/descale actions on the
+post-change evidence window: elapsed time AND KPI-matched
+`window_outcomes` since the last confirmed material Change. Missing
+either dimension defers — time alone is not enough, and lifetime totals
+never prove post-change readiness. A fully evaluated change (ready)
+unlocks a second staged scale; an unsettled change forces hold/wait
+with `wait_reason` + `next_review_trigger` ("等积累更多付费或进入下一
+个稳定窗口再判断").
+
+### Decision Window
+
+> Action timing should be evaluated using evidence accumulated after
+> the most recent material change, not lifetime totals alone.
+
+The window starts at the last confirmed Change's `effective_at` (when it
+falls after the baseline); without a change it is the previous
+comparable observation → current observation. Bounded state only — no
+Time-Series DB. `window_outcomes` is the KPI-matched outcome count
+observed SINCE the change (distinct from the cumulative outcome).
+
+### One Material Lever at a Time
+
+> Avoid stacking budget, bid, and creative changes before the previous
+> material change has been evaluated.
+
+Budget vs bid sequencing: budget_constraint → budget lever first, bid
+constraint → bid lever first; both materially supported → investigate
+(never change both). `resolve_action_lever()` names the ONE lever the
+action moves. Creative fatigue is sequenced into refresh / retest /
+pause / hold — a creative issue never automatically causes a budget
+change; new creatives need a test window (`creative_test` minimum
+impressions) before any judgment.
+
+### Evidence Window
+
+> Time alone is not enough. Outcome volume, traffic/spend, and elapsed
+> time jointly determine whether a decision window is mature enough.
+
+Deep KPIs (pay/purchase CPA, ROAS) are outcome-first; traffic-heavy
+KPIs (CPI, creative tests) also read impressions/clicks/spend.
+
+### Timing Heuristics
+
+> Timing thresholds are conservative internal operational heuristics,
+> not universal platform rules.
+
+All thresholds live in `TIMING_CALIBRATION` (change_settle: 24h +
+KPI-family min_new_outcomes; creative_test: min impressions). Scale
+magnitude is small | normal (never aggressive; numeric Safety remains
+the final cap); descale is always small and requires measurement
+stable + mature sample + persistent negative trend + no recent change
+(no ping-pong).

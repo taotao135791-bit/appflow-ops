@@ -2,6 +2,57 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.6.4 — 2026-08-14
+
+### Added
+
+- **Action readiness distinct from action eligibility**: `evaluate_action_readiness()`
+  — an action may be eligible in principle but not ready now because
+  the previous material change has not accumulated enough NEW evidence
+  (elapsed time + KPI-matched `window_outcomes` since the change).
+  Unsettled change → hold/wait with `wait_reason` + `next_review_trigger`.
+- **Post-change evidence windows**: the decision window starts at the
+  last confirmed Change's effective_at (fallback: previous comparable
+  observation → current); lifetime totals never prove post-change
+  readiness. A fully evaluated change unlocks a second staged scale.
+- **Sequential-change protection**: no second material action before
+  the previous change has accumulated enough new evidence; a temporary
+  KPI deterioration right after a change is a window problem, never an
+  automatic descale (no ping-pong).
+- **Budget-vs-bid action sequencing**: `resolve_action_lever()` —
+  budget_constraint → budget lever first, bid constraint → bid lever
+  first, both supported → investigate (never change both at once).
+- **Scale/descale timing calibration**: `TIMING_CALIBRATION` (24h
+  settle window + KPI-family min_new_outcomes); descale requires
+  measurement stable + mature sample + persistent negative trend + no
+  recent change, and is always small.
+- **Small/normal action magnitude semantics**: `resolve_action_magnitude()`
+  — deep-event KPIs and market context scale small; strong headroom
+  without context may scale normal; numeric Safety remains the final cap.
+- **Creative refresh/retest/pause/hold calibration**: fatigue → refresh
+  (acceptable overall KPI), retest (weak/confounded evidence), pause
+  (specific consistent loser + sufficient sample), hold (new creative
+  in its test window) — a creative issue never automatically causes a
+  budget change.
+- **Next-review triggers for wait decisions**: wait names what evidence
+  triggers the next review (more_pay_outcomes / more_installs / ...).
+
+### Fixed
+
+- **optimization_goal and conversion_event conflicts are no longer
+  silently ignored**: both sources are normalized and must AGREE —
+  install vs pay → `ambiguous_goal_semantics` (never pick one).
+- **Purchase event no longer silently selects Purchase CPA when ROAS is
+  equally plausible**: purchase event + ROAS target →
+  `ambiguous_primary_kpi` unless a goal disambiguates.
+- **User-facing scale summaries now name the actual primary KPI**: Pay
+  CPA / Purchase CPA / CPI / ROAS instead of a hardcoded "CPA"; ROAS is
+  "明显高于目标", cost KPIs are "明显低于目标".
+- **Recent changes can no longer be followed by another material action
+  before sufficient new evidence**: eligibility is not readiness.
+- **Lifetime outcome counts no longer prove post-change readiness**:
+  window_outcomes (post-change) gates scale timing.
+
 ## 3.6.3 — 2026-08-14
 
 ### Added

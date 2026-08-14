@@ -3641,3 +3641,356 @@
   forbidden_actions:
   - decrease
   - pause
+- id: di_timing_eligible_not_ready
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      primary_kpi: pay_cpa
+      target_pay_cpa: 100.0
+      pay_cpa: 60.0
+      payments: 150
+      window_outcomes: 2
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    primary_kpi: pay_cpa
+    target_pay_cpa: 100.0
+    pay_cpa: 60.0
+    payments: 150
+    window_outcomes: 2
+    measurement_state: stable
+    maturity_state: sufficient
+  window_context:
+    last_change_effective_at: "2026-08-14T09:00:00Z"
+    current_observed_at: "2026-08-14T11:00:00Z"
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: eligible
+  expected_action_readiness: wait
+  expected_wait_reason: recent_change_unsettled
+  expected_next_review_trigger: more_pay_outcomes
+  acceptable_actions:
+  - hold
+  - wait
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_timing_ready_second_scale
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      primary_kpi: pay_cpa
+      target_pay_cpa: 100.0
+      pay_cpa: 60.0
+      payments: 220
+      window_outcomes: 40
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    primary_kpi: pay_cpa
+    target_pay_cpa: 100.0
+    pay_cpa: 60.0
+    payments: 220
+    window_outcomes: 40
+    measurement_state: stable
+    maturity_state: sufficient
+  window_context:
+    last_change_effective_at: "2026-08-13T09:00:00Z"
+    current_observed_at: "2026-08-14T10:30:00Z"
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: eligible
+  expected_action_readiness: ready
+  expected_action_magnitude: small
+  acceptable_actions:
+  - increase
+  - scale
+  forbidden_actions:
+  - decrease
+  - pause
+- id: di_timing_time_alone_not_enough
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      cpa: 30.0
+      target_cpa: 50.0
+      conversions: 200
+      window_outcomes: 5
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    cpa: 30.0
+    target_cpa: 50.0
+    conversions: 200
+    window_outcomes: 5
+    measurement_state: stable
+    maturity_state: sufficient
+  window_context:
+    last_change_effective_at: "2026-08-13T09:00:00Z"
+    current_observed_at: "2026-08-14T10:30:00Z"
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: eligible
+  expected_action_readiness: wait
+  expected_wait_reason: recent_change_unsettled
+  expected_next_review_trigger: more_outcomes
+  acceptable_actions:
+  - hold
+  - wait
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_timing_real_descale
+  platform_scope:
+  - meta
+  domain: funnel
+  per_platform_metrics:
+    meta:
+      cvr_change_pct: -0.25
+      ctr_change_pct: 0.01
+      impressions: 100000
+      clicks: 5000
+      cpa: 95.0
+      target_cpa: 50.0
+      conversions: 300
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    cpa: 95.0
+    target_cpa: 50.0
+    conversions: 300
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - audience_quality_shift
+  - conversion_funnel_degradation
+  - post_click_friction
+  acceptable_actions:
+  - decrease
+  - investigate
+  - wait
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_timing_bad_cpa_after_change_no_descale
+  platform_scope:
+  - meta
+  domain: funnel
+  per_platform_metrics:
+    meta:
+      cvr_change_pct: -0.25
+      ctr_change_pct: 0.01
+      impressions: 100000
+      clicks: 5000
+      recent_budget_change: true
+      cpa: 95.0
+      target_cpa: 50.0
+      conversions: 300
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    cpa: 95.0
+    target_cpa: 50.0
+    conversions: 300
+    recent_budget_change: true
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - audience_quality_shift
+  - conversion_funnel_degradation
+  - post_click_friction
+  acceptable_actions:
+  - investigate
+  - wait
+  - hold
+  forbidden_actions:
+  - decrease
+  - increase
+  - scale
+- id: di_timing_fatigue_refresh
+  platform_scope:
+  - meta
+  domain: creative
+  per_platform_metrics:
+    meta:
+      ctr_change_pct: -0.25
+      frequency_change_pct: 0.18
+      old_creative_worse: true
+      cvr_change_pct: 0.01
+      cpm_change_pct: 0.01
+      impressions: 100000
+      clicks: 5000
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    impressions: 100000
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - creative_fatigue
+  expected_action_magnitude: none
+  acceptable_actions:
+  - refresh
+  - retest
+  - observe
+  forbidden_actions:
+  - decrease
+  - pause
+  - increase
+- id: di_timing_fatigue_pause_specific_loser
+  platform_scope:
+  - meta
+  domain: creative
+  per_platform_metrics:
+    meta:
+      ctr_change_pct: -0.25
+      old_creative_worse: true
+      frequency_change_pct: 0.18
+      only_one_creative_declines: true
+      impressions: 100000
+      clicks: 5000
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    impressions: 100000
+    clicks: 5000
+    only_one_creative_declines: true
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - creative_fatigue
+  acceptable_actions:
+  - pause
+  - refresh
+  forbidden_actions:
+  - decrease
+  - increase
+- id: di_timing_new_creative_hold
+  platform_scope:
+  - meta
+  domain: creative
+  per_platform_metrics:
+    meta:
+      ctr_change_pct: -0.25
+      old_creative_worse: true
+      recent_creative_change: true
+      impressions: 300
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - creative_fatigue
+  acceptable_actions:
+  - hold
+  - wait
+  forbidden_actions:
+  - pause
+  - decrease
+  - increase
+- id: di_timing_goal_conflict_ambiguous
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      optimization_goal: install
+      conversion_event: pay
+      target_cpi: 5.0
+      target_pay_cpa: 100.0
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    optimization_goal: install
+    conversion_event: pay
+    target_cpi: 5.0
+    target_pay_cpa: 100.0
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: needs_more_evidence
+  expected_eligibility_reason: ambiguous_goal_semantics
+  acceptable_actions:
+  - wait
+  - observe
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_timing_purchase_vs_roas_ambiguous
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      conversion_event: purchase
+      target_purchase_cpa: 50.0
+      purchase_cpa: 40.0
+      purchases: 100
+      target_roas: 1.5
+      roas: 2.0
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    conversion_event: purchase
+    target_purchase_cpa: 50.0
+    purchase_cpa: 40.0
+    purchases: 100
+    target_roas: 1.5
+    roas: 2.0
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: needs_more_evidence
+  expected_eligibility_reason: ambiguous_primary_kpi
+  acceptable_actions:
+  - wait
+  - observe
+  forbidden_actions:
+  - increase
+  - scale

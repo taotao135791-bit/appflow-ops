@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.3/install.sh | bash -s -- --ref=v3.6.3
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.4/install.sh | bash -s -- --ref=v3.6.4
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -308,6 +308,8 @@ v3.6.1 起 **Calibration Reliability**：scale eligibility 服从 selected platf
 v3.6.2 起 **Action Confidence & KPI Alignment**：一个 action 必须被**正确的 KPI、正确的 outcome、正确的平台 scope、足够的置信度**支撑——missing outcome volume 直接挡掉 scale（CPA 30/50 但没给转化量 → `missing_outcome_volume` → wait，impressions 再多也不能代替转化量）；**measurement/maturity = unknown 可以继续调查但不可以批准加量**（positive safety 要求 stable/sufficient）；**primary KPI 不再按 CPA→CPI→ROAS 硬编码优先**——`primary_kpi` 显式声明（或只有单个 target 时自动推断），多 target 无声明 → `ambiguous_primary_kpi` → 先问清楚（CPI $3 好看但 Pay CPA $140，主要 KPI 是付费就不该因为 CPI 扩量）；**outcome volume 必须匹配 KPI**——pay CPA 用 payments、purchase CPA 用 purchases、CPI 用 installs，1000 installs 永远不能支撑 pay CPA 扩量；**不同平台的独立问题不是 rival 是 parallel issue**——Google 可以扩量的同时 Meta 素材疲劳单独处理（`parallel_issues` 解释用，不阻塞主判断）；**explicit trend 字符串与 numeric change_pct 同等样本校准**——`ctr_trend="down"` 配 150 impressions 同样是 weak，绕不过 sample calibration。
 
 v3.6.3 起 **Decision Attribution & Goal Semantics**：判断正确还必须要准确知道它属于哪个平台、哪个目标、哪条证据，以及另一个问题到底是 Rival、Parallel Issue 还是只是 Context——**summary 的 evidence 永远来自 selected_evaluation**（同 hypothesis ID 双平台共存时，auction_pressure@google top 绝不会引用 Meta 的 CPM 证据）；**parallel issue 带平台 attribution**（creative_fatigue@meta ≠ creative_fatigue@tiktok，输出会说"meta 侧的素材疲劳"）；**conversion_event / optimization_goal 是事件语义不是 KPI 字面量**（`conversion_event="pay"` → pay_cpa、`optimization_goal="purchase"` → purchase_cpa，explicit primary_kpi 与 goal 冲突 → ambiguous 不猜）；**ROAS 不再拿 generic conversions 当 outcome**（无 revenue 事件语义的 200 conversions ≠ ROAS 样本足够，purchases 优先）；**shared 假设按 action relevance 分类**（shared funnel/measurement 问题阻止 scale，market_wide_event 只是 material context——提醒"不建议一次放太多"，不阻塞健康扩量）；**KPI-family 最小证据阈值**（cpi 50 / pay_cpa 10 / purchase_cpa 10——20 installs 与 20 payments 不是同一种 scale readiness）。
+
+v3.6.4 起 **Optimization Timing & Action Sequencing**：AppFlow 开始知道"即使我知道该做什么，也不代表现在就是做它的时机"——**eligibility ≠ readiness**（上次 confirmed Change 之后必须积累足够的新证据：elapsed time + KPI-matched `window_outcomes`，lifetime totals 不能证明 post-change readiness；刚 +20% 预算 2 小时后的 CPA 变差 → wait 不是 decrease，不会 ping-pong）；**decision window 从最近一次 material Change 开始**（无 Change 则 previous→current）；**一次只动一个 material lever**（budget_constraint → 先动预算，bid_constraint → 先动出价，双 supported → investigate 不同时改）；**scale 有 magnitude**（small/normal，深层 KPI 与 market context 只 small，numeric Safety 仍是最终上限）；**descale 只在成熟持续恶化时 small decrease**（stable + mature + persistent negative trend + no recent change）；**creative fatigue 区分 refresh/retest/pause/hold**（整体 KPI 可接受 → 补新素材不动预算；证据弱或受近期调整影响 → 重测；明确 loser + 样本足 → 暂停；新素材测试窗口内 → hold）；**wait 必须说等什么**（`wait_reason` + `next_review_trigger`："等积累更多付费或进入下一个稳定窗口"）；goal 三源共同校验（optimization_goal=install + conversion_event=pay → ambiguous 不猜；purchase event + ROAS target → 不静默选 Purchase CPA）。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

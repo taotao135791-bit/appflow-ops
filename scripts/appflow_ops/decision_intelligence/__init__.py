@@ -17,10 +17,18 @@ Public entry points — callers should never import internal modules:
 from __future__ import annotations
 
 from .calibration import (
+    ACTION_MAGNITUDES,
+    ACTION_READINESS_STATES,
     KPI_SCALE_MINIMUMS,
     METRIC_CALIBRATION,
     PRIMARY_KPIS,
+    TIMING_CALIBRATION,
+    evaluate_action_readiness,
+    evaluate_descale_candidate,
     normalize_goal_to_kpi,
+    resolve_action_lever,
+    resolve_action_magnitude,
+    resolve_creative_action,
     resolve_kpi_outcome_volume,
     resolve_primary_kpi,
     resolve_primary_kpi_context,
@@ -84,6 +92,8 @@ from .summary import (
 )
 
 __all__ = [
+    "ACTION_MAGNITUDES",
+    "ACTION_READINESS_STATES",
     "ALL_HYPOTHESES",
     "CONVERGENCE_STATUSES",
     "CROSS_PLATFORM_HYPOTHESES",
@@ -96,6 +106,7 @@ __all__ = [
     "SIGNAL_IDS",
     "SIGNAL_LABELS",
     "TIKTOK_HYPOTHESES",
+    "TIMING_CALIBRATION",
     "Convergence",
     "DecisionIntelligenceResult",
     "EvidenceResult",
@@ -114,6 +125,8 @@ __all__ = [
     "decision_attribution",
     "derive_change_pcts",
     "detect_operational_domain",
+    "evaluate_action_readiness",
+    "evaluate_descale_candidate",
     "evaluate_hypotheses",
     "evaluate_hypothesis",
     "hypothesis_by_id",
@@ -124,6 +137,9 @@ __all__ = [
     "operational_domain",
     "primary_domain",
     "rank_hypotheses",
+    "resolve_action_lever",
+    "resolve_action_magnitude",
+    "resolve_creative_action",
     "resolve_evaluation_safety",
     "resolve_kpi_outcome_volume",
     "resolve_primary_kpi",

@@ -74,6 +74,21 @@ class DecisionIntelligenceResult:
     # v3.6.3: supported shared/run facts that do NOT block the selected
     # action but matter as material context (market-wide event, ...).
     material_context: tuple[MaterialContext, ...] = ()
+    # v3.6.4: action readiness (ready | wait | needs_more_evidence |
+    # not_eligible | None) — eligibility is NOT readiness.
+    action_readiness: str | None = None
+    # v3.6.4: why a material action was deferred (recent_change_unsettled...).
+    wait_reason: str | None = None
+    # v3.6.4: what evidence should trigger the next review (more_pay_outcomes...).
+    next_review_trigger: str | None = None
+    # v3.6.4: small | normal | none — reversible magnitude.
+    action_magnitude: str | None = None
+    # v3.6.4: the ONE material lever moved (budget | bid | creative |
+    # measurement | None) — sequencing means never moving two levers.
+    action_lever: str | None = None
+    # v3.6.4: the primary KPI governing this action (audit + user-facing
+    # KPI name) — resolved from the action context, never guessed.
+    primary_kpi: str | None = None
     # v3.5.5: safety warnings per NON-selected platform (e.g.
     # {"meta": ("measurement_invalid",)}) — a warning on one platform is
     # never a veto on an independent diagnosis for another.
@@ -104,6 +119,7 @@ def from_convergence(
     safety_context: dict[str, str],
     evidence: EvidenceResult | None = None,
     platform_warnings: dict[str, tuple[str, ...]] | None = None,
+    primary_kpi: str | None = None,
 ) -> DecisionIntelligenceResult:
     """Build the public result from pipeline internals (single assembly
     point so the runtime entry and tests share identical semantics).
@@ -138,6 +154,12 @@ def from_convergence(
         eligibility_reason=convergence.eligibility_reason,
         parallel_issues=convergence.parallel_issues,
         material_context=convergence.material_context,
+        action_readiness=convergence.action_readiness,
+        wait_reason=convergence.wait_reason,
+        next_review_trigger=convergence.next_review_trigger,
+        action_magnitude=convergence.action_magnitude,
+        action_lever=convergence.action_lever,
+        primary_kpi=primary_kpi,
         platform_warnings=dict(platform_warnings or {}),
         evidence=evidence,
     )

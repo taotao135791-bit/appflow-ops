@@ -184,6 +184,26 @@ class OperationalResult:
     decision_id: str | None = None
 
 
+def _latest_change_effective_at(
+    change_context: Mapping[str, object] | None,
+) -> str | None:
+    """The latest confirmed material Change time from the evidence
+    change context (v3.6.4): keys are ``last_<type>_change_effective_at``
+    (e.g. last_budget_change_effective_at) plus the generic
+    ``change_effective_at`` — never assume a bare ``last_change_*`` key.
+    """
+    if not change_context:
+        return None
+    candidates = [
+        value
+        for key, value in change_context.items()
+        if key == "change_effective_at"
+        or (key.startswith("last_") and key.endswith("_change_effective_at"))
+    ]
+    timestamps = [str(value) for value in candidates if isinstance(value, str)]
+    return max(timestamps) if timestamps else None
+
+
 def _platform_bounded_state(
     session: StateSession, platforms: tuple[str, ...] | None
 ) -> dict[str, Any]:
@@ -618,7 +638,30 @@ class PlatformOperationalRun:
             ranked,
             safety_context=safety_context,
             action_context=action_context or None,
+            # v3.6.4: the decision window — last confirmed material
+            # Change and the current observation time — gates action
+            # READINESS (eligibility != readiness): a second material
+            # action needs enough NEW evidence since the change.
+            window_context=(
+                {
+                    "last_change_effective_at": _latest_change_effective_at(
+                        evidence.change_context
+                    ),
+                    "current_observed_at": (
+                        next(iter(current_observed_at.values()), None)
+                        if current_observed_at
+                        else None
+                    ),
+                }
+                if evidence.change_context
+                else None
+            ),
         )
+        from appflow_ops.decision_intelligence.calibration import (
+            resolve_primary_kpi,
+        )
+
+        primary_kpi, _ = resolve_primary_kpi(action_context or {})
         return from_convergence(
             convergence=convergence,
             platform_scope=self.platform_scope,
@@ -635,6 +678,7 @@ class PlatformOperationalRun:
                 ranked, measurement_by_platform, maturity_by_platform
             ),
             evidence=evidence,
+            primary_kpi=primary_kpi,
         )
 
     def record_decision_from_intelligence(self) -> str | None:

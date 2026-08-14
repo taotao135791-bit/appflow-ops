@@ -295,3 +295,25 @@ python3 scripts/sync_skill_layout.py --check
   scale is KPI-family aware (KPI_SCALE_MINIMUMS) — 20 installs and 20
   payments are not the same scale evidence; unknown families never
   fall back to a universal count.
+- **Never recommend a second material adjustment before the previous
+  confirmed change has accumulated enough new evidence.** Action
+  readiness (elapsed time + KPI-matched window outcomes since the
+  change) gates scale/descale — eligibility is not readiness.
+- **Total historical conversions are not equivalent to conversions
+  observed after the latest material change.** Use window_outcomes
+  (post-change), never lifetime totals, for post-change readiness.
+- **One material lever at a time is the default. Do not change budget
+  and bid together unless a platform-specific deterministic contract
+  explicitly requires it.** Diagnose the constraint (budget vs bid)
+  before choosing the lever.
+- **A temporary KPI deterioration immediately after a change is a
+  reason to inspect the evidence window, not automatic proof that the
+  change failed.** Never decrease right after an increase without new
+  material evidence (no ping-pong).
+- **`wait` must specify what evidence or condition should trigger the
+  next review.** wait_reason + next_review_trigger are part of the
+  decision, never a bare "wait".
+- **Creative refresh, retest, pause, and hold are distinct operational
+  decisions.** Fatigue with acceptable overall KPI → refresh; weak or
+  confounded evidence → retest; a specific consistent loser with
+  sufficient sample → pause; a new creative in its test window → hold.

@@ -1,4 +1,4 @@
-"""Business calibration for Ads Decision Intelligence (v3.6.2).
+"""Business calibration for Ads Decision Intelligence (v3.6.4).
 
 Thin constants + helpers — deliberately NOT an architecture layer.
 Calibration themes (Decision Quality Calibration):
@@ -17,10 +17,16 @@ G. the PRIMARY KPI (explicit or unambiguously implied by a single
    target) drives the target/actual comparison, the headroom judgment
    AND the outcome-volume check — never a hardcoded CPA→CPI→ROAS
    precedence, and never an install volume standing in for a pay/purchase
-   KPI (v3.6.2).
-
-An action must be supported by the correct KPI, correct outcome evidence,
-correct platform scope, and sufficient confidence (v3.6.2 goal).
+   KPI (v3.6.2). All goal sources are validated TOGETHER: primary_kpi /
+   optimization_goal / conversion_event must agree; a purchase event
+   cannot silently choose purchase_cpa over ROAS (v3.6.4).
+H. ACTION ELIGIBILITY != ACTION READINESS (v3.6.4): an action may be
+   eligible in principle but not ready now because the previous material
+   change has not accumulated enough NEW evidence (elapsed time +
+   KPI-matched window outcomes). One material lever at a time; wait must
+   name what evidence triggers the next review. Timing thresholds are
+   conservative internal operational heuristics, not universal media
+   benchmarks.
 
 Values are internal operational heuristics, not universal benchmarks —
 expected to be tuned by real cases in v3.6.x.
@@ -171,7 +177,8 @@ SCALE_ACTIONS = frozenset({"increase", "scale"})
 ELIGIBILITY_STATES = ("eligible", "not_eligible", "needs_more_evidence")
 
 # Short reason codes for deferring/blocking a scale action (v3.6.2
-# adds the positive-safety and KPI-alignment reasons).
+# adds the positive-safety and KPI-alignment reasons; v3.6.4 adds the
+# goal-conflict and timing reasons).
 ELIGIBILITY_REASONS = (
     "thin_kpi_headroom",
     "low_conversion_volume",
@@ -184,6 +191,8 @@ ELIGIBILITY_REASONS = (
     "measurement_unknown",
     "maturity_unknown",
     "ambiguous_primary_kpi",
+    "ambiguous_goal_semantics",
+    "recent_change_unsettled",
 )
 
 # ── Primary KPI (v3.6.2) ────────────────────────────────────────────────
@@ -281,43 +290,68 @@ _PRIMARY_KPI_KEYS = ("primary_kpi", "optimization_goal", "conversion_event")
 
 
 def resolve_primary_kpi(facts: Mapping[str, object]) -> tuple[str | None, str | None]:
-    """(kpi_type, reason): which KPI governs THIS action (v3.6.3).
+    """(kpi_type, reason): which KPI governs THIS action (v3.6.4).
 
-    Priority (§17):
+    ALL goal sources are validated TOGETHER — never ``A or B`` first-
+    wins (§A.1-3):
 
-    1. explicit ``primary_kpi`` — authoritative; a simultaneously
-       declared event/goal that normalizes to a DIFFERENT KPI is a real
-       conflict → ambiguous (never guess, §19);
-    2. unambiguous ``optimization_goal`` / ``conversion_event`` + the
-       matching target exists → that KPI (multiple targets no longer
-       ambiguous when the event disambiguates, §20);
-    3. exactly ONE target → that KPI (backward compatible);
-    4. multiple targets without any declaration → ambiguous;
-    5. no targets → (None, None).
+    1. explicit ``primary_kpi`` is authoritative; a simultaneously
+       declared goal/event that normalizes to a DIFFERENT KPI is a real
+       conflict → ambiguous (never guess);
+    2. ``optimization_goal`` and ``conversion_event`` are BOTH normalized
+       and must AGREE — install vs pay → ``ambiguous_goal_semantics``;
+       a revenue goal + purchase event resolves to ROAS (§A.4);
+    3. a purchase event with a ROAS target present is not enough to pick
+       purchase_cpa vs roas → ``ambiguous_primary_kpi`` unless a goal
+       (revenue) disambiguates;
+    4. resolved event/goal + the matching target exists → that KPI;
+    5. exactly ONE target → that KPI (backward compatible);
+    6. multiple targets without any declaration → ambiguous;
+    7. no targets → (None, None).
 
     ``conversion_event="pay"`` is NOT the literal enum ``pay_cpa`` — it
     is an event semantic that normalizes to pay_cpa when appropriate.
     """
     explicit = facts.get("primary_kpi")
+    goal = facts.get("optimization_goal")
+    event = facts.get("conversion_event")
+    explicit_kpi = (
+        normalize_goal_to_kpi(explicit)
+        if isinstance(explicit, str) and explicit
+        else None
+    )
+    goal_kpi = normalize_goal_to_kpi(goal) if isinstance(goal, str) and goal else None
+    event_kpi = (
+        normalize_goal_to_kpi(event) if isinstance(event, str) and event else None
+    )
     if isinstance(explicit, str) and explicit:
-        kpi = normalize_goal_to_kpi(explicit)
-        if kpi is None:
+        if explicit_kpi is None:
             return None, "ambiguous_primary_kpi"  # unknown value: no guessing
-        goal = facts.get("optimization_goal") or facts.get("conversion_event")
-        if isinstance(goal, str) and goal:
-            goal_kpi = normalize_goal_to_kpi(goal)
-            if goal_kpi is not None and goal_kpi != kpi:
-                # Explicit KPI vs explicit goal conflict: do not guess.
-                return None, "ambiguous_primary_kpi"
-        return kpi, None
-    goal = facts.get("optimization_goal") or facts.get("conversion_event")
-    if isinstance(goal, str) and goal:
-        goal_kpi = normalize_goal_to_kpi(goal)
-        if goal_kpi is not None:
-            target_key = _KPI_SPECS[goal_kpi][0]
-            if isinstance(facts.get(target_key), (int, float)):
-                # Event/goal + matching target: unambiguous (§16/18/20).
-                return goal_kpi, None
+        if (goal_kpi is not None and goal_kpi != explicit_kpi) or (
+            event_kpi is not None and event_kpi != explicit_kpi
+        ):
+            # Explicit KPI vs explicit goal/event conflict: do not guess.
+            return None, "ambiguous_primary_kpi"
+        return explicit_kpi, None
+    if goal_kpi is not None and event_kpi is not None and goal_kpi != event_kpi:
+        if "roas" in (goal_kpi, event_kpi) and "purchase_cpa" in (goal_kpi, event_kpi):
+            resolved: str | None = "roas"  # revenue goal disambiguates (§A.4)
+        else:
+            # Conflicting goal semantics (install vs pay): never pick one.
+            return None, "ambiguous_goal_semantics"
+    else:
+        resolved = goal_kpi if goal_kpi is not None else event_kpi
+    if resolved is not None:
+        # §A.4: a purchase event alone cannot choose purchase_cpa vs roas
+        # when a ROAS target is also present.
+        if resolved == "purchase_cpa" and isinstance(
+            facts.get("target_roas"), (int, float)
+        ):
+            return None, "ambiguous_primary_kpi"
+        target_key = _KPI_SPECS[resolved][0]
+        if isinstance(facts.get(target_key), (int, float)):
+            # Event/goal + matching target: unambiguous (§16/18/20).
+            return resolved, None
     present_targets = [
         kpi
         for kpi, (target_key, _, _, _) in _KPI_SPECS.items()
@@ -526,6 +560,9 @@ def scale_eligibility(
     if headroom is None:
         if reason == "ambiguous_primary_kpi":
             return "needs_more_evidence", "ambiguous_primary_kpi"
+        if reason == "ambiguous_goal_semantics":
+            # v3.6.4: conflicting goal sources (install vs pay) defer.
+            return "needs_more_evidence", "ambiguous_goal_semantics"
         return "needs_more_evidence", None  # no KPI context
     volume = _outcome_volume(facts)
     if volume is None:
@@ -542,3 +579,243 @@ def scale_eligibility(
     if volume < minimum:
         return "needs_more_evidence", "low_conversion_volume"
     return "eligible", None
+
+
+# ── H. Action readiness & timing (v3.6.4) ───────────────────────────────
+
+# Action readiness states (v3.6.4 §B.8): eligibility is NOT readiness.
+ACTION_READINESS_STATES = ("ready", "wait", "needs_more_evidence", "not_eligible")
+
+# Action magnitude (v3.6.4 §H): small | normal | none — never an
+# aggressive band; numeric Safety remains the final cap.
+ACTION_MAGNITUDES = ("small", "normal", "none")
+
+# Timing calibration constants (v3.6.4 §P): all thresholds live HERE,
+# never scattered magic numbers. Conservative internal operational
+# heuristics — starting calibration values, NOT universal platform
+# benchmarks.
+TIMING_CALIBRATION: dict[str, dict[str, object]] = {
+    # Post-change settling: how much NEW evidence must accumulate after
+    # the last confirmed material Change before another material action
+    # (scale / descale / bid change) is allowed. Lifetime totals do NOT
+    # prove post-change readiness.
+    "change_settle": {
+        "min_elapsed_hours": 24,
+        "min_new_outcomes": {
+            "cpi": 100,  # high-frequency event: more evidence required
+            "registration_cpa": 50,
+            "cpa": 30,
+            "pay_cpa": 15,  # deep events are sparse
+            "purchase_cpa": 15,
+            "roas": 15,
+        },
+    },
+    # New / refreshed creative test window: enough impressions before
+    # judging a creative (early winners and early losers are both noise).
+    "creative_test": {
+        "min_impressions": 2000,
+    },
+}
+
+# Negative trend signals that can justify a descale (v3.6.4 §I).
+_DESCALE_TREND_SIGNALS = (
+    "cvr_trend_down",
+    "pay_rate_trend_down",
+    "registration_rate_trend_down",
+    "install_rate_trend_down",
+    "ctr_trend_down",
+)
+
+# Review trigger labels per KPI family (v3.6.4 §M): wait decisions must
+# name what evidence triggers the next review.
+_REVIEW_TRIGGERS: dict[str, str] = {
+    "cpi": "more_installs",
+    "registration_cpa": "more_registrations",
+    "pay_cpa": "more_pay_outcomes",
+    "purchase_cpa": "more_purchase_outcomes",
+    "roas": "more_revenue_outcomes",
+    "cpa": "more_outcomes",
+}
+
+
+def _hours_between(earlier_iso: str, later_iso: str) -> float | None:
+    """Elapsed hours between two ISO timestamps; None when unparsable."""
+    try:
+        from datetime import datetime
+
+        def _parse(value: str) -> datetime:
+            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+        delta = _parse(later_iso) - _parse(earlier_iso)
+        return max(delta.total_seconds() / 3600.0, 0.0)
+    except (ValueError, TypeError):
+        return None
+
+
+def evaluate_action_readiness(
+    facts: Mapping[str, object],
+    window_context: Mapping[str, object] | None = None,
+) -> tuple[str, str | None, str | None]:
+    """(state, wait_reason, next_review_trigger): v3.6.4 §B-G.
+
+    Eligibility says the action is principled; readiness says it is
+    safe to execute NOW. After the last confirmed material Change,
+    another material action requires enough NEW evidence: elapsed time
+    AND KPI-matched window outcomes (``window_outcomes`` fact). Missing
+    either dimension defers — time alone is not enough, and lifetime
+    totals never prove post-change readiness. No pending change → ready
+    (eligibility governs).
+    """
+    window = window_context or {}
+    change_at = window.get("last_change_effective_at")
+    current_at = window.get("current_observed_at")
+    if not isinstance(change_at, str) or not isinstance(current_at, str):
+        return "ready", None, None  # no pending change
+    elapsed = _hours_between(change_at, current_at)
+    if elapsed is None:
+        return "wait", "recent_change_unsettled", "more_evidence"
+    kpi_type, _ = resolve_primary_kpi(facts)
+    spec = TIMING_CALIBRATION["change_settle"]
+    min_hours = spec["min_elapsed_hours"]
+    min_new = spec["min_new_outcomes"]
+    assert isinstance(min_new, Mapping)
+    min_outcomes = min_new.get(kpi_type or "cpa")
+    window_outcomes = facts.get("window_outcomes")
+    if (
+        isinstance(min_hours, (int, float))
+        and isinstance(min_outcomes, (int, float))
+        and isinstance(window_outcomes, (int, float))
+        and elapsed >= float(min_hours)
+        and float(window_outcomes) >= float(min_outcomes)
+    ):
+        return "ready", None, None
+    return "wait", "recent_change_unsettled", _review_trigger(kpi_type)
+
+
+def _review_trigger(kpi_type: str | None) -> str:
+    return _REVIEW_TRIGGERS.get(kpi_type or "cpa", "more_outcomes")
+
+
+def resolve_action_magnitude(
+    action: str,
+    facts: Mapping[str, object],
+    material_context_ids: tuple[str, ...] = (),
+) -> str:
+    """small | normal | none (v3.6.4 §H): scale is small when headroom is
+    thin, material context is present (market-wide CPM up), or the KPI is
+    a deep event; normal only with strong headroom, no material context,
+    settled history. Descale is always small (§I). Numeric Safety remains
+    the final cap — magnitude never invents its own percentages."""
+    if action not in ("increase", "scale", "decrease"):
+        return "none"
+    if action == "decrease":
+        return "small"
+    context = resolve_primary_kpi_context(facts)
+    if material_context_ids:
+        return "small"  # market context: stay staged, never enlarge
+    if context is not None and context.get("kpi_type") in (
+        "pay_cpa",
+        "purchase_cpa",
+        "roas",
+    ):
+        return "small"  # deep-event KPI: first scale is small
+    headroom = str(context.get("headroom") or "") if context else ""
+    if headroom == "strong_headroom":
+        return "normal"
+    return "small"
+
+
+def resolve_action_lever(hypothesis_id: str | None) -> str | None:
+    """budget | bid | creative | measurement | None (v3.6.4 §J): the ONE
+    material lever the action moves. Sequencing means never moving two
+    levers in one decision (one material lever at a time)."""
+    if hypothesis_id == "budget_constraint":
+        return "budget"
+    if hypothesis_id == "bid_constraint":
+        return "bid"
+    if hypothesis_id in (
+        "creative_fatigue",
+        "creative_message_mismatch",
+        "creative_format_mismatch",
+    ):
+        return "creative"
+    if hypothesis_id in (
+        "measurement_instability",
+        "install_measurement_issue",
+        "shared_measurement_issue",
+    ):
+        return "measurement"
+    return None
+
+
+def evaluate_descale_candidate(
+    facts: Mapping[str, object],
+    top_supporting: tuple[str, ...],
+) -> bool:
+    """v3.6.4 §I: a small decrease is justified only when the KPI is
+    materially worse AND the deterioration is persistent (negative trend
+    in the SELECTED evidence) with no transient explanation: measurement
+    stable, maturity sufficient, no recent change, mature sample. Bad
+    KPI right after a change is a window problem, never an automatic
+    descale (no ping-pong)."""
+    if str(facts.get("measurement_state") or "") != "stable":
+        return False
+    if str(facts.get("maturity_state") or "") != "sufficient":
+        return False
+    if (
+        facts.get("recent_budget_change") is True
+        or facts.get("recent_bid_change") is True
+    ):
+        return False
+    if not any(signal in top_supporting for signal in _DESCALE_TREND_SIGNALS):
+        return False
+    context = resolve_primary_kpi_context(facts)
+    if context is None or context.get("headroom") != "no_headroom":
+        return False
+    volume = context.get("outcome_volume")
+    # tiny sample: wait, never react
+    return isinstance(volume, (int, float)) and float(volume) >= 10
+
+
+def resolve_creative_action(
+    hypothesis_id: str,
+    supporting: tuple[str, ...],
+    facts: Mapping[str, object],
+) -> str:
+    """v3.6.4 §K/L: refresh | retest | pause | hold | observe for creative
+    hypotheses — fatigue is not only replace:
+
+    - pause: a SPECIFIC creative is consistently worse with sufficient
+      sample and no confounder (only_one_creative_declines + mature);
+    - retest: weak/inconclusive evidence or a recent delivery change
+      confounds the result (recent budget/bid change present);
+    - hold: a new creative is still in its test window (recent creative
+      change + tiny sample);
+    - refresh: fatigue with acceptable overall KPI (default).
+
+    A creative issue never automatically causes a budget change."""
+    if hypothesis_id not in ("creative_fatigue", "creative_message_mismatch"):
+        return "observe"
+    min_impressions = TIMING_CALIBRATION["creative_test"]["min_impressions"]
+    assert isinstance(min_impressions, (int, float))
+    impressions = facts.get("impressions")
+    if (
+        facts.get("recent_creative_change") is True
+        or facts.get("recent_campaign_restart") is True
+    ):
+        if not isinstance(impressions, (int, float)) or float(impressions) < float(
+            min_impressions
+        ):
+            return "hold"  # new creative too early to judge
+    if (
+        facts.get("recent_budget_change") is True
+        or facts.get("recent_bid_change") is True
+    ):
+        return "retest"  # delivery change confounds: retest, never pause
+    if (
+        facts.get("only_one_creative_declines") is True
+        and isinstance(impressions, (int, float))
+        and float(impressions) >= float(min_impressions)
+    ):
+        return "pause"  # clear specific loser with sufficient sample
+    return "refresh"

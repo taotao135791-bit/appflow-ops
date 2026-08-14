@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.3/install.sh | bash -s -- --ref=v3.6.3
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.4/install.sh | bash -s -- --ref=v3.6.4
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -534,6 +534,28 @@ funnel/measurement issues block scale; market_wide_event is material
 context — warn, stay small/staged, never veto); scale evidence minimums
 are KPI-family aware (cpi 50 / pay_cpa 10 — 20 installs and 20 payments
 are not the same scale readiness).
+
+From v3.6.4 (Optimization Timing & Action Sequencing) AppFlow knows
+that even a correct action is not necessarily the right action NOW:
+ACTION ELIGIBILITY != ACTION READINESS — a second material action needs
+enough NEW evidence since the last confirmed Change (elapsed time +
+KPI-matched window_outcomes; lifetime totals never prove post-change
+readiness; a temporary KPI dip right after a change is a window
+problem, never an automatic descale); the decision window starts at the
+last material Change; ONE material lever at a time (budget first when
+budget-constrained, bid first when bid-constrained, investigate when
+both — never change both); scale carries small/normal magnitude (deep
+KPIs and market context scale small; numeric Safety remains the final
+cap); descale is small and requires stable measurement + mature sample
++ persistent negative trend + no recent change (no ping-pong); creative
+fatigue is refresh/retest/pause/hold (refresh with acceptable overall
+KPI, retest on weak/confounded evidence, pause on a specific consistent
+loser with sufficient sample, hold inside a new creative's test
+window); wait must name its next review trigger (more_pay_outcomes /
+more_installs / ...); goal sources are validated TOGETHER
+(optimization_goal=install + conversion_event=pay → ambiguous, never a
+guess; purchase event + ROAS target → ambiguous_primary_kpi unless a
+goal disambiguates).
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

@@ -126,6 +126,11 @@ _COMMON_METRIC_KEYS = (
     # platform-vs-source discrepancy) is REAL measurement evidence —
     # common envelope on every platform.
     "reporting_anomaly",
+    # v3.6.4: post-change window outcome count — how many KPI-matched
+    # outcomes were observed SINCE the last material Change. Lifetime
+    # totals never prove post-change readiness (action readiness uses
+    # this, not the cumulative outcome).
+    "window_outcomes",
     # v3.5.2: rate fields participate in current-vs-history trend
     # derivation (same platform, same metric family).
     "install_rate",
