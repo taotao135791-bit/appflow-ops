@@ -90,6 +90,16 @@ _COMMON_METRIC_KEYS = (
     "payments",
     "cpi",
     "cpa",
+    # v3.6.0: KPI targets are common envelope — action eligibility
+    # (scale decisions) consumes them on every platform, not only Google.
+    "target_cpa",
+    "target_cpi",
+    "target_roas",
+    "roas",
+    # v3.6.0: recent-change confounders are common envelope — a declared
+    # recent budget/bid change gates scale eligibility on every platform.
+    "recent_budget_change",
+    "recent_bid_change",
     "budget",
     "daily_budget",
     "measurement_state",

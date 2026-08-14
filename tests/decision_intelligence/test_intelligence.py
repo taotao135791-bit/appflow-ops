@@ -137,12 +137,15 @@ def test_contradiction_weakens() -> None:
     assert fatigue.score == -2
 
 
-def test_exclusion_condition_excludes() -> None:
+def test_recent_change_is_confounder_not_exclusion() -> None:
+    # v3.6.0: a recent budget change never proves fatigue impossible — it
+    # weakens it (contradiction), it does not exclude it (confounder).
     specs = build_hypothesis_set(platform_scope=("meta",))
     signals = {"ctr_trend_down": True, "recent_budget_change": True}
     evals = evaluate_hypotheses(specs, signals)
     fatigue = next(e for e in evals if e.hypothesis.id == "creative_fatigue")
-    assert fatigue.status == "excluded"
+    assert fatigue.status != "excluded"
+    assert fatigue.status in ("unverified", "weakened")
 
 
 def test_missing_required_evidence_blocks_moderate_support() -> None:
@@ -250,19 +253,25 @@ def test_single_metric_cannot_confirm_fatigue() -> None:
     assert fatigue.status != "supported"  # 2 points only
 
 
-def test_budget_confounder_blocks_fatigue() -> None:
+def test_recent_change_confounder_keeps_fatigue_candidate() -> None:
+    # v3.6.0: recent change + real fatigue evidence can coexist; the
+    # change hypothesis ranks first without hard-excluding fatigue.
     specs = build_hypothesis_set(platform_scope=("meta",))
     signals = {
         "ctr_trend_down": True,
         "recent_budget_change": True,
         "delivery_mix_shifted": True,
+        "old_creative_worse": True,
+        "frequency_trend_up": True,
     }
     evals = evaluate_hypotheses(specs, signals)
     ranked = rank_hypotheses(evals)
     fatigue = next(
         r.evaluation for r in ranked if r.evaluation.hypothesis.id == "creative_fatigue"
     )
-    assert fatigue.status == "excluded"
+    # Fatigue is NOT excluded: 6 support - 2 confounder = 4 (supported).
+    assert fatigue.status != "excluded"
+    assert fatigue.score == 4
     top = ranked[0].evaluation
     assert top.hypothesis.id == "recent_budget_bid_interference" or (
         top.hypothesis.id == "delivery_mix_shift"
@@ -474,6 +483,9 @@ def test_eval_case(case) -> None:
             if measurement_by_platform or maturity_by_platform
             else None
         ),
+        # v3.6.0: action eligibility context — fixtures may declare
+        # KPI/efficiency facts (cpa/target_cpa/...) to gate scale actions.
+        action_context=case.get("action_context"),
     )
     if case.get("convergence_blocked"):
         assert result.converged is False, (
@@ -513,6 +525,14 @@ def test_eval_case(case) -> None:
         assert result_full.safety_block == case["expected_safety_block"], (
             f"{case['id']}: safety_block {result_full.safety_block} != "
             f"{case['expected_safety_block']}"
+        )
+    # v3.6.0: action eligibility assertions — diagnosis and action
+    # eligibility are evaluated separately; a constraint diagnosis never
+    # implies permission to scale.
+    if case.get("expected_eligibility") is not None:
+        assert result.action_eligibility == case["expected_eligibility"], (
+            f"{case['id']}: action_eligibility {result.action_eligibility} != "
+            f"{case['expected_eligibility']}"
         )
 
 

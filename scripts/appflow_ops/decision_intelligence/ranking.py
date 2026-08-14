@@ -28,6 +28,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
+from .calibration import SCALE_ACTIONS, scale_eligibility
 from .evaluator import SUPPORTED_THRESHOLD, HypothesisEvaluation
 
 _STATUS_ORDER: dict[str, int] = {
@@ -122,6 +123,11 @@ class Convergence:
     # diagnosis identity is preserved — a block changes the action, not
     # the hypothesis.
     safety_block: str | None = None
+    # v3.6.0: action eligibility for the final action
+    # (eligible | not_eligible | needs_more_evidence | None when no
+    # eligibility gate applies) — diagnosis and action eligibility are
+    # evaluated separately.
+    action_eligibility: str | None = None
 
 
 def rank_hypotheses(
@@ -173,6 +179,7 @@ def converge(
     measurement_state: str = "stable",
     maturity_state: str = "sufficient",
     safety_context: SafetyContext | None = None,
+    action_context: Mapping[str, object] | None = None,
 ) -> Convergence:
     """Converge to the smallest useful action (or an honest wait).
 
@@ -184,6 +191,12 @@ def converge(
     use the aggregate states. ``measurement_state``/``maturity_state``
     remain for library callers without a SafetyContext (aggregate
     semantics; the runtime-native path always passes a SafetyContext).
+
+    Eligibility-aware (v3.6.0): when ``action_context`` is provided and
+    the smallest action is a scaling action (increase/scale), the action
+    is gated by ``scale_eligibility`` — a budget/bid constraint is a
+    DIAGNOSIS, not permission to scale; bad efficiency or an unsettled
+    recent change downgrades the action to hold/wait.
     """
     top = ranked[0].evaluation if ranked else None
     if top is None:
@@ -280,6 +293,16 @@ def converge(
         action = _first_action(top.hypothesis.id, top.hypothesis.possible_actions)
         if action is None:
             action = "observe"
+        # v3.6.0: Diagnosis != Action. A scaling action (increase/scale) is
+        # only emitted when scale is actually eligible — a budget
+        # constraint proves the cap, not that adding budget is wise.
+        eligibility: str | None = None
+        if action in SCALE_ACTIONS and action_context is not None:
+            eligibility = scale_eligibility(action_context)
+            if eligibility == "not_eligible":
+                action = "hold"
+            elif eligibility == "needs_more_evidence":
+                action = "wait"
         confidence = "high" if top.score >= 6 else "medium"
         return Convergence(
             decision=action,
@@ -289,6 +312,7 @@ def converge(
             exclusions=exclusions,
             missing_evidence=missing,
             review_condition="按约定窗口（X spend / Y impressions）复查",
+            action_eligibility=eligibility,
             converged=True,
         )
 
@@ -301,9 +325,11 @@ def converge(
         message = "证据不足以收敛到单一原因，先保持观察"
     return Convergence(
         decision="wait" if top.status != "weakened" else "investigate",
-        top_hypothesis=top.hypothesis.id
-        if top.status in ("supported", "unverified")
-        else None,
+        # v3.6.0: the ranked diagnosis identity is ALWAYS preserved — an
+        # honest wait still names its strongest candidate (top fields
+        # derive from ONE selected evaluation; no evidence does not make
+        # the candidate vanish).
+        top_hypothesis=top.hypothesis.id,
         confidence="low",
         rationale=(message,),
         exclusions=exclusions,

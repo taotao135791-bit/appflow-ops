@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.5.5/install.sh | bash -s -- --ref=v3.5.5
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.0/install.sh | bash -s -- --ref=v3.6.0
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -467,6 +467,22 @@ attribution matches the selected evaluation (`auction_pressure@google_ads`
 → `platform=google_ads`, shared stays `cross_platform`); other
 platforms' safety problems survive as `platform_warnings`, never a
 global veto.
+
+From v3.6.0 the DI plumbing is FROZEN and the goal becomes Decision
+Quality Calibration: measurement hypotheses require ACTUAL measurement
+evidence (CVR down with explicitly stable measurement is a funnel
+problem, never a tracking problem — stable measurement is a strong
+contradiction); recent budget/bid changes are CONFOUNDERS, not logical
+exclusions (real fatigue evidence + a recent budget change = two
+supported candidates → investigate, never a reckless full swap);
+**Diagnosis ≠ Action** (budget cap with CPA 110 vs target 50 →
+`increase` is blocked by action eligibility → hold; CPA 32 vs target 50
+with no recent change → small increase; a recent change → wait);
+**sample size decides evidence strength** (-25% CTR on 150 impressions
+is WEAK evidence that cannot support fatigue; the same movement on 100k
+impressions is normal; pay count 5 → 3 with -40% is inconclusive,
+500 → 300 is material); downstream rates use conservative 12%/15%
+material bands with real conversion-count minimums.
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

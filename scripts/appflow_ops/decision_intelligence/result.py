@@ -54,6 +54,11 @@ class DecisionIntelligenceResult:
     # (measurement_invalid | maturity_insufficient | None). A block
     # changes convergence/action, never the ranked diagnosis.
     safety_block: str | None = None
+    # v3.6.0: action eligibility for the recommended action
+    # (eligible | not_eligible | needs_more_evidence | None) — diagnosis
+    # and action eligibility are evaluated separately (a budget
+    # constraint does not imply permission to scale).
+    action_eligibility: str | None = None
     # v3.5.5: safety warnings per NON-selected platform (e.g.
     # {"meta": ("measurement_invalid",)}) — a warning on one platform is
     # never a veto on an independent diagnosis for another.
@@ -114,6 +119,7 @@ def from_convergence(
             top.hypothesis.evaluation_scope if top is not None else None
         ),
         safety_block=convergence.safety_block,
+        action_eligibility=convergence.action_eligibility,
         platform_warnings=dict(platform_warnings or {}),
         evidence=evidence,
     )

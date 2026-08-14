@@ -100,13 +100,22 @@ def evaluate_hypothesis(
     measurement_state: str = "stable",
     maturity_state: str = "sufficient",
     platform: str | None = None,
+    signal_strength: Mapping[str, str] | None = None,
 ) -> HypothesisEvaluation:
     """Evaluate one hypothesis. Deterministic and repeatable.
 
     Order: exclusion → support/contradiction scoring → missing-evidence
     cap → safety cap (invalid measurement / insufficient maturity).
     ``platform`` records the evidence attribution of this evaluation.
+    ``signal_strength`` (v3.6.0): a WEAK signal (tiny sample movement)
+    counts +1/-1 instead of +2/-2 — a -25% CTR on 150 impressions is
+    weaker evidence than the same movement on 100k impressions.
     """
+    strengths = signal_strength or {}
+
+    def _weight(signal: str) -> int:
+        return 1 if strengths.get(signal) == "weak" else 2
+
     supporting = tuple(
         signal for signal in hypothesis.supporting_signals if signals.get(signal)
     )
@@ -136,7 +145,9 @@ def evaluate_hypothesis(
             platform=platform,
         )
 
-    score = SUPPORT_WEIGHT * len(supporting) + CONTRADICTION_WEIGHT * len(contradicting)
+    score = sum(_weight(signal) for signal in supporting) - sum(
+        _weight(signal) for signal in contradicting
+    )
     safety_capped = False
     # Safety caps: with invalid measurement, only the measurement
     # hypothesis may claim support; with insufficient maturity, no
@@ -237,6 +248,13 @@ def evaluate_hypotheses(
             )
         return measurement_state, maturity_state
 
+    def _strengths_for(platform: str | None) -> dict[str, str]:
+        """v3.6.0: sample-aware evidence strength follows the same
+        provenance boundary as the signals themselves."""
+        if platform and platform != "cross_platform":
+            return evidence.signal_strength_by_platform.get(platform, {})
+        return evidence.signal_strength
+
     evaluations: list[HypothesisEvaluation] = []
     for hypothesis in hypotheses:
         scope = hypothesis.evaluation_scope
@@ -255,6 +273,7 @@ def evaluate_hypotheses(
                     measurement_state=measurement_state,
                     maturity_state=maturity_state,
                     platform=platform_tag,
+                    signal_strength=_strengths_for(platform_tag),
                 )
             )
             continue
@@ -274,6 +293,7 @@ def evaluate_hypotheses(
                     measurement_state=measurement_state,
                     maturity_state=maturity_state,
                     platform=None,
+                    signal_strength=_strengths_for(None),
                 )
             )
             continue
@@ -295,6 +315,7 @@ def evaluate_hypotheses(
                     measurement_state=platform_measurement,
                     maturity_state=platform_maturity,
                     platform=platform,
+                    signal_strength=_strengths_for(platform),
                 )
             )
     return tuple(evaluations)

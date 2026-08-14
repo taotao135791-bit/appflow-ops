@@ -1,4 +1,4 @@
-"""Signal extraction for Ads Decision Intelligence (v3.5.0 → v3.5.2).
+"""Signal extraction for Ads Decision Intelligence (v3.5.0 → v3.6.0).
 
 Signals are the bridge between raw metrics/context and hypothesis
 evaluation. A signal id is present (True) when the phenomenon is
@@ -11,12 +11,19 @@ v3.5.2: evidence is CONTINUOUS, not a current snapshot:
 - otherwise a comparable previous observation derives the trend
 - per-platform provenance is preserved (``signals_by_platform``);
   shared signals exist only when >= 2 distinct platforms agree
+
+v3.6.0: business calibration — metric-family movement thresholds and
+sample-aware evidence strength. A -25% CTR on 150 impressions is WEAK
+evidence; the same movement on 100k impressions is normal. Metric-level
+sufficiency is NOT campaign maturity.
 """
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+
+from .calibration import sample_sufficient, thresholds_for
 
 # Metrics keys that are directly readable as trend signals when present.
 # Every *_trend_* signal id in SIGNAL_IDS must be reachable through one of
@@ -40,6 +47,9 @@ _TREND_KEYS: dict[str, tuple[str, ...]] = {
 # stable signal; beyond the material threshold yields up/down; the gap in
 # between is ambiguous and yields NOTHING (never guessed).
 # v3.5.2: the SAME constants drive current-vs-history derivation.
+# v3.6.0: metric families with a calibration entry use their own
+# conservative bands (see ``calibration.METRIC_CALIBRATION``); these
+# uniform values remain the fallback.
 MATERIAL_CHANGE_PCT = 0.10
 STABLE_CHANGE_PCT = 0.05
 
@@ -164,43 +174,65 @@ _CROSS_AGGREGATIONS: dict[str, str] = {
 
 
 def _change_pct_signals(
-    down: str | None, stable: str | None, up: str | None, value: float
+    down: str | None,
+    stable: str | None,
+    up: str | None,
+    value: float,
+    metric_family: str | None = None,
 ) -> tuple[str, ...]:
     """Map a numeric relative movement to trend signal ids (shared by the
-    explicit change_pct path and the current-vs-history derivation)."""
-    if value <= -MATERIAL_CHANGE_PCT:
+    explicit change_pct path and the current-vs-history derivation).
+    v3.6.0: metric-family calibration thresholds (fallback = legacy)."""
+    stable_pct, material_pct = thresholds_for(metric_family or "")
+    if value <= -material_pct:
         return (down,) if down is not None else ()
-    if value >= MATERIAL_CHANGE_PCT:
+    if value >= material_pct:
         return (up,) if up is not None else ()
-    if abs(value) <= STABLE_CHANGE_PCT:
+    if abs(value) <= stable_pct:
         return (stable,) if stable is not None else ()
     return ()  # ambiguous movement: no signal
 
 
-def signals_from_metrics(metrics: Mapping[str, object]) -> dict[str, bool]:
-    """Extract present signals from a metrics/facts mapping. Only values
-    that exist are extracted; missing data stays missing (never invented).
-    """
+def _signals_from_metrics(
+    metrics: Mapping[str, object],
+) -> tuple[dict[str, bool], dict[str, str]]:
+    """(signals, strengths) extraction. v3.6.0: movement on a metric whose
+    sample population is below the family minimum is WEAK evidence;
+    explicit canonical trend strings and bool facts stay normal."""
     signals: dict[str, bool] = {}
+    strengths: dict[str, str] = {}
     for key, ids in _TREND_KEYS.items():
         value = metrics.get(key)
         if isinstance(value, str):
             for signal_id in ids:
                 if value == signal_id.replace(f"{key}_", ""):
                     signals[signal_id] = True
+                    strengths[signal_id] = "normal"
                     break
     for key, signal_id in _BOOL_KEYS.items():
         value = metrics.get(key)
         if value is True:
             signals[signal_id] = True
-    # Relative movement: numeric change_pct → trend signal, via thresholds.
-    # Missing value or ambiguous band → no signal (stable is never guessed).
+            strengths[signal_id] = "normal"
+    # Relative movement: numeric change_pct → trend signal, via the
+    # metric-family calibrated thresholds + sample sufficiency.
     for key, (down, stable, up) in _CHANGE_PCT_KEYS.items():
         value = metrics.get(key)
         if not isinstance(value, (int, float)):
             continue
-        for signal_id in _change_pct_signals(down, stable, up, value):
+        family = key.removesuffix("_change_pct")
+        strength = "normal" if sample_sufficient(metrics, family) else "weak"
+        for signal_id in _change_pct_signals(down, stable, up, value, family):
             signals[signal_id] = True
+            strengths[signal_id] = strength
+    return signals, strengths
+
+
+def signals_from_metrics(metrics: Mapping[str, object]) -> dict[str, bool]:
+    """Extract present signals from a metrics/facts mapping. Only values
+    that exist are extracted; missing data stays missing (never invented).
+    """
+    signals, _ = _signals_from_metrics(metrics)
     return signals
 
 
@@ -256,6 +288,9 @@ class EvidenceResult:
       evidence (recent_budget_change / recent_bid_change / ...)
     - ``decision_context`` / ``outcome_context``: prior recommendation and
       outcome — CONTEXT only, never factual support
+    - ``signal_strength`` / ``signal_strength_by_platform``: evidence
+      strength (weak/normal) per signal id — sample-aware calibration
+      (v3.6.0); weak evidence counts less in evaluation
     """
 
     signals: dict[str, bool] = field(default_factory=dict)
@@ -270,6 +305,9 @@ class EvidenceResult:
     # v3.5.3: per-platform latest context retained alongside global latest.
     decisions_by_platform: dict[str, dict[str, object]] = field(default_factory=dict)
     outcomes_by_platform: dict[str, dict[str, object]] = field(default_factory=dict)
+    # v3.6.0: sample-aware evidence strength (weak/normal) per signal id.
+    signal_strength: dict[str, str] = field(default_factory=dict)
+    signal_strength_by_platform: dict[str, dict[str, str]] = field(default_factory=dict)
 
 
 def build_evidence(
@@ -292,9 +330,10 @@ def build_evidence(
     observation is comparable (same platform, same metric family).
     """
     signals_by_platform: dict[str, dict[str, bool]] = {}
+    signal_strength_by_platform: dict[str, dict[str, str]] = {}
     historical_comparisons: dict[str, dict[str, float]] = {}
     for platform, metrics in per_platform.items():
-        platform_signals = signals_from_metrics(metrics)
+        platform_signals, platform_strengths = _signals_from_metrics(metrics)
         previous = (historical_by_platform or {}).get(platform) or {}
         changes = derive_change_pcts(metrics, previous)
         if changes:
@@ -307,23 +346,45 @@ def build_evidence(
         for trend_key, change_pct in changes.items():
             if trend_key in explicit_trend_keys:
                 continue
+            family = trend_key.removesuffix("_trend")
+            strength = "normal" if sample_sufficient(metrics, family) else "weak"
             for signal_id in _change_pct_signals(
-                *_CHANGE_PCT_KEYS[f"{trend_key.rsplit('_', 1)[0]}_change_pct"],
+                *_CHANGE_PCT_KEYS[f"{family}_change_pct"],
                 change_pct,
+                family,
             ):
                 platform_signals[signal_id] = True
+                platform_strengths[signal_id] = strength
         signals_by_platform[platform] = platform_signals
+        signal_strength_by_platform[platform] = platform_strengths
 
     # Merged aggregate + shared signals (>= 2 distinct platforms only).
+    # v3.6.0: a cross-level signal inherits the WEAKEST contributing
+    # platform strength (two tiny-sample declines are not strong shared
+    # evidence either).
+    signal_strength: dict[str, str] = {}
+    for platform_strengths in signal_strength_by_platform.values():
+        for signal_id, strength in platform_strengths.items():
+            if signal_id not in signal_strength or strength == "weak":
+                signal_strength[signal_id] = strength
     signals: dict[str, bool] = {}
     for platform_signals in signals_by_platform.values():
         signals.update(platform_signals)
     shared_signals: dict[str, bool] = {}
     for raw_signal, cross_signal in _CROSS_AGGREGATIONS.items():
-        count = sum(1 for ps in signals_by_platform.values() if ps.get(raw_signal))
-        if count >= 2:
+        platforms_with = [
+            platform
+            for platform, ps in signals_by_platform.items()
+            if ps.get(raw_signal)
+        ]
+        if len(platforms_with) >= 2:
             signals[cross_signal] = True
             shared_signals[cross_signal] = True
+            if all(
+                signal_strength_by_platform[platform].get(raw_signal) == "weak"
+                for platform in platforms_with
+            ):
+                signal_strength[cross_signal] = "weak"
 
     # Cross-platform comparison is available when >= 2 platforms show the
     # SAME downstream direction (both down, or both stable). A divergent
@@ -525,6 +586,8 @@ def build_evidence(
         outcome_context=outcome_context,
         decisions_by_platform=decisions_by_platform,
         outcomes_by_platform=outcomes_by_platform,
+        signal_strength=signal_strength,
+        signal_strength_by_platform=signal_strength_by_platform,
     )
 
 

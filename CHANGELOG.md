@@ -2,6 +2,56 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.6.0 — 2026-08-14
+
+Decision Intelligence plumbing is FROZEN. This minor release changes the
+core goal from "can the system reason correctly?" to "is the judgment
+itself right?" — Decision Quality Calibration, driven by adversarial
+real-optimizer cases.
+
+### Changed
+
+- **Calibrated measurement hypotheses to require actual measurement
+  evidence**: `measurement_instability` / `install_measurement_issue` /
+  `shared_measurement_issue` are supported only by real measurement
+  anomalies (`measurement_invalid` / `cross_measurement_invalid`); an
+  explicitly stable measurement is now a strong contradiction
+  (weakened) — CVR down with measurement stable is a funnel problem,
+  never a tracking problem.
+- **Recent bid/budget changes now act as confounders instead of
+  automatic creative-fatigue exclusions**: `creative_fatigue` /
+  `creative_message_mismatch` are no longer hard-excluded by recent
+  changes; fatigue stays supported on real fatigue evidence and faces a
+  material rival instead of premature convergence. CVR stable with CTR
+  down is now positive fatigue evidence.
+- **Diagnosis and action eligibility are evaluated separately**: a
+  budget/bid constraint never implies permission to scale; scaling
+  actions (increase/scale) are gated by `scale_eligibility`
+  (measurement, maturity, settled recent changes, KPI efficiency) —
+  `eligible` / `not_eligible` / `needs_more_evidence`.
+- **Metric evidence strength now considers sample sufficiency**: a
+  movement on a tiny population (150 impressions, pay count 5 → 3) is
+  WEAK evidence (weight 1 vs 2); the same movement on a mature sample is
+  normal. Metric-level sufficiency is distinct from campaign maturity.
+- **Metric-family specific movement thresholds introduced**
+  (`METRIC_CALIBRATION`): downstream rates (cvr/install/registration/
+  pay) use conservative material bands (12%/15%) and real conversion
+  count minimums; the legacy uniform 5%/10% remains the fallback.
+
+### Added
+
+- **Scale eligibility evaluation**: `scale_eligibility()` + KPI targets
+  (target_cpa/target_cpi/target_roas) added to the common projection
+  envelope; `DecisionIntelligenceResult.action_eligibility`.
+- **Evidence-strength calibration**: `signal_strength` /
+  `signal_strength_by_platform` on the EvidenceResult; cross-level
+  signals inherit the weakest contributing platform.
+- **Adversarial decision-quality eval scenarios**: 74 → 95 real
+  optimizer cases — measurement-vs-funnel, fatigue-vs-recent-change,
+  budget-constraint-vs-scale (bad CPA → hold, good CPA → small
+  increase, recent change → wait), and sample-size cases (tiny vs
+  mature populations). 23 calibration unit/runtime tests added.
+
 ## 3.5.5 — 2026-08-13
 
 ### Fixed

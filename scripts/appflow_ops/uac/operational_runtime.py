@@ -587,7 +587,29 @@ class PlatformOperationalRun:
             aggregate_measurement=measurement_state,
             aggregate_maturity=maturity_state,
         )
-        convergence = converge(ranked, safety_context=safety_context)
+        # v3.6.0: action eligibility context — the selected evaluation's
+        # facts (KPI/efficiency/sample) plus recent-change confounders, so
+        # a scaling action is gated by real eligibility, not by the
+        # diagnosis alone (constraint != permission to scale).
+        action_context: dict[str, object] = {}
+        selected = ranked[0].evaluation if ranked else None
+        if (
+            selected is not None
+            and selected.platform
+            and selected.platform in per_platform
+        ):
+            action_context.update(per_platform[selected.platform])
+        else:
+            for platform_facts in per_platform.values():
+                action_context.update(platform_facts)
+        for key in ("recent_budget_change", "recent_bid_change"):
+            if evidence.signals.get(key):
+                action_context[key] = True
+        convergence = converge(
+            ranked,
+            safety_context=safety_context,
+            action_context=action_context or None,
+        )
         return from_convergence(
             convergence=convergence,
             platform_scope=self.platform_scope,

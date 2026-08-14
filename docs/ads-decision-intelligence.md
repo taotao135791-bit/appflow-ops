@@ -349,3 +349,65 @@ evaluation: `auction_pressure@google_ads` persists with
 `platform=google_ads`; a blocked shared diagnosis still persists with
 `platform=cross_platform` + its scope — a safety action never rewrites the
 diagnostic attribution.
+
+## Decision Quality Calibration (v3.6.0)
+
+The plumbing is frozen; this section calibrates whether the JUDGMENT
+resembles a mature media optimizer. Four themes, all implemented as thin
+constants/helpers (`calibration.py`) — no architecture layer.
+
+### Diagnosis ≠ Action
+
+> A correct diagnosis does not automatically make its most obvious
+> intervention eligible.
+
+`budget_constraint` proves the campaign hits its budget cap; it does NOT
+prove that increasing the budget is wise. `converge()` gates scaling
+actions (increase/scale) with `scale_eligibility(action_context)`:
+measurement reliable, maturity sufficient, recent change settled, and
+efficiency acceptable relative to the KPI target (CPA/CPI ≤ target, ROAS
+≥ target). States: `eligible` / `not_eligible` / `needs_more_evidence`
+(missing KPI → conservative wait). The result exposes `action_eligibility`
+separately from the diagnosis.
+
+### Metric Deterioration Is Not Measurement Evidence
+
+> Metric deterioration is not measurement evidence.
+
+`measurement_instability` / `install_measurement_issue` /
+`shared_measurement_issue` now require an ACTUAL measurement anomaly
+(`measurement_invalid` / `cross_measurement_invalid`). CVR down with
+measurement stable is funnel evidence — the stable measurement is a
+strong contradiction (weakened), never silent support. A cross-platform
+pay decline with both platforms stable never promotes a shared
+measurement issue.
+
+### Recent Changes Are Confounders
+
+> Recent operational changes are confounders, not logical proof that
+> another diagnosis is impossible.
+
+`recent_budget_change` / `recent_bid_change` no longer hard-exclude
+`creative_fatigue` / `creative_message_mismatch`; they are contradiction
+evidence (-2) — fatigue stays supported on real fatigue evidence and
+simply faces a material rival (`recent_budget_bid_interference`), which
+blocks premature convergence (investigate + discriminating evidence).
+CVR stable with CTR down is POSITIVE fatigue evidence (upper-funnel
+decline while conversions hold = creative, not funnel).
+
+### Sample Sufficiency Affects Evidence Strength
+
+> Sample sufficiency affects evidence strength even when campaign-level
+> maturity is sufficient.
+
+Metric-family calibration table (`METRIC_CALIBRATION`) sets conservative
+movement thresholds and minimum sample populations per family; the
+legacy uniform 5%/10% remains the fallback. A movement on a tiny
+population emits the signal as WEAK (weight 1 instead of 2 in
+evaluation): -25% CTR on 150 impressions cannot support fatigue, while
+the same movement on 100k impressions can. Pay/install/registration
+rates are stricter (material 15%, real conversion counts required).
+`signal_strength` / `signal_strength_by_platform` are exposed on the
+EvidenceResult; cross-level signals inherit the weakest contributing
+platform. Metric-level sufficiency is NOT campaign maturity — the two
+concepts never merge.

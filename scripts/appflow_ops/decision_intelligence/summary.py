@@ -131,6 +131,23 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
             )
         else:
             lines.append(f"更像{_label(result.top_hypothesis or '')}，先做最小动作。")
+        # v3.6.0: Diagnosis != Action — a correct diagnosis does not make
+        # its most obvious intervention eligible. Say it explicitly when a
+        # scale action was blocked by eligibility.
+        if result.action_eligibility == "not_eligible" and (
+            result.recommended_action in ("hold", "wait")
+        ):
+            if result.top_hypothesis in ("budget_constraint", "bid_constraint"):
+                lines.append(
+                    f"{_label(result.top_hypothesis or '')}是真的，但现在不建议加量"
+                    "——先把效率拉回目标附近、等近期调整稳定后再考虑扩。"
+                )
+            else:
+                lines.append(
+                    "诊断成立，但当前条件不允许执行最直接的加量动作，先保持现状。"
+                )
+        elif result.action_eligibility == "needs_more_evidence":
+            lines.append("缺 KPI/效率数据，暂时不能判断是否值得加量，先观察。")
     elif (
         result.convergence_status == "investigate"
         and result.safety_block == "measurement_invalid"
@@ -172,6 +189,20 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
         for signal_id in ev.supporting:
             if signal_id in SIGNAL_LABELS:
                 evidence_lines.append(f"- {SIGNAL_LABELS[signal_id]}")
+        # v3.6.0: metric deterioration is not measurement evidence — when
+        # measurement is explicitly stable and the top is a funnel
+        # diagnosis, say it directly instead of implying tracking issues.
+        if (
+            result.top_hypothesis
+            in (
+                "conversion_funnel_degradation",
+                "post_click_friction",
+                "pay_funnel_degradation",
+                "shared_product_funnel_issue",
+            )
+            and result.safety_context.get("measurement_state") == "stable"
+        ):
+            lines.append("更像漏斗/转化链路问题，不像 tracking；measurement 当前正常。")
         break
     if evidence_lines:
         lines.append("\n依据：")
@@ -185,6 +216,15 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
                 _label(e) for e in result.next_discriminating_evidence[:2]
             )
             lines.append(f"最需要补的是：{needed}。")
+        # v3.6.0: fatigue + recent-change coexistence — never a reckless
+        # full swap or budget cut; smallest useful action.
+        if result.top_hypothesis == "creative_fatigue" and any(
+            h == "recent_budget_bid_interference" for h in result.material_alternatives
+        ):
+            lines.append(
+                "素材有疲劳迹象，但你刚调过预算/出价，delivery 也可能在重新分配——"
+                "预算先不动，只补一小组新素材，再看一个稳定窗口。"
+            )
 
     # Material exclusions (weak evidence vs excluded).
     excluded = [

@@ -221,3 +221,18 @@ ruff check scripts tests
 mypy scripts/appflow_ops/uac
 python3 scripts/sync_skill_layout.py --check
 ```
+- **Prefer false negatives over high-confidence false positives when
+  evidence volume is weak.** A -25% CTR on 150 impressions is not the
+  same evidence as the same movement on 100k impressions; metric-level
+  sample sufficiency is separate from campaign maturity.
+- **Budget or bid constraint does not imply scale eligibility.** A
+  scaling action (increase/scale) requires measurement reliability,
+  sufficient maturity, settled recent changes, and acceptable efficiency
+  against the KPI target — otherwise hold/wait.
+- **Do not use downstream performance decline as evidence of measurement
+  failure when measurement health is explicitly stable.** Stable
+  measurement is a strong contradiction to measurement instability.
+- **A confounder should usually weaken confidence or create a competing
+  hypothesis, not automatically exclude a plausible diagnosis.** Recent
+  budget/bid changes weaken creative fatigue; they never prove it
+  impossible.

@@ -1,4 +1,4 @@
-"""Ads Decision Intelligence facade (v3.5.5).
+"""Ads Decision Intelligence facade (v3.6.0).
 
 Public entry points — callers should never import internal modules:
 
@@ -6,12 +6,20 @@ Public entry points — callers should never import internal modules:
     build_hypothesis_set(platform_scope, domain, cross_platform)
     evaluate_hypotheses(specs, signals, measurement_state, maturity_state)
     rank_hypotheses(evaluations)
-    converge(ranked, measurement_state, maturity_state, safety_context)
+    converge(ranked, measurement_state, maturity_state, safety_context,
+             action_context)
     resolve_evaluation_safety(evaluation, safety_context)
+    scale_eligibility(facts) / thresholds_for(family) / sample_sufficient
 """
 
 from __future__ import annotations
 
+from .calibration import (
+    METRIC_CALIBRATION,
+    sample_sufficient,
+    scale_eligibility,
+    thresholds_for,
+)
 from .domains import (
     OPERATIONAL_DOMAINS,
     detect_operational_domain,
@@ -69,6 +77,7 @@ __all__ = [
     "CROSS_PLATFORM_HYPOTHESES",
     "HYPOTHESIS_STATUSES",
     "META_HYPOTHESES",
+    "METRIC_CALIBRATION",
     "OPERATIONAL_DOMAINS",
     "SIGNAL_IDS",
     "SIGNAL_LABELS",
@@ -98,7 +107,10 @@ __all__ = [
     "primary_domain",
     "rank_hypotheses",
     "resolve_evaluation_safety",
+    "sample_sufficient",
+    "scale_eligibility",
     "signals_from_metrics",
     "signals_from_platforms",
     "summarize_decision_intelligence",
+    "thresholds_for",
 ]

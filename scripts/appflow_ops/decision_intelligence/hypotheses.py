@@ -109,10 +109,23 @@ META_HYPOTHESES: tuple[HypothesisSpec, ...] = (
             "ctr_trend_down",
             "old_creative_worse",
             "frequency_trend_up",
+            # v3.6.0: CVR stable with CTR down is POSITIVE fatigue evidence
+            # (upper-funnel decline while conversions hold = creative
+            # fatigue, not a funnel problem).
+            "cvr_trend_stable",
         ),
-        contradicting_signals=("ctr_trend_stable", "new_creative_also_dropping"),
+        # v3.6.0: recent bid/budget changes are CONFOUNDERS, not logical
+        # exclusions — a recent budget change means delivery may be
+        # redistributing; it never proves fatigue is impossible. Fatigue
+        # can stay supported and simply face a material rival.
+        contradicting_signals=(
+            "ctr_trend_stable",
+            "new_creative_also_dropping",
+            "recent_budget_change",
+            "recent_bid_change",
+        ),
         required_evidence=("ctr_trend", "creative_age_data"),
-        exclusion_conditions=("recent_budget_change", "recent_bid_change"),
+        exclusion_conditions=(),
         possible_actions=("replace", "retest", "observe"),
     ),
     HypothesisSpec(
@@ -125,9 +138,14 @@ META_HYPOTHESES: tuple[HypothesisSpec, ...] = (
             "multi_creative_impacted",
             "cpm_trend_up",
         ),
-        contradicting_signals=("ctr_trend_stable",),
+        # v3.6.0: same confounder semantics as creative_fatigue.
+        contradicting_signals=(
+            "ctr_trend_stable",
+            "recent_budget_change",
+            "recent_bid_change",
+        ),
         required_evidence=("ctr_trend", "creative_mix"),
-        exclusion_conditions=("recent_budget_change", "recent_bid_change"),
+        exclusion_conditions=(),
         possible_actions=("replace", "retest"),
     ),
     HypothesisSpec(
@@ -228,11 +246,13 @@ META_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         label="数据/归因不稳定",
         domain="measurement",
         applicable_platforms=("*",),
-        supporting_signals=(
-            "measurement_invalid",
-            "cvr_trend_down",
-            "ctr_trend_stable",
-        ),
+        # v3.6.0: bad conversion performance is NOT measurement evidence.
+        # Measurement instability requires an actual measurement anomaly
+        # (invalid state); a stable measurement is a strong contradiction
+        # (CVR down with measurement stable is a funnel problem, not a
+        # tracking problem).
+        supporting_signals=("measurement_invalid",),
+        contradicting_signals=("measurement_stable",),
         required_evidence=("measurement_health",),
         possible_actions=("investigate_measurement", "wait"),
     ),
@@ -338,11 +358,11 @@ TIKTOK_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         label="安装数据/回传问题",
         domain="measurement",
         applicable_platforms=("tiktok",),
-        supporting_signals=(
-            "measurement_invalid",
-            "install_rate_trend_down",
-            "click_volume_trend_stable",
-        ),
+        # v3.6.0: install drop is NOT measurement evidence; only an actual
+        # measurement anomaly supports it, and stable measurement
+        # contradicts it.
+        supporting_signals=("measurement_invalid",),
+        contradicting_signals=("measurement_stable",),
         required_evidence=("measurement_health",),
         possible_actions=("investigate_measurement", "wait"),
     ),
@@ -409,11 +429,12 @@ CROSS_PLATFORM_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         label="共享数据/归因问题",
         domain="measurement",
         applicable_platforms=("cross_platform",),
-        supporting_signals=(
-            "cross_measurement_invalid",
-            "cross_pay_rate_drop",
-            "cross_cvr_drop",
-        ),
+        # v3.6.0: cross-platform downstream decline alone never supports a
+        # shared measurement issue — actual measurement anomalies on >= 2
+        # platforms (cross_measurement_invalid) are required; an explicit
+        # stable measurement contradicts it.
+        supporting_signals=("cross_measurement_invalid",),
+        contradicting_signals=("measurement_stable",),
         # v3.5.4: measurement_conflict (Meta invalid + Google stable) is a
         # reliability DIVERGENCE — it indicates "investigate measurement
         # consistency", never "shared measurement problem confirmed".
