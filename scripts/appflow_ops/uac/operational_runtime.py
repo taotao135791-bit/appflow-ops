@@ -591,6 +591,11 @@ class PlatformOperationalRun:
         # facts (KPI/efficiency/sample) plus recent-change confounders, so
         # a scaling action is gated by real eligibility, not by the
         # diagnosis alone (constraint != permission to scale).
+        # v3.6.1: eligibility follows the selected evaluation's
+        # PROVENANCE — a platform-bound top only sees THAT platform's
+        # facts and recent changes; another platform's change never
+        # blocks this platform's scale (aggregate signals are only used
+        # for shared/run-level tops).
         action_context: dict[str, object] = {}
         selected = ranked[0].evaluation if ranked else None
         if (
@@ -599,12 +604,16 @@ class PlatformOperationalRun:
             and selected.platform in per_platform
         ):
             action_context.update(per_platform[selected.platform])
+            platform_signals = evidence.signals_by_platform.get(selected.platform, {})
+            for key in ("recent_budget_change", "recent_bid_change"):
+                if platform_signals.get(key):
+                    action_context[key] = True
         else:
             for platform_facts in per_platform.values():
                 action_context.update(platform_facts)
-        for key in ("recent_budget_change", "recent_bid_change"):
-            if evidence.signals.get(key):
-                action_context[key] = True
+            for key in ("recent_budget_change", "recent_bid_change"):
+                if evidence.signals.get(key):
+                    action_context[key] = True
         convergence = converge(
             ranked,
             safety_context=safety_context,

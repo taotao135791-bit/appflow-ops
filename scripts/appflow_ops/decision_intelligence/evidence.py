@@ -23,7 +23,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from .calibration import sample_sufficient, thresholds_for
+from .calibration import sample_sufficiency, thresholds_for
 
 # Metrics keys that are directly readable as trend signals when present.
 # Every *_trend_* signal id in SIGNAL_IDS must be reachable through one of
@@ -153,6 +153,7 @@ _BOOL_KEYS: dict[str, str] = {
     "downstream_conversion_down": "downstream_conversion_down",
     "traffic_quality_signal": "traffic_quality_signal",
     "click_quality_signal": "click_quality_signal",
+    "reporting_anomaly": "reporting_anomaly",
     "no_recent_change": "no_recent_change",
     "recent_creative_change": "recent_creative_change",
     "recent_audience_change": "recent_audience_change",
@@ -216,12 +217,16 @@ def _signals_from_metrics(
             strengths[signal_id] = "normal"
     # Relative movement: numeric change_pct → trend signal, via the
     # metric-family calibrated thresholds + sample sufficiency.
+    # v3.6.1: missing sample context is UNKNOWN (weak), never sufficient
+    # — a -25% CTR with no impressions fact is uncertainty.
     for key, (down, stable, up) in _CHANGE_PCT_KEYS.items():
         value = metrics.get(key)
         if not isinstance(value, (int, float)):
             continue
         family = key.removesuffix("_change_pct")
-        strength = "normal" if sample_sufficient(metrics, family) else "weak"
+        strength = (
+            "normal" if sample_sufficiency(metrics, family) == "sufficient" else "weak"
+        )
         for signal_id in _change_pct_signals(down, stable, up, value, family):
             signals[signal_id] = True
             strengths[signal_id] = strength
@@ -347,7 +352,11 @@ def build_evidence(
             if trend_key in explicit_trend_keys:
                 continue
             family = trend_key.removesuffix("_trend")
-            strength = "normal" if sample_sufficient(metrics, family) else "weak"
+            strength = (
+                "normal"
+                if sample_sufficiency(metrics, family) == "sufficient"
+                else "weak"
+            )
             for signal_id in _change_pct_signals(
                 *_CHANGE_PCT_KEYS[f"{family}_change_pct"],
                 change_pct,

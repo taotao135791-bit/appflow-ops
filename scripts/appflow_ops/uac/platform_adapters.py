@@ -104,6 +104,10 @@ _COMMON_METRIC_KEYS = (
     "daily_budget",
     "measurement_state",
     "maturity_state",
+    # v3.6.1: a reporting anomaly (event loss / tracking break /
+    # platform-vs-source discrepancy) is REAL measurement evidence —
+    # common envelope on every platform.
+    "reporting_anomaly",
     # v3.5.2: rate fields participate in current-vs-history trend
     # derivation (same platform, same metric family).
     "install_rate",

@@ -147,7 +147,40 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
                     "诊断成立，但当前条件不允许执行最直接的加量动作，先保持现状。"
                 )
         elif result.action_eligibility == "needs_more_evidence":
-            lines.append("缺 KPI/效率数据，暂时不能判断是否值得加量，先观察。")
+            if result.eligibility_reason == "thin_kpi_headroom":
+                lines.append(
+                    "先别加。虽然 CPA/成本刚好低于目标，但余量太小，而且样本还不够，"
+                    "暂时不能证明扩量后还能守住成本。先继续积累转化，再看。"
+                )
+            elif result.eligibility_reason == "low_conversion_volume":
+                lines.append(
+                    "先别加。转化量还太少，现在的成本水平可能只是少数转化的偶然，"
+                    "继续积累转化后再判断是否值得扩。"
+                )
+            elif result.eligibility_reason == "weak_sample":
+                lines.append("先别加。样本量还不足以支撑扩量判断，先观察一个完整窗口。")
+            elif result.eligibility_reason == "material_rival":
+                lines.append(
+                    "先别加。素材/漏斗还有未解决的候选问题，先把这些风险排除再考虑扩。"
+                )
+            else:
+                lines.append("缺 KPI/效率数据，暂时不能判断是否值得加量，先观察。")
+        elif result.action_eligibility == "eligible" and result.top_hypothesis in (
+            "budget_constraint",
+            "bid_constraint",
+        ):
+            lines.append(
+                "可以考虑小幅加。预算/出价已经受限，CPA 明显低于目标，转化量和数据"
+                "稳定性都够——建议分阶段加，不要一次放太多。"
+            )
+            # v3.6.1: cross-platform isolation — the selected platform scales
+            # on its own evidence; other platforms' warnings are not vetoes.
+            if result.top_platform and result.platform_warnings:
+                warning_names = "、".join(result.platform_warnings)
+                lines.append(
+                    f"{result.top_platform} 可以按自己的效率和样本做判断；"
+                    f"{warning_names} 的问题不影响它，那边继续观察。"
+                )
     elif (
         result.convergence_status == "investigate"
         and result.safety_block == "measurement_invalid"
@@ -172,6 +205,11 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
         if result.platform_warnings:
             names = "、".join(result.platform_warnings)
             lines.append(f"{names} 的数据暂不可信，那边先不下结论。")
+        # v3.6.1: measurement problem first — never touch creative/budget
+        # while the data itself is untrustworthy.
+        lines.append(
+            "先查 tracking，不建议现在根据成本去调素材或预算——先把数据可信度恢复。"
+        )
     elif result.convergence_status == "investigate":
         lines.append("候选原因并存，先别下结论——补充证据再收敛。")
     elif result.convergence_status == "wait" and result.safety_block:

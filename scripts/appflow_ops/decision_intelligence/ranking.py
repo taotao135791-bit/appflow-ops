@@ -128,6 +128,11 @@ class Convergence:
     # eligibility gate applies) — diagnosis and action eligibility are
     # evaluated separately.
     action_eligibility: str | None = None
+    # v3.6.1: short reason for a blocked/deferred scale action
+    # (thin_kpi_headroom | low_conversion_volume | weak_sample |
+    # recent_change | measurement_unreliable | maturity_insufficient |
+    # None).
+    eligibility_reason: str | None = None
 
 
 def rank_hypotheses(
@@ -296,9 +301,12 @@ def converge(
         # v3.6.0: Diagnosis != Action. A scaling action (increase/scale) is
         # only emitted when scale is actually eligible — a budget
         # constraint proves the cap, not that adding budget is wise.
+        # v3.6.1: eligibility is stricter — KPI pass is necessary, not
+        # sufficient (headroom, outcome volume, sample, recent change).
         eligibility: str | None = None
+        eligibility_reason: str | None = None
         if action in SCALE_ACTIONS and action_context is not None:
-            eligibility = scale_eligibility(action_context)
+            eligibility, eligibility_reason = scale_eligibility(action_context)
             if eligibility == "not_eligible":
                 action = "hold"
             elif eligibility == "needs_more_evidence":
@@ -313,6 +321,7 @@ def converge(
             missing_evidence=missing,
             review_condition="按约定窗口（X spend / Y impressions）复查",
             action_eligibility=eligibility,
+            eligibility_reason=eligibility_reason,
             converged=True,
         )
 

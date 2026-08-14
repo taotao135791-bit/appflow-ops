@@ -102,8 +102,16 @@ def test_auction_platform_bound_evaluations_do_not_splice() -> None:
 def test_true_shared_pay_drop_supports_shared() -> None:
     evidence = build_evidence(
         per_platform={
-            "meta": {"pay_rate_change_pct": -0.3},
-            "google_ads": {"pay_rate_change_pct": -0.25},
+            "meta": {
+                "pay_rate_change_pct": -0.3,
+                "registrations": 1000,
+                "payments": 300,
+            },
+            "google_ads": {
+                "pay_rate_change_pct": -0.25,
+                "registrations": 1000,
+                "payments": 300,
+            },
         }
     )
     assert evidence.shared_signals.get("cross_pay_rate_drop") is True
@@ -404,6 +412,8 @@ def test_top_platform_attribution_in_summary(workspace) -> None:
             "cpm_change_pct": 0.35,
             "ctr_change_pct": 0.01,
             "cvr_change_pct": 0.0,
+            "impressions": 100000,
+            "clicks": 5000,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },

@@ -427,6 +427,9 @@ def _run_scenario1(workspace) -> tuple[PlatformOperationalRun, object]:
             "cpm_change_pct": 0.3,
             "ctr_change_pct": 0.01,
             "cvr_change_pct": 0.01,
+            "impressions": 50000,
+            "clicks": 5000,
+            "conversions": 100,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },
@@ -463,6 +466,8 @@ def test_runtime_e2e_meta_insufficient_google_mature_survives(workspace) -> None
         {
             "cpm_change_pct": 0.3,
             "ctr_change_pct": 0.01,
+            "impressions": 50000,
+            "clicks": 5000,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },

@@ -411,3 +411,70 @@ rates are stricter (material 15%, real conversion counts required).
 EvidenceResult; cross-level signals inherit the weakest contributing
 platform. Metric-level sufficiency is NOT campaign maturity — the two
 concepts never merge.
+
+## Calibration Reliability (v3.6.1)
+
+### Sample Sufficiency
+
+> Missing sample size is uncertainty, not proof of sufficiency.
+
+Sample sufficiency is a THREE-state judgment: `sufficient` /
+`insufficient` / `unknown`. A missing base population or success-event
+count is `unknown` and downgrades evidence strength to WEAK — a -25% CTR
+with no impressions fact is never treated like the same movement on
+100k impressions. Tiny samples (`insufficient`) are equally weak.
+
+> Rate evidence should consider both the base population and the number
+> of successful conversion events when those facts are available.
+
+Rate calibration now reads numerator AND denominator: CTR = impressions +
+clicks; click→install = clicks + installs; install→registration =
+installs + registrations; registration→pay = registrations + payments;
+CVR = clicks + conversions (or conversion_base/conversion_count when the
+schema carries them). 2000 clicks with 2 conversions is NOT a strong CVR
+decline — the denominator is large but the numerator is tiny.
+
+### Action Eligibility Provenance
+
+> Action eligibility follows the selected platform's provenance.
+
+A platform-bound top uses ONLY that platform's facts, signals, recent
+changes and safety. Meta's recent budget change never blocks Google's
+scale decision; shared/run-level tops use the aggregate context
+(conservative). The runtime never reads the aggregate
+`evidence.signals` for a platform-bound action context.
+
+### Scale Eligibility 2.0
+
+> Passing a KPI threshold is not enough to justify scale. Headroom,
+> volume, stability, and recent changes matter.
+
+`scale_eligibility()` is stricter than "actual <= target":
+
+- KPI headroom: a marginal pass (CPA 49 vs target 50) is
+  `thin_kpi_headroom` → `needs_more_evidence`; only a comfortable pass
+  (CPA ≤ 0.85 × target) is strong headroom. The ratio is an internal
+  operational heuristic, not a universal benchmark.
+- Outcome volume: 1-2 conversions never justify scale
+  (`low_conversion_volume` → wait).
+- Weak sample blocks scale (`weak_sample`); a same-platform recent
+  change blocks scale (`recent_change`); measurement/maturity gates
+  stay (`measurement_unreliable` / `maturity_insufficient`).
+- A supported creative/funnel rival already blocks confident convergence
+  (investigate) — scale is never emitted on top of an unresolved
+  material alternative.
+- Reason codes are exposed (`eligibility_reason`) so the user answer can
+  say WHY scaling is deferred.
+
+### Measurement Diagnosis Safety
+
+> A measurement-domain diagnosis must not be suppressed merely because
+> measurement is invalid; invalid measurement is often the evidence for
+> that diagnosis.
+
+The invalid-measurement safety cap classifies by hypothesis DOMAIN, not
+an ID whitelist: `measurement_instability`, `install_measurement_issue`
+and `shared_measurement_issue` stay evaluable (and can be supported)
+while non-measurement diagnoses remain capped. `reporting_anomaly`
+(event loss / tracking break / platform-vs-source discrepancy) is real
+measurement evidence on every platform.

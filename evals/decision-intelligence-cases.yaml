@@ -400,6 +400,8 @@
     google_ads:
       pay_rate_change_pct: -0.25
       ctr_change_pct: 0.0
+      registrations: 1000
+      payments: 300
       measurement_state: stable
       maturity_state: sufficient
     meta:
@@ -642,6 +644,9 @@
     cpm_change_pct: 0.02
     cvr_change_pct: 0.01
     frequency_change_pct: 0.18
+    impressions: 100000
+    clicks: 5000
+    conversions: 100
   signals:
     old_creative_worse: true
   measurement: stable
@@ -867,6 +872,7 @@
   measurement: invalid
   maturity: sufficient
   acceptable_top:
+  - install_measurement_issue
   - click_to_install_friction
   - measurement_instability
   acceptable_actions:
@@ -1685,6 +1691,7 @@
   measurement: invalid
   maturity: sufficient
   acceptable_top:
+  - measurement_instability
   - audience_quality_shift
   - conversion_funnel_degradation
   expected_top_platform: meta
@@ -2341,3 +2348,399 @@
   forbidden_actions:
   - increase
   - replace
+- id: di_cal_tiktok_install_measurement_anomaly
+  platform_scope:
+  - tiktok
+  domain: measurement
+  per_platform_metrics:
+    tiktok:
+      measurement_state: invalid
+      maturity_state: sufficient
+      reporting_anomaly: true
+      clicks: 5000
+      installs: 300
+  measurement_by_platform:
+    tiktok: invalid
+  maturity_by_platform:
+    tiktok: sufficient
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top:
+  - install_measurement_issue
+  expected_top_platform: tiktok
+  acceptable_actions:
+  - investigate_measurement
+  - wait
+  forbidden_actions:
+  - replace
+  - increase
+  - decrease
+- id: di_cal_ctr_missing_sample
+  platform_scope:
+  - meta
+  domain: creative
+  per_platform_metrics:
+    meta:
+      ctr_change_pct: -0.25
+      old_creative_worse: true
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  expected_signal_strength:
+    ctr_trend_down: weak
+  acceptable_actions:
+  - wait
+  - observe
+  forbidden_actions:
+  - replace
+  - increase
+  - decrease
+  convergence_blocked: true
+- id: di_cal_cvr_large_traffic_tiny_conversions
+  platform_scope:
+  - meta
+  domain: funnel
+  per_platform_metrics:
+    meta:
+      cvr_change_pct: -0.4
+      clicks: 2000
+      conversions: 2
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  expected_signal_strength:
+    cvr_trend_down: weak
+  acceptable_actions:
+  - wait
+  - observe
+  forbidden_actions:
+  - replace
+  - increase
+  - decrease
+  convergence_blocked: true
+- id: di_cal_barely_passing_cpa
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      cpa: 49.0
+      target_cpa: 50.0
+      conversions: 2
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    cpa: 49.0
+    target_cpa: 50.0
+    conversions: 2
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: needs_more_evidence
+  expected_eligibility_reason: thin_kpi_headroom
+  acceptable_actions:
+  - wait
+  - hold
+  - observe
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_cal_strong_scale_candidate
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      cpa: 31.0
+      target_cpa: 50.0
+      conversions: 200
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    cpa: 31.0
+    target_cpa: 50.0
+    conversions: 200
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: eligible
+  acceptable_actions:
+  - increase
+  - wait
+  - observe
+  forbidden_actions:
+  - decrease
+  - pause
+- id: di_cal_good_cpa_low_volume_wait
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      cpa: 30.0
+      target_cpa: 50.0
+      conversions: 2
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    cpa: 30.0
+    target_cpa: 50.0
+    conversions: 2
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: needs_more_evidence
+  expected_eligibility_reason: low_conversion_volume
+  acceptable_actions:
+  - wait
+  - hold
+  - observe
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_cal_creative_risk_blocks_scale
+  platform_scope:
+  - meta
+  domain: creative
+  signals:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    ctr_trend_down: true
+    old_creative_worse: true
+    frequency_trend_up: true
+    cvr_trend_stable: true
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    cpa: 30.0
+    target_cpa: 50.0
+    conversions: 200
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - creative_fatigue
+  - budget_constraint
+  acceptable_actions:
+  - investigate
+  - wait
+  - hold
+  - retest
+  forbidden_actions:
+  - increase
+  - scale
+  - decrease
+  convergence_blocked: true
+- id: di_cal_bid_bad_efficiency_no_bid_increase
+  platform_scope:
+  - google_ads
+  domain: bid_budget
+  signals:
+    cpm_trend_up: true
+    delivery_concentrated: true
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    cpa: 90.0
+    target_cpa: 40.0
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - bid_constraint
+  expected_eligibility: not_eligible
+  acceptable_actions:
+  - hold
+  - wait
+  - observe
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_cal_meta_recent_change_blocks_meta_scale
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      cpa: 30.0
+      target_cpa: 50.0
+      conversions: 200
+      recent_budget_change: true
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    cpa: 30.0
+    target_cpa: 50.0
+    conversions: 200
+    recent_budget_change: true
+    measurement_state: stable
+    maturity_state: sufficient
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: not_eligible
+  expected_eligibility_reason: recent_change
+  acceptable_actions:
+  - hold
+  - wait
+  - observe
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_cal_pay_tiny_base
+  platform_scope:
+  - tiktok
+  domain: funnel
+  per_platform_metrics:
+    tiktok:
+      pay_rate_change_pct: -0.4
+      registrations: 10
+      payments: 3
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  expected_signal_strength:
+    pay_rate_trend_down: weak
+  acceptable_actions:
+  - wait
+  - observe
+  - investigate
+  forbidden_actions:
+  - decrease
+  - pause
+  convergence_blocked: true
+- id: di_cal_pay_large_base
+  platform_scope:
+  - tiktok
+  domain: funnel
+  per_platform_metrics:
+    tiktok:
+      pay_rate_change_pct: -0.4
+      registrations: 1000
+      payments: 300
+      install_rate_trend: stable
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  expected_signal_strength:
+    pay_rate_trend_down: normal
+  acceptable_top:
+  - pay_funnel_degradation
+  acceptable_actions:
+  - investigate
+  - observe
+  - wait
+  forbidden_actions:
+  - increase
+  - decrease
+- id: di_cal_measurement_invalid_creative_capped
+  platform_scope:
+  - meta
+  domain: creative
+  per_platform_metrics:
+    meta:
+      ctr_change_pct: -0.25
+      frequency_change_pct: 0.18
+      impressions: 100000
+      clicks: 5000
+      old_creative_worse: true
+      measurement_state: invalid
+      maturity_state: sufficient
+  measurement_by_platform:
+    meta: invalid
+  maturity_by_platform:
+    meta: sufficient
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top:
+  - measurement_instability
+  - creative_fatigue
+  acceptable_actions:
+  - investigate_measurement
+  - investigate
+  - wait
+  forbidden_actions:
+  - replace
+  - increase
+  - decrease
+  convergence_blocked: true
+- id: di_cal_shared_measurement_both_invalid_evaluable
+  platform_scope:
+  - google_ads
+  - meta
+  domain: measurement
+  per_platform_metrics:
+    meta:
+      pay_rate_change_pct: -0.25
+      measurement_state: invalid
+      maturity_state: sufficient
+    google_ads:
+      pay_rate_change_pct: -0.3
+      measurement_state: invalid
+      maturity_state: sufficient
+  measurement_by_platform:
+    meta: invalid
+    google_ads: invalid
+  maturity_by_platform:
+    meta: sufficient
+    google_ads: sufficient
+  measurement: invalid
+  maturity: sufficient
+  acceptable_top:
+  - shared_measurement_issue
+  - shared_product_funnel_issue
+  - measurement_instability
+  acceptable_actions:
+  - investigate_measurement
+  - investigate
+  - wait
+  forbidden_actions:
+  - increase
+  - decrease
+  convergence_blocked: true
+- id: di_cal_fatigue_and_recent_budget_retest
+  platform_scope:
+  - meta
+  domain: creative
+  signals:
+    ctr_trend_down: true
+    old_creative_worse: true
+    frequency_trend_up: true
+    cvr_trend_stable: true
+    recent_budget_change: true
+  measurement: stable
+  maturity: sufficient
+  acceptable_top:
+  - creative_fatigue
+  - recent_budget_bid_interference
+  acceptable_actions:
+  - investigate
+  - wait
+  - hold
+  - retest
+  forbidden_actions:
+  - decrease
+  - pause
+  - increase
+  - replace
+  convergence_blocked: true

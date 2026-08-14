@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.0/install.sh | bash -s -- --ref=v3.6.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.1/install.sh | bash -s -- --ref=v3.6.1
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -302,6 +302,8 @@ v3.5.4 起 **Evaluation、Safety、Change 完全服从同一 provenance boundary
 v3.5.5 起 **Convergence 也服从同一 provenance boundary**：`converge()` 按 selected evaluation 的 scope 解析 Safety（platform-bound top 用该平台自己的 measurement/maturity，缺失 → unknown，绝不 fallback aggregate；shared/run top 用 aggregate，保持保守）——Meta measurement invalid 不再把 Google 的 `auction_pressure` 全局改写成 investigate measurement；`top_hypothesis` / `top_platform` / `evaluation_scope` 永远来自同一个 selected evaluation（attribution 不可发散）；safety block 只改变 action 不改变诊断身份（`investigate_measurement` ≠ `top_hypothesis=measurement_instability`）；持久化 Decision 的 attribution 匹配 selected evaluation（`auction_pressure@google_ads` → `platform=google_ads`，shared 保持 `cross_platform`）；其他平台的 safety 问题保留为 `platform_warnings` 而非全局 veto。
 
 v3.6.0 起 **DI 框架冻结，开始校准业务判断**（Decision Quality Calibration）：measurement 假设必须要有真实 measurement 证据——CVR↓ 配 stable measurement 是漏斗问题不是 tracking 问题（`measurement_stable` 是强反证）；recent budget/bid change 从 fatigue 的 hard exclusion 变成 confounder——真疲劳证据 + 刚调预算 = 两个 supported 候选并存 → investigate 而不是武断换素材；**诊断 ≠ 动作**——budget_constraint 打满但 CPA 110 vs target 50 → `increase` 被 eligibility 拦截（`action_eligibility=not_eligible` → hold），CPA 32 vs 50 且无近期变更才允许 small increase，刚调过预算 → wait；**样本决定证据强度**——150 impressions 的 CTR -25% 是 weak 证据（不能支撑疲劳），100k impressions 同样 -25% 是 normal 证据；pay 5→3 的 -40% 不算数，500→300 才算；下游指标（cvr/pay/install rate）用更保守的 12%/15% 阈值 + 真实转化数门槛。
+
+v3.6.1 起 **Calibration Reliability**：scale eligibility 服从 selected platform 的 provenance——Meta 刚调过预算不再阻塞 Google 的扩量判断（平台级 action context 只用该平台自己的 facts/signals）；measurement cap 从 ID 白名单改为 **domain 分类**——`install_measurement_issue` / `shared_measurement_issue` 在 measurement invalid 时仍可正常评估（invalid 本身就是它们的证据），新增 `reporting_anomaly` 真实 measurement 证据信号；**sample 缺失 ≠ sufficient**——三态（sufficient/insufficient/unknown），无 impressions 的 CTR -25% 是 weak；rate 证据看 **numerator + denominator**——2000 clicks + 2 conversions 的 CVR -40% 不算强证据；**KPI 达标 ≠ 可扩量**——CPA 49 vs 50 是 thin headroom → wait，1-2 个转化 → low_conversion_volume → wait，CPA 31 vs 50 + 200 转化 + 无近期变更才 eligible（分阶段小幅加）；reason codes（`eligibility_reason`）告诉用户为什么暂缓。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

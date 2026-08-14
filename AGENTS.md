@@ -236,3 +236,17 @@ python3 scripts/sync_skill_layout.py --check
   hypothesis, not automatically exclude a plausible diagnosis.** Recent
   budget/bid changes weaken creative fatigue; they never prove it
   impossible.
+- **Unknown sample volume should reduce confidence rather than inherit
+  full evidence weight.** Missing base population / success-event facts
+  are uncertainty (weak), never proof of sufficiency.
+- **Do not scale merely because current CPA/CPI is marginally below
+  target or ROAS marginally above target.** KPI headroom, outcome
+  volume, sample strength and settled recent changes all gate a scaling
+  action; a marginal pass defers to wait/needs-more-evidence.
+- **A measurement-domain diagnosis must not be suppressed merely
+  because measurement is invalid; invalid measurement is often the
+  evidence for that diagnosis.** The invalid-measurement cap classifies
+  by hypothesis domain, never an ID whitelist.
+- **Action eligibility for one platform must never inherit another
+  platform's recent changes.** Platform-bound action context comes from
+  the selected platform's own facts, signals and safety.

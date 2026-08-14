@@ -2,6 +2,56 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.6.1 — 2026-08-14
+
+### Fixed
+
+- **Platform-specific scale eligibility no longer inherits other
+  platforms' recent changes**: a platform-bound action context is built
+  from the SELECTED platform's own facts/signals only — Meta's budget
+  change never blocks Google's scale decision (aggregate signals are
+  used only for shared/run-level tops).
+- **Measurement-domain hypotheses are no longer incorrectly
+  safety-capped by measurement invalidity**: the invalid-measurement cap
+  classifies by hypothesis DOMAIN (not an ID whitelist), so
+  `install_measurement_issue` / `shared_measurement_issue` stay
+  evaluable — invalid measurement is often the evidence FOR them. New
+  `reporting_anomaly` signal (event loss / tracking break /
+  platform-vs-source discrepancy) is real measurement evidence on every
+  platform.
+- **Missing sample information no longer receives full evidence
+  strength**: sample sufficiency is three-state (sufficient /
+  insufficient / unknown); unknown downgrades to weak — a -25% CTR with
+  no impressions fact is never treated like the same movement on 100k
+  impressions.
+- **Low numerator rate changes no longer appear mature solely because
+  denominator traffic is large**: rate calibration reads numerator AND
+  denominator (CTR: impressions+clicks; CVR: clicks+conversions;
+  click→install: clicks+installs; install→registration:
+  installs+registrations; registration→pay: registrations+payments) —
+  2000 clicks with 2 conversions is weak, not strong.
+
+### Changed
+
+- **Rate calibration now considers numerator and denominator evidence
+  where available** (metric-family calibration table extended).
+- **Scale eligibility now requires KPI headroom, sufficient outcome
+  volume, stable evidence, and no unresolved recent-change risk**: a
+  marginal KPI pass (CPA 49 vs 50) is `thin_kpi_headroom` →
+  `needs_more_evidence` → wait; 1-2 conversions →
+  `low_conversion_volume` → wait; a same-platform recent change →
+  `recent_change` → hold. Reason codes exposed as
+  `eligibility_reason`.
+- **Marginal KPI pass now results in wait/needs-more-evidence rather
+  than automatic scale**; strong efficient mature candidates still
+  receive a staged small increase.
+
+Eval set expanded 95 → 109 real scenarios (cross-platform scale
+isolation, TikTok measurement anomaly, missing/tiny/large samples,
+numerator-weak CVR, barely-passing CPA, strong scale candidate,
+creative-risk scale block, bid bad-efficiency, measurement-domain
+cap fix). 15 reliability unit/runtime tests added.
+
 ## 3.6.0 — 2026-08-14
 
 Decision Intelligence plumbing is FROZEN. This minor release changes the

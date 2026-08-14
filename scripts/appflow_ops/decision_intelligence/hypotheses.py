@@ -51,6 +51,7 @@ SIGNAL_IDS = (
     "measurement_invalid",
     "measurement_stable",
     "measurement_conflict",
+    "reporting_anomaly",
     "maturity_insufficient",
     "cross_pay_rate_drop",
     "cross_pay_rate_stable",
@@ -248,10 +249,10 @@ META_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         applicable_platforms=("*",),
         # v3.6.0: bad conversion performance is NOT measurement evidence.
         # Measurement instability requires an actual measurement anomaly
-        # (invalid state); a stable measurement is a strong contradiction
-        # (CVR down with measurement stable is a funnel problem, not a
-        # tracking problem).
-        supporting_signals=("measurement_invalid",),
+        # (invalid state / reporting anomaly); a stable measurement is a
+        # strong contradiction (CVR down with measurement stable is a
+        # funnel problem, not a tracking problem).
+        supporting_signals=("measurement_invalid", "reporting_anomaly"),
         contradicting_signals=("measurement_stable",),
         required_evidence=("measurement_health",),
         possible_actions=("investigate_measurement", "wait"),
@@ -358,10 +359,12 @@ TIKTOK_HYPOTHESES: tuple[HypothesisSpec, ...] = (
         label="安装数据/回传问题",
         domain="measurement",
         applicable_platforms=("tiktok",),
-        # v3.6.0: install drop is NOT measurement evidence; only an actual
-        # measurement anomaly supports it, and stable measurement
-        # contradicts it.
-        supporting_signals=("measurement_invalid",),
+        # v3.6.0/1: install drop is NOT measurement evidence; only an
+        # actual measurement anomaly (invalid state / reporting anomaly)
+        # supports it, and stable measurement contradicts it — and an
+        # invalid measurement must never cap this measurement-domain
+        # diagnosis itself (v3.6.1).
+        supporting_signals=("measurement_invalid", "reporting_anomaly"),
         contradicting_signals=("measurement_stable",),
         required_evidence=("measurement_health",),
         possible_actions=("investigate_measurement", "wait"),

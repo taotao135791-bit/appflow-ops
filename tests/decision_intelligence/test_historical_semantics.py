@@ -244,6 +244,9 @@ def test_normal_di_persistence_preserves_recommended_action(workspace) -> None:
             "cpm_change_pct": 0.02,
             "cvr_change_pct": 0.01,
             "frequency_change_pct": 0.18,
+            "impressions": 100000,
+            "clicks": 5000,
+            "conversions": 100,
             "old_creative_worse": True,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
@@ -311,6 +314,8 @@ def test_signals_by_platform_preserves_provenance(workspace) -> None:
     run.record_observation(
         {
             "pay_rate_change_pct": -0.3,
+            "registrations": 1000,
+            "payments": 300,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },
@@ -397,6 +402,8 @@ def test_both_platforms_decline_supports_shared(workspace) -> None:
     run.record_observation(
         {
             "pay_rate_change_pct": -0.25,
+            "registrations": 1000,
+            "payments": 300,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },

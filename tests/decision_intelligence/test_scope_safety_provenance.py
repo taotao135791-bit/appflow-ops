@@ -71,6 +71,8 @@ def test_meta_invalid_does_not_cap_google_auction() -> None:
             "google_ads": {
                 "cpm_change_pct": 0.3,
                 "ctr_change_pct": 0.01,
+                "impressions": 50000,
+                "clicks": 5000,
                 "measurement_state": "stable",
                 "maturity_state": "sufficient",
             },
@@ -381,6 +383,8 @@ def test_runtime_safety_provenance_google_not_capped(workspace) -> None:
         {
             "cpm_change_pct": 0.32,
             "ctr_change_pct": 0.0,
+            "impressions": 50000,
+            "clicks": 5000,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },

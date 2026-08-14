@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.0/install.sh | bash -s -- --ref=v3.6.0
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.1/install.sh | bash -s -- --ref=v3.6.1
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -483,6 +483,21 @@ is WEAK evidence that cannot support fatigue; the same movement on 100k
 impressions is normal; pay count 5 → 3 with -40% is inconclusive,
 500 → 300 is material); downstream rates use conservative 12%/15%
 material bands with real conversion-count minimums.
+
+From v3.6.1 the calibration itself is hardened (Calibration
+Reliability): scale eligibility follows the SELECTED platform's
+provenance (Meta's recent budget change never blocks Google's scale);
+the invalid-measurement safety cap classifies by hypothesis DOMAIN, not
+an ID whitelist — `install_measurement_issue` /
+`shared_measurement_issue` stay evaluable (invalid measurement is often
+their evidence) and a new `reporting_anomaly` signal carries real
+measurement evidence; missing sample size is UNKNOWN, never sufficient
+(a -25% CTR with no impressions fact is weak); rate evidence reads
+numerator AND denominator (2000 clicks with 2 conversions is not a
+strong CVR decline); KPI pass is necessary but not sufficient for scale
+— marginal headroom (CPA 49 vs 50) → wait, 1-2 conversions → wait,
+comfortable headroom + volume + settled changes → small staged
+increase, with `eligibility_reason` codes explaining the deferral.
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

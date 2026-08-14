@@ -149,10 +149,13 @@ def evaluate_hypothesis(
         _weight(signal) for signal in contradicting
     )
     safety_capped = False
-    # Safety caps: with invalid measurement, only the measurement
-    # hypothesis may claim support; with insufficient maturity, no
-    # hypothesis may claim support (not enough data to confirm anything).
-    if measurement_state == "invalid" and hypothesis.id != "measurement_instability":
+    # Safety caps: with invalid measurement, only MEASUREMENT-DOMAIN
+    # diagnoses may claim support (v3.6.1 — domain classification, never
+    # an ID whitelist: measurement_instability, install_measurement_issue
+    # and shared_measurement_issue are all measurement diagnoses and must
+    # stay evaluable — invalid measurement is often the evidence FOR
+    # them); with insufficient maturity, no hypothesis may claim support.
+    if measurement_state == "invalid" and hypothesis.domain != "measurement":
         safety_capped = True
     if maturity_state == "insufficient":
         safety_capped = True

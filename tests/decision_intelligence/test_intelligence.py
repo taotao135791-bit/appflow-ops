@@ -534,6 +534,21 @@ def test_eval_case(case) -> None:
             f"{case['id']}: action_eligibility {result.action_eligibility} != "
             f"{case['expected_eligibility']}"
         )
+    if case.get("expected_eligibility_reason") is not None:
+        assert result.eligibility_reason == case["expected_eligibility_reason"], (
+            f"{case['id']}: eligibility_reason {result.eligibility_reason} != "
+            f"{case['expected_eligibility_reason']}"
+        )
+    # v3.6.1: sample-strength assertions (weak/normal) for raw-metric
+    # fixtures — e.g. expected_signal_strength: {ctr_trend_down: weak}.
+    if case.get("expected_signal_strength") and current_platforms:
+        for signal_id, strength in case["expected_signal_strength"].items():
+            observed = evidence.signal_strength_by_platform.get(
+                case["platform_scope"][0], {}
+            ).get(signal_id)
+            assert observed == strength, (
+                f"{case['id']}: {signal_id} strength {observed} != {strength}"
+            )
 
 
 def test_eval_case_set_size() -> None:
