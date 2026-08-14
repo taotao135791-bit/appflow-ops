@@ -112,6 +112,18 @@ def _label(signal_or_hypothesis: str) -> str:
     )
 
 
+def _parallel_label(issue: object) -> str:
+    """User-facing label for an attributed parallel issue (v3.6.3):
+    creative_fatigue@meta → "meta 侧的素材疲劳" — the platform is part
+    of the answer, never a bare hypothesis id."""
+    hypothesis_id = getattr(issue, "hypothesis_id", None)
+    platform = getattr(issue, "platform", None)
+    label = _label(str(hypothesis_id or ""))
+    if isinstance(platform, str) and platform and platform != "cross_platform":
+        return f"{platform} 侧的{label}"
+    return label
+
+
 def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
     """Short default answer (a few sentences). Long ranking tables are
     only for debug/eval, never the product default."""
@@ -204,9 +216,13 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
                 )
             # v3.6.2: parallel issues — supported independent problems on
             # OTHER platforms are explained, never treated as rivals that
-            # block this platform's scale.
+            # block this platform's scale. v3.6.3: each parallel issue
+            # carries its platform attribution (never a bare hypothesis
+            # id — creative_fatigue@meta is not creative_fatigue@tiktok).
             if result.parallel_issues:
-                issue_names = "、".join(_label(h) for h in result.parallel_issues[:2])
+                issue_names = "、".join(
+                    _parallel_label(p) for p in result.parallel_issues[:2]
+                )
                 if result.top_platform and result.top_platform != "cross_platform":
                     lines.append(
                         f"{result.top_platform} 可以单独考虑小幅扩量；"
@@ -218,6 +234,16 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
                         f"同时存在独立问题（{issue_names}），但那是另一条问题，"
                         "不影响当前判断。"
                     )
+            # v3.6.3: material context — shared facts that do not block
+            # the action but matter (market-wide CPM up): stay small/staged.
+            if result.material_context:
+                context_names = "、".join(
+                    _label(m.hypothesis_id) for m in result.material_context[:2]
+                )
+                lines.append(
+                    f"另外{context_names}还在，不建议一次放太多——先小幅增加并观察成本"
+                    "是否还能守住。"
+                )
     elif (
         result.convergence_status == "investigate"
         and result.safety_block == "measurement_invalid"
@@ -270,19 +296,22 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
     else:
         lines.append("证据不足以收敛到单一原因，先保持观察。")
 
-    # Strongest evidence: signals supporting the top hypothesis.
+    # Strongest evidence: signals supporting the SELECTED evaluation
+    # (v3.6.3 PART A): never rediscover the winning evaluation by
+    # hypothesis ID — same-ID evaluations on different platforms must not
+    # mix evidence (auction_pressure@google_ads top must never cite Meta's
+    # CPM). The result already carries the exact attribution.
     evidence_lines: list[str] = []
-    for ev in result.evaluations:
-        if ev.hypothesis.id != result.top_hypothesis:
-            continue
-        for signal_id in ev.supporting:
+    selected = result.selected_evaluation
+    if selected is not None:
+        for signal_id in selected.supporting:
             if signal_id in SIGNAL_LABELS:
                 evidence_lines.append(f"- {SIGNAL_LABELS[signal_id]}")
         # v3.6.0: metric deterioration is not measurement evidence — when
         # measurement is explicitly stable and the top is a funnel
         # diagnosis, say it directly instead of implying tracking issues.
         if (
-            result.top_hypothesis
+            selected.hypothesis.id
             in (
                 "conversion_funnel_degradation",
                 "post_click_friction",
@@ -292,7 +321,6 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
             and result.safety_context.get("measurement_state") == "stable"
         ):
             lines.append("更像漏斗/转化链路问题，不像 tracking；measurement 当前正常。")
-        break
     if evidence_lines:
         lines.append("\n依据：")
         lines.extend(evidence_lines[:4])

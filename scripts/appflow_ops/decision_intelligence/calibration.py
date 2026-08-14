@@ -217,34 +217,107 @@ _KPI_SPECS: dict[str, tuple[str, str, str, str]] = {
         "purchases",
         "lower",
     ),
-    # ROAS outcome: purchases preferred, canonical conversions fallback
-    # (revenue evidence is implied by the ROAS ratio itself).
-    "roas": ("target_roas", "roas", "conversions", "higher"),
+    # ROAS outcome is resolved separately (v3.6.3): generic conversions
+    # are NOT automatically revenue-generating outcomes.
+    "roas": ("target_roas", "roas", "purchases", "higher"),
 }
 
-# Facts keys consulted when the observation declares its primary KPI
-# (any string value; ``primary_kpi`` wins over the legacy hints).
+# KPI → the conversion EVENT it optimizes (v3.6.3 §22): the goal is not
+# just "lower is better" — pay_cpa means the pay/payment event.
+_KPI_EVENTS: dict[str, str] = {
+    "cpi": "install",
+    "cpa": "conversion",
+    "registration_cpa": "registration",
+    "pay_cpa": "pay",
+    "purchase_cpa": "purchase",
+    "roas": "revenue",
+}
+
+# Event/goal semantics → KPI normalization (v3.6.3 §16). conversion_event
+# and optimization_goal are EVENT semantics (pay, purchase, ...) — related
+# to but NOT literal synonyms of the KPI enum (pay_cpa, purchase_cpa, ...).
+_EVENT_TO_KPI: dict[str, str] = {
+    "install": "cpi",
+    "registration": "registration_cpa",
+    "pay": "pay_cpa",
+    "payment": "pay_cpa",
+    "purchase": "purchase_cpa",
+    "revenue": "roas",
+    "conversion": "cpa",
+}
+
+
+# KPI-family minimum outcome evidence before a scale decision (v3.6.3
+# §42-51). Outcome density differs: installs are high-frequency events
+# and need MORE evidence; deep pay/purchase events are sparse and cannot
+# mechanically demand the same counts. Conservative internal operational
+# heuristics — NOT universal industry benchmarks; unknown families never
+# fall back to an arbitrary universal count.
+KPI_SCALE_MINIMUMS: dict[str, int] = {
+    "cpi": 50,
+    "registration_cpa": 30,
+    "cpa": 20,  # legacy MIN_SCALE_CONVERSIONS for the generic family
+    "pay_cpa": 10,
+    "purchase_cpa": 10,
+    "roas": 10,
+}
+
+
+def normalize_goal_to_kpi(value: str) -> str | None:
+    """Normalize a goal/event string to a KPI type (v3.6.3 §16): a
+    literal KPI enum passes through; event semantics (install / pay /
+    payment / purchase / revenue / conversion) map to their KPI family.
+    Returns None for unknown values — never guessed."""
+    normalized = value.strip().lower()
+    if normalized in PRIMARY_KPIS:
+        return normalized
+    return _EVENT_TO_KPI.get(normalized)
+
+
+# Facts keys consulted when the observation declares its goal. Only
+# ``primary_kpi`` is the literal KPI enum; the other two carry EVENT
+# semantics and are normalized through ``normalize_goal_to_kpi`` (v3.6.3).
 _PRIMARY_KPI_KEYS = ("primary_kpi", "optimization_goal", "conversion_event")
 
 
 def resolve_primary_kpi(facts: Mapping[str, object]) -> tuple[str | None, str | None]:
-    """(kpi_type, reason): which KPI governs THIS action (v3.6.2).
+    """(kpi_type, reason): which KPI governs THIS action (v3.6.3).
 
-    - explicit ``primary_kpi`` (or legacy ``optimization_goal`` /
-      ``conversion_event``) in the supported enum → that KPI;
-    - no explicit declaration and EXACTLY ONE target exists → that KPI
-      (backward compatible — a single-target account implies its goal);
-    - multiple targets without a declaration → (None,
-      "ambiguous_primary_kpi") — never silently pick CPA first;
-    - no targets at all → (None, None) (no KPI context).
+    Priority (§17):
+
+    1. explicit ``primary_kpi`` — authoritative; a simultaneously
+       declared event/goal that normalizes to a DIFFERENT KPI is a real
+       conflict → ambiguous (never guess, §19);
+    2. unambiguous ``optimization_goal`` / ``conversion_event`` + the
+       matching target exists → that KPI (multiple targets no longer
+       ambiguous when the event disambiguates, §20);
+    3. exactly ONE target → that KPI (backward compatible);
+    4. multiple targets without any declaration → ambiguous;
+    5. no targets → (None, None).
+
+    ``conversion_event="pay"`` is NOT the literal enum ``pay_cpa`` — it
+    is an event semantic that normalizes to pay_cpa when appropriate.
     """
-    for key in _PRIMARY_KPI_KEYS:
-        declared = facts.get(key)
-        if isinstance(declared, str) and declared:
-            normalized = declared.strip().lower()
-            if normalized in PRIMARY_KPIS:
-                return normalized, None
+    explicit = facts.get("primary_kpi")
+    if isinstance(explicit, str) and explicit:
+        kpi = normalize_goal_to_kpi(explicit)
+        if kpi is None:
             return None, "ambiguous_primary_kpi"  # unknown value: no guessing
+        goal = facts.get("optimization_goal") or facts.get("conversion_event")
+        if isinstance(goal, str) and goal:
+            goal_kpi = normalize_goal_to_kpi(goal)
+            if goal_kpi is not None and goal_kpi != kpi:
+                # Explicit KPI vs explicit goal conflict: do not guess.
+                return None, "ambiguous_primary_kpi"
+        return kpi, None
+    goal = facts.get("optimization_goal") or facts.get("conversion_event")
+    if isinstance(goal, str) and goal:
+        goal_kpi = normalize_goal_to_kpi(goal)
+        if goal_kpi is not None:
+            target_key = _KPI_SPECS[goal_kpi][0]
+            if isinstance(facts.get(target_key), (int, float)):
+                # Event/goal + matching target: unambiguous (§16/18/20).
+                return goal_kpi, None
     present_targets = [
         kpi
         for kpi, (target_key, _, _, _) in _KPI_SPECS.items()
@@ -260,20 +333,34 @@ def resolve_primary_kpi(facts: Mapping[str, object]) -> tuple[str | None, str | 
 def resolve_kpi_outcome_volume(
     kpi_type: str, facts: Mapping[str, object]
 ) -> int | None:
-    """The outcome count MATCHING the KPI being optimized (v3.6.2):
+    """The outcome count MATCHING the KPI being optimized (v3.6.3):
     CPI → installs, registration CPA → registrations, pay CPA → payments,
-    purchase CPA → purchases, generic CPA → canonical conversions, ROAS →
-    purchases (fallback conversions). NEVER first-available across KPIs —
-    1000 installs cannot stand in for a pay-CPA scale decision."""
+    purchase CPA → purchases, generic CPA → canonical conversions. NEVER
+    first-available across KPIs — 1000 installs cannot stand in for a
+    pay-CPA scale decision.
+
+    ROAS (v3.6.3 §23-26): generic conversions are NOT automatically
+    revenue-generating outcomes — purchases (or conversions ONLY when the
+    declared conversion event is known to map to purchase/pay/revenue)
+    count as outcome evidence; unknown conversion meaning → None.
+    """
     spec = _KPI_SPECS.get(kpi_type)
     if spec is None:
         return None
     _, _, outcome_key, _ = spec
     if kpi_type == "roas":
-        outcome_keys: tuple[str, ...] = ("purchases", "conversions")
-    else:
-        outcome_keys = (outcome_key,)
-    for key in outcome_keys:
+        purchases = facts.get("purchases")
+        if isinstance(purchases, (int, float)):
+            return int(purchases)
+        event = facts.get("conversion_event") or facts.get("optimization_goal")
+        if isinstance(event, str) and event:
+            event_kpi = normalize_goal_to_kpi(event)
+            if event_kpi in ("purchase_cpa", "pay_cpa", "roas"):
+                conversions = facts.get("conversions")
+                if isinstance(conversions, (int, float)):
+                    return int(conversions)
+        return None  # generic conversions without revenue semantics
+    for key in (outcome_key,):
         value = facts.get(key)
         if isinstance(value, (int, float)):
             return int(value)
@@ -284,17 +371,21 @@ def resolve_primary_kpi_context(
     facts: Mapping[str, object],
 ) -> dict[str, object] | None:
     """One lightweight resolution of the KPI context for the current
-    action (v3.6.2). Returns None when no KPI context exists at all;
+    action (v3.6.3). Returns None when no KPI context exists at all;
     otherwise a plain dict with:
 
     - ``kpi_type``: the governing KPI (None when ambiguous)
     - ``target`` / ``actual``: numeric target and actual (None when the
       fact is missing)
+    - ``outcome_event``: the conversion EVENT the KPI optimizes
+      (install / conversion / registration / pay / purchase / revenue)
     - ``outcome_volume``: the KPI-matched outcome count (None when
       missing)
     - ``direction``: "lower" | "higher" (which way is better)
     - ``headroom``: strong_headroom | thin_headroom | no_headroom | None
     - ``reason``: ambiguous_primary_kpi | thin_kpi_headroom | None
+    - ``resolution_source``: explicit_primary_kpi | optimization_goal |
+      conversion_event | single_target (audit)
     """
     kpi_type, kpi_reason = resolve_primary_kpi(facts)
     if kpi_type is None and kpi_reason is None:
@@ -303,10 +394,12 @@ def resolve_primary_kpi_context(
         "kpi_type": kpi_type,
         "target": None,
         "actual": None,
+        "outcome_event": _KPI_EVENTS.get(kpi_type) if kpi_type else None,
         "outcome_volume": None,
         "direction": None,
         "headroom": None,
         "reason": kpi_reason,
+        "resolution_source": _resolution_source(facts),
     }
     if kpi_type is None:
         return context
@@ -337,6 +430,19 @@ def resolve_primary_kpi_context(
                 context["headroom"] = "no_headroom"
     context["outcome_volume"] = resolve_kpi_outcome_volume(kpi_type, facts)
     return context
+
+
+def _resolution_source(facts: Mapping[str, object]) -> str | None:
+    """Audit: which input resolved the primary KPI (v3.6.3 §21)."""
+    if isinstance(facts.get("primary_kpi"), str) and facts.get("primary_kpi"):
+        return "explicit_primary_kpi"
+    if isinstance(facts.get("optimization_goal"), str) and facts.get(
+        "optimization_goal"
+    ):
+        return "optimization_goal"
+    if isinstance(facts.get("conversion_event"), str) and facts.get("conversion_event"):
+        return "conversion_event"
+    return "single_target"
 
 
 # Conservative headroom ratio (internal operational heuristic, NOT a
@@ -426,6 +532,13 @@ def scale_eligibility(
         # v3.6.2: unknown outcome volume is NOT scale evidence — impressions
         # can prove a CTR sample, never a stable CPA/pay CPA.
         return "needs_more_evidence", "missing_outcome_volume"
-    if volume < MIN_SCALE_CONVERSIONS:
+    # v3.6.3 §42-51: minimum scale evidence is KPI-family aware — 20
+    # installs and 20 payments are NOT the same scale evidence. Unknown
+    # KPI family never falls back to an arbitrary universal count.
+    kpi_type, _ = resolve_primary_kpi(facts)
+    minimum = KPI_SCALE_MINIMUMS.get(kpi_type or "")
+    if minimum is None:
+        return "needs_more_evidence", None
+    if volume < minimum:
         return "needs_more_evidence", "low_conversion_volume"
     return "eligible", None

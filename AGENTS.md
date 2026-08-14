@@ -273,3 +273,25 @@ python3 scripts/sync_skill_layout.py --check
   "down" on 150 impressions is weak evidence, exactly like
   ctr_change_pct=-25% on 150 impressions; a trend string with no sample
   facts is weak too.
+- **Never reconstruct top evidence by hypothesis ID alone when multiple
+  platform-bound evaluations share that ID.** The summary consumes
+  result.selected_evaluation — auction_pressure@google_ads as top never
+  cites auction_pressure@meta's evidence.
+- **conversion_event=pay is an event semantic, not the literal KPI enum
+  pay_cpa.** Normalize events/goals to KPI types (normalize_goal_to_kpi)
+  with a matching target; an explicit primary_kpi that contradicts an
+  explicit goal is ambiguous, never a guess.
+- **Parallel issues must retain their platform attribution.**
+  creative_fatigue@meta is not creative_fatigue@tiktok; user output
+  names the platform.
+- **A supported shared hypothesis is not automatically a veto; determine
+  whether it materially invalidates the selected action.** Shared
+  funnel/measurement issues block scale actions; market-wide context
+  warns (material context) but does not block.
+- **Generic conversions must not be treated as ROAS outcome volume
+  unless the conversion event is known to be revenue-generating.**
+- **KPI-specific action evidence must remain semantically aligned from
+  target → actual → outcome volume.** The minimum outcome evidence for
+  scale is KPI-family aware (KPI_SCALE_MINIMUMS) — 20 installs and 20
+  payments are not the same scale evidence; unknown families never
+  fall back to a universal count.

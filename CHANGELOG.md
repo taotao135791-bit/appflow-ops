@@ -2,6 +2,55 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.6.3 — 2026-08-14
+
+### Added
+
+- **Platform-attributed parallel issues**: `ParallelIssue` carries
+  hypothesis_id + platform + evaluation_scope + status —
+  creative_fatigue@meta is not creative_fatigue@tiktok, and the
+  user-facing summary names the platform.
+- **Event/goal-to-KPI normalization**: `normalize_goal_to_kpi()` —
+  conversion_event / optimization_goal are EVENT semantics (pay,
+  purchase, ...) normalized to their KPI family with a matching target;
+  an explicit primary_kpi contradicting an explicit goal is a real
+  conflict → ambiguous (never a hardcoded precedence). Resolved context
+  exposes `resolution_source` and `outcome_event` for audit.
+- **Action-relevant shared rival semantics**: `shared_candidate_blocks_action()`
+  — shared_product_funnel_issue / shared_measurement_issue block scale
+  actions; market_wide_event does NOT (it becomes `material_context`:
+  warning + staged/small increase, never a veto).
+- **Material context semantics**: supported shared/run facts that do
+  not block the selected action are recorded in `material_context` and
+  surfaced in the summary (market-wide CPM up → "不建议一次放太多").
+- **KPI-family scale evidence thresholds**: `KPI_SCALE_MINIMUMS` (cpi
+  50 / registration_cpa 30 / cpa 20 / pay_cpa 10 / purchase_cpa 10 /
+  roas 10) — installs are high-frequency and need more evidence; deep
+  pay/purchase events cannot demand install counts; unknown families
+  never fall back to a universal count.
+
+### Fixed
+
+- **User-facing summary can no longer use evidence from the wrong
+  platform evaluation**: the evidence block is built from
+  result.selected_evaluation (hypothesis + platform + supporting), never
+  by rescaming evaluations on hypothesis ID — auction_pressure@google_ads
+  top can never cite auction_pressure@meta's CPM.
+- **optimization_goal / conversion_event no longer require literal KPI
+  enum values**: conversion_event="pay" resolves pay_cpa when
+  target_pay_cpa exists; optimization_goal="purchase" resolves
+  purchase_cpa.
+- **ROAS no longer borrows generic conversion volume without
+  revenue-event semantics**: unknown conversion meaning →
+  missing_outcome_volume → needs_more_evidence (purchases preferred;
+  conversions only with a revenue-generating event declaration).
+- **Supported shared/run hypotheses no longer automatically veto every
+  platform-specific action**: market-wide context warns but does not
+  block a healthy scale candidate.
+- **Identical outcome counts across different KPI families no longer
+  imply identical scale readiness**: 20 installs defer (cpi minimum
+  50), 20 payments pass (pay_cpa minimum 10).
+
 ## 3.6.2 — 2026-08-14
 
 ### Added

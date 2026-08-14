@@ -552,12 +552,21 @@ def test_eval_case(case) -> None:
     # v3.6.2: parallel-issue assertions — supported independent issues
     # on OTHER platforms (e.g. expected_parallel_issues: [creative_fatigue])
     # must be recorded without blocking the selected platform's action.
+    # v3.6.3: entries are attributed (ParallelIssue); fixtures declare
+    # hypothesis ids only, the runner compares on the id dimension.
     if case.get("expected_parallel_issues") is not None:
-        assert set(result_full.parallel_issues) == set(
-            case["expected_parallel_issues"]
-        ), (
-            f"{case['id']}: parallel_issues {result_full.parallel_issues} != "
+        observed_ids = {p.hypothesis_id for p in result_full.parallel_issues}
+        assert observed_ids == set(case["expected_parallel_issues"]), (
+            f"{case['id']}: parallel_issues {observed_ids} != "
             f"{case['expected_parallel_issues']}"
+        )
+    # v3.6.3: material-context assertions — supported shared/run facts
+    # that do NOT block the action (market-wide event, ...).
+    if case.get("expected_material_context") is not None:
+        observed_context = {m.hypothesis_id for m in result_full.material_context}
+        assert observed_context == set(case["expected_material_context"]), (
+            f"{case['id']}: material_context {observed_context} != "
+            f"{case['expected_material_context']}"
         )
 
 

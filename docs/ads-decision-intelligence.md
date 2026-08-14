@@ -542,3 +542,82 @@ sufficiency calibration as numeric `ctr_change_pct` — a `down` label on
 150 impressions is WEAK, never normal; with no sample facts it is WEAK
 too. The same business fact has the same strength regardless of input
 encoding.
+
+## Decision Attribution & Goal Semantics (v3.6.3)
+
+> AppFlow must know exactly WHO the conclusion is about, WHAT goal
+> governs the action, WHICH evidence belongs to it, and WHETHER another
+> issue actually invalidates that action.
+
+### Decision Attribution
+
+> User-facing evidence must come from the exact selected evaluation, not
+> from another evaluation with the same hypothesis ID.
+
+The summary consumes `result.selected_evaluation` directly (hypothesis,
+platform, scope, supporting evidence) — it never rescans `evaluations`
+by hypothesis ID. `auction_pressure@google_ads` as top can never cite
+`auction_pressure@meta`'s CPM evidence: every `- ` evidence line in the
+user summary is a supporting signal of the selected evaluation.
+
+### Goal Semantics
+
+> primary_kpi, optimization_goal, and conversion_event are related but
+> not interchangeable literals.
+
+`primary_kpi` is the literal KPI enum (cpi / cpa / registration_cpa /
+pay_cpa / purchase_cpa / roas). `optimization_goal` and
+`conversion_event` are EVENT semantics (install / registration / pay /
+payment / purchase / revenue / conversion) normalized through
+`normalize_goal_to_kpi()` — `conversion_event="pay"` is not the literal
+`pay_cpa`, it normalizes to it when the matching target exists.
+Priority: explicit `primary_kpi` > unambiguous event/goal + matching
+target > single target > ambiguous. An explicit KPI that contradicts an
+explicit goal is a real conflict → `ambiguous_primary_kpi`, never a
+guess. The resolved context carries `resolution_source` and
+`outcome_event` for audit.
+
+### Parallel Issues
+
+> An independent issue on another platform should be reported with its
+> platform attribution instead of treated as a competing explanation.
+
+`parallel_issues` entries are `ParallelIssue` (hypothesis_id, platform,
+evaluation_scope, status, score) — `creative_fatigue@meta` is not
+`creative_fatigue@tiktok`, and the user output names the platform
+("meta 侧的素材疲劳").
+
+### Action-Relevant Rivals
+
+> A shared hypothesis should block a platform-specific action only when
+> it materially undermines the diagnosis, KPI reliability, or action
+> safety.
+
+`shared_candidate_blocks_action()` gates shared/run candidates by the
+POTENTIAL action: `shared_product_funnel_issue` and
+`shared_measurement_issue` block scale actions (conversion reliability /
+efficiency durability), `market_wide_event` does NOT — it becomes
+`material_context` (warning + staged/small increase, never a veto).
+Same-platform supported candidates stay material rivals; different-
+platform platform-bound issues stay parallel issues.
+
+### KPI-aware Scale Evidence
+
+> Minimum scale evidence depends on the optimization outcome. Install,
+> registration, pay, purchase, and ROAS evidence should not share one
+> universal event-count threshold.
+
+`KPI_SCALE_MINIMUMS` (cpi 50 / registration_cpa 30 / cpa 20 / pay_cpa
+10 / purchase_cpa 10 / roas 10): installs are high-frequency and need
+more evidence; deep pay/purchase events are sparse and cannot
+mechanically demand install counts — 20 installs and 20 payments are NOT
+the same scale evidence. Conservative internal operational heuristics,
+NOT universal industry benchmarks; unknown KPI families never fall back
+to an arbitrary universal count.
+
+### ROAS Outcome Semantics
+
+Generic conversions are NOT automatically revenue-generating outcomes.
+ROAS outcome volume prefers `purchases`; `conversions` count only when
+the declared conversion event maps to purchase/pay/revenue — unknown
+conversion meaning → `missing_outcome_volume` → needs_more_evidence.

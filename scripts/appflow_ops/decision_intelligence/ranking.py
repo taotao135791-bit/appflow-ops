@@ -1,4 +1,4 @@
-"""Ranking and convergence for Ads Decision Intelligence (v3.6.2).
+"""Ranking and convergence for Ads Decision Intelligence (v3.6.3).
 
 Ranking is deterministic and repeatable — never pseudo-probabilities.
 Status priority: supported > unverified > insufficient_evidence >
@@ -10,14 +10,12 @@ evidence, and a review condition; when nothing is supported, the answer
 is wait/investigate with the most decisive missing evidence named —
 never a forced recommendation.
 
-Rival semantics are SCOPE-AWARE (v3.6.2): a supported hypothesis on
-another media platform is NOT automatically a competing explanation —
-"another platform's independent issue" is a PARALLEL issue that never
-blocks this platform's action. A material rival is only (a) a supported
-candidate on the SAME platform, or (b) a shared/run-level candidate that
-could invalidate the platform action; a shared/run top keeps the
-conservative global semantics (any supported candidate is a material
-alternative).
+Attribution is exact (v3.6.3): the selected evaluation is the SINGLE
+source of the top diagnosis, its platform, scope and evidence; parallel
+issues keep their platform/scope attribution; shared/run candidates are
+classified by ACTION RELEVANCE — a shared funnel/measurement issue can
+block a scale action, a market-wide event is material context (warning,
+not a veto), never an automatic global block.
 
 Safety follows the SELECTED evaluation's provenance (v3.5.5): a
 platform-bound top consumes that platform's own measurement/maturity
@@ -139,9 +137,14 @@ class Convergence:
     # ambiguous_primary_kpi | None).
     eligibility_reason: str | None = None
     # v3.6.2: supported hypotheses on OTHER platforms (independent
-    # platform-bound issues) — they are parallel issues for explanation,
-    # never material rivals that block this platform's action.
-    parallel_issues: tuple[str, ...] = ()
+    # platform-bound issues) — parallel issues for explanation, never
+    # material rivals that block this platform's action. v3.6.3: each
+    # entry keeps its platform/scope attribution (ParallelIssue).
+    parallel_issues: tuple[ParallelIssue, ...] = ()
+    # v3.6.3: supported shared/run facts that do NOT block the selected
+    # action but matter as context (market-wide event, ...) — warning
+    # and aggressiveness influence, never a veto.
+    material_context: tuple[MaterialContext, ...] = ()
 
 
 def rank_hypotheses(
@@ -187,21 +190,81 @@ def _discriminating_evidence(
     return tuple(sorted(runner_required - top_required))[:3]
 
 
+@dataclass(frozen=True)
+class ParallelIssue:
+    """Attributed parallel issue (v3.6.3): an independent supported
+    problem on ANOTHER platform (or the same platform in a shared top's
+    run) — kept for explanation with its full attribution, never a veto.
+    Multiple evaluations of the same hypothesis id on different platforms
+    stay separate entries (creative_fatigue@meta ≠ creative_fatigue@tiktok)."""
+
+    hypothesis_id: str
+    platform: str | None
+    evaluation_scope: str
+    status: str
+    score: int = 0
+
+
+@dataclass(frozen=True)
+class MaterialContext:
+    """Attributed material context (v3.6.3): a supported shared/run
+    fact that may influence action aggressiveness or wording (market-wide
+    CPM up, ...) but does NOT invalidate the selected action."""
+
+    hypothesis_id: str
+    platform: str | None
+    evaluation_scope: str
+
+
+# Shared/run hypotheses that materially undermine conversion reliability,
+# efficiency durability or action safety — they can BLOCK a scale action
+# (v3.6.3 §33). Market context (market_wide_event) is NOT here: it warns,
+# it does not veto (v3.6.3 §34).
+_SHARED_ACTION_BLOCKERS = frozenset(
+    {"shared_product_funnel_issue", "shared_measurement_issue"}
+)
+
+
+def shared_candidate_blocks_action(
+    candidate: HypothesisEvaluation,
+    action: str | None,
+    selected_evaluation: HypothesisEvaluation | None,
+) -> bool:
+    """Action-relevant rival semantics (v3.6.3 §35-37): does a
+    shared/run candidate actually invalidate the SELECTED action?
+
+    - non-shared candidates: not covered here (same-platform rival logic
+      handles them);
+    - scale actions: blocked only by conversion-reliability / efficiency-
+      safety shared issues (shared_product_funnel_issue,
+      shared_measurement_issue) — market context does not veto;
+    - investigate/wait/observe actions: no extra blocking needed (a
+      shared issue is already the reason or irrelevant).
+    """
+    if candidate.hypothesis.evaluation_scope not in ("shared", "run"):
+        return False
+    if action not in SCALE_ACTIONS:
+        return False
+    if selected_evaluation is None:
+        return False
+    return candidate.hypothesis.id in _SHARED_ACTION_BLOCKERS
+
+
 def is_material_rival(
     top: HypothesisEvaluation, candidate: HypothesisEvaluation
 ) -> bool:
-    """Scope-aware rival classification (v3.6.2): is ``candidate`` a real
-    competing explanation for the SELECTED diagnosis?
+    """Scope-aware rival classification (v3.6.2 + v3.6.3): is ``candidate``
+    a real competing explanation for the SELECTED diagnosis?
 
     - a shared/run-level top keeps the conservative global semantics —
       any supported candidate is a material alternative;
     - a platform-bound top faces a material rival only when the
-      candidate is (a) supported on the SAME platform, or (b) a
-      shared/run-level candidate that could invalidate the platform
-      action;
+      candidate is supported on the SAME platform;
+    - shared/run candidates are NOT automatically rivals — their action
+      relevance is decided separately by
+      ``shared_candidate_blocks_action`` in convergence (v3.6.3);
     - a supported candidate on ANOTHER media platform is a PARALLEL
-      issue, never a competing explanation ("Meta fatigue" does not
-      block "Google may scale").
+      issue, never a competing explanation.
     """
     if candidate.status != "supported":
         return False
@@ -209,7 +272,7 @@ def is_material_rival(
     if top_scope in ("shared", "run"):
         return True  # conservative: shared top faces any supported rival
     if candidate.hypothesis.evaluation_scope in ("shared", "run"):
-        return True  # a shared issue can undermine a platform action
+        return False  # action relevance decided separately (v3.6.3)
     # Both platform-bound: same platform → real rival; different
     # platform → parallel issue. (None == None keeps legacy library
     # semantics where every evaluation is in the same scope.)
@@ -304,13 +367,22 @@ def converge(
     if top.status == "supported" and (
         top.score >= 6 or (top.score >= CONVERGE_SCORE_THRESHOLD and not top.missing)
     ):
-        # Scope-aware rival scan (v3.6.2): the FIRST material rival in
-        # rank order blocks confident convergence — a materially
+        # Attribution-aware rival scan (v3.6.3): the FIRST material rival
+        # in rank order blocks confident convergence — a materially
         # supported runner-up is a MAJOR ALTERNATIVE (v3.5.1) and score
-        # gap alone never eliminates it. Supported hypotheses on OTHER
-        # platforms are collected as PARALLEL issues (explanation only).
+        # gap alone never eliminates it. Supported candidates are
+        # classified by ACTION RELEVANCE:
+        #   same-platform supported          → material rival
+        #   shared/run blocker (funnel/meas) → material rival
+        #   shared/run context (market-wide) → material context
+        #   other-platform platform-bound    → parallel issue (attributed)
+        potential_action = (
+            _first_action(top.hypothesis.id, top.hypothesis.possible_actions)
+            or "observe"
+        )
         material_rival: HypothesisEvaluation | None = None
-        parallel_issues: list[str] = []
+        parallel_issues: list[ParallelIssue] = []
+        material_contexts: list[MaterialContext] = []
         for ev in ranked[1:]:
             candidate = ev.evaluation
             if candidate.status != "supported":
@@ -318,7 +390,27 @@ def converge(
             if is_material_rival(top, candidate):
                 material_rival = candidate
                 break
-            parallel_issues.append(candidate.hypothesis.id)
+            if candidate.hypothesis.evaluation_scope in ("shared", "run"):
+                if shared_candidate_blocks_action(candidate, potential_action, top):
+                    material_rival = candidate
+                    break
+                material_contexts.append(
+                    MaterialContext(
+                        hypothesis_id=candidate.hypothesis.id,
+                        platform=candidate.platform,
+                        evaluation_scope=candidate.hypothesis.evaluation_scope,
+                    )
+                )
+            else:
+                parallel_issues.append(
+                    ParallelIssue(
+                        hypothesis_id=candidate.hypothesis.id,
+                        platform=candidate.platform,
+                        evaluation_scope=candidate.hypothesis.evaluation_scope,
+                        status=candidate.status,
+                        score=candidate.score,
+                    )
+                )
         if material_rival is not None:
             return Convergence(
                 decision="investigate",
@@ -338,6 +430,7 @@ def converge(
                     top, material_rival
                 ),
                 parallel_issues=tuple(parallel_issues),
+                material_context=tuple(material_contexts),
                 review_condition="补齐区分性证据后再收敛",
                 converged=False,
             )
@@ -369,6 +462,7 @@ def converge(
             action_eligibility=eligibility,
             eligibility_reason=eligibility_reason,
             parallel_issues=tuple(parallel_issues),
+            material_context=tuple(material_contexts),
             converged=True,
         )
 

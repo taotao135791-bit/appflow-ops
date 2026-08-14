@@ -37,6 +37,7 @@ from appflow_ops.decision_intelligence import (
     resolve_kpi_outcome_volume,
     resolve_primary_kpi_context,
     scale_eligibility,
+    shared_candidate_blocks_action,
 )
 from appflow_ops.decision_intelligence.evaluator import (
     HypothesisEvaluation,
@@ -244,7 +245,15 @@ def test_kpi_outcome_mapping() -> None:
     assert resolve_kpi_outcome_volume("purchase_cpa", facts) == 40
     assert resolve_kpi_outcome_volume("cpa", facts) is None  # conversions missing
     assert resolve_kpi_outcome_volume("roas", facts) == 40  # purchases first
-    assert resolve_kpi_outcome_volume("roas", {"conversions": 9}) == 9
+    # v3.6.3: generic conversions are NOT ROAS outcome volume without a
+    # revenue-generating event declaration.
+    assert resolve_kpi_outcome_volume("roas", {"conversions": 9}) is None
+    assert (
+        resolve_kpi_outcome_volume(
+            "roas", {"conversions": 9, "conversion_event": "purchase"}
+        )
+        == 9
+    )
 
 
 # ── PART E: Scope-aware rivals & parallel issues ─────────────────────────
@@ -265,10 +274,16 @@ def test_different_platform_issue_is_parallel() -> None:
 
 
 def test_shared_candidate_is_material_for_platform_top() -> None:
-    # Case 10: a shared issue can undermine a platform action.
+    # Case 10: a shared issue can undermine a platform action — but only
+    # when it actually blocks the ACTION (v3.6.3: action-relevant rival
+    # semantics; shared candidates are not automatic rivals).
     top = _eval("budget_constraint", platform="google_ads")
     shared = _eval("shared_product_funnel_issue")
-    assert is_material_rival(top, shared) is True
+    assert is_material_rival(top, shared) is False  # decided by action relevance
+    assert shared_candidate_blocks_action(shared, "increase", top) is True
+    market = _eval("market_wide_event")
+    assert shared_candidate_blocks_action(market, "increase", top) is False
+    assert shared_candidate_blocks_action(shared, "investigate", top) is False
 
 
 def test_google_scale_survives_meta_fatigue(workspace) -> None:
@@ -310,7 +325,10 @@ def test_google_scale_survives_meta_fatigue(workspace) -> None:
     assert result.top_platform == "google_ads"
     assert result.action_eligibility == "eligible"
     assert result.recommended_action == "increase"
-    assert "creative_fatigue" in result.parallel_issues
+    assert any(
+        p.hypothesis_id == "creative_fatigue" and p.platform == "meta"
+        for p in result.parallel_issues
+    ), result.parallel_issues
     run.finish()
 
 

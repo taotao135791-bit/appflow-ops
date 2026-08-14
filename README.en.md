@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.2/install.sh | bash -s -- --ref=v3.6.2
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.3/install.sh | bash -s -- --ref=v3.6.3
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -516,6 +516,24 @@ are parallel issues, not material rivals (Google may scale while Meta
 fatigue is handled separately); explicit trend strings go through the
 same sample calibration as numeric change_pct (`ctr_trend="down"` on
 150 impressions is weak, never normal).
+
+From v3.6.3 (Decision Attribution & Goal Semantics) a correct judgment
+must also know exactly WHO it is about, WHAT goal governs it, WHICH
+evidence belongs to it, and WHETHER another issue really invalidates
+the action: the user-facing summary consumes result.selected_evaluation
+(never rescanning evaluations by hypothesis ID — auction_pressure@google_ads
+top can never cite auction_pressure@meta's CPM); parallel issues keep
+platform attribution (creative_fatigue@meta != creative_fatigue@tiktok);
+conversion_event / optimization_goal are EVENT semantics normalized to
+their KPI family (conversion_event="pay" → pay_cpa, optimization_goal=
+"purchase" → purchase_cpa; an explicit KPI/goal conflict is ambiguous,
+never a guess); ROAS outcome volume requires revenue-generating events
+(generic conversions without event semantics → missing_outcome_volume);
+shared hypotheses are classified by ACTION RELEVANCE (shared
+funnel/measurement issues block scale; market_wide_event is material
+context — warn, stay small/staged, never veto); scale evidence minimums
+are KPI-family aware (cpi 50 / pay_cpa 10 — 20 installs and 20 payments
+are not the same scale readiness).
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

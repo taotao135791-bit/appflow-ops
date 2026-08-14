@@ -18,7 +18,12 @@ from dataclasses import dataclass, field
 
 from .evaluator import HypothesisEvaluation
 from .evidence import EvidenceResult
-from .ranking import Convergence, RankedHypothesis
+from .ranking import (
+    Convergence,
+    MaterialContext,
+    ParallelIssue,
+    RankedHypothesis,
+)
 
 CONVERGENCE_STATUSES = ("converged", "investigate", "wait", "insufficient_evidence")
 
@@ -64,8 +69,11 @@ class DecisionIntelligenceResult:
     # v3.6.2: supported independent issues on OTHER platforms — parallel
     # issues for explanation, never rivals that block the selected
     # platform's action (Google may scale while Meta fatigue is recorded
-    # here).
-    parallel_issues: tuple[str, ...] = ()
+    # here). v3.6.3: every entry keeps its platform/scope attribution.
+    parallel_issues: tuple[ParallelIssue, ...] = ()
+    # v3.6.3: supported shared/run facts that do NOT block the selected
+    # action but matter as material context (market-wide event, ...).
+    material_context: tuple[MaterialContext, ...] = ()
     # v3.5.5: safety warnings per NON-selected platform (e.g.
     # {"meta": ("measurement_invalid",)}) — a warning on one platform is
     # never a veto on an independent diagnosis for another.
@@ -129,6 +137,7 @@ def from_convergence(
         action_eligibility=convergence.action_eligibility,
         eligibility_reason=convergence.eligibility_reason,
         parallel_issues=convergence.parallel_issues,
+        material_context=convergence.material_context,
         platform_warnings=dict(platform_warnings or {}),
         evidence=evidence,
     )
