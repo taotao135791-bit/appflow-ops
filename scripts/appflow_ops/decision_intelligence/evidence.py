@@ -198,8 +198,12 @@ def _signals_from_metrics(
     metrics: Mapping[str, object],
 ) -> tuple[dict[str, bool], dict[str, str]]:
     """(signals, strengths) extraction. v3.6.0: movement on a metric whose
-    sample population is below the family minimum is WEAK evidence;
-    explicit canonical trend strings and bool facts stay normal."""
+    sample population is below the family minimum is WEAK evidence.
+    v3.6.2: explicit canonical trend strings go through the SAME sample
+    calibration as numeric change_pct — ``ctr_trend="down"`` on 150
+    impressions is weak, never normal (trend-representation invariance:
+    the same business fact must have the same strength regardless of how
+    it was encoded). Boolean operational facts stay normal."""
     signals: dict[str, bool] = {}
     strengths: dict[str, str] = {}
     for key, ids in _TREND_KEYS.items():
@@ -208,7 +212,12 @@ def _signals_from_metrics(
             for signal_id in ids:
                 if value == signal_id.replace(f"{key}_", ""):
                     signals[signal_id] = True
-                    strengths[signal_id] = "normal"
+                    family = key.removesuffix("_trend")
+                    strengths[signal_id] = (
+                        "normal"
+                        if sample_sufficiency(metrics, family) == "sufficient"
+                        else "weak"
+                    )
                     break
     for key, signal_id in _BOOL_KEYS.items():
         value = metrics.get(key)

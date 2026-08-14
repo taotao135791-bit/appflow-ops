@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.1/install.sh | bash -s -- --ref=v3.6.1
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.2/install.sh | bash -s -- --ref=v3.6.2
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -304,6 +304,8 @@ v3.5.5 起 **Convergence 也服从同一 provenance boundary**：`converge()` �
 v3.6.0 起 **DI 框架冻结，开始校准业务判断**（Decision Quality Calibration）：measurement 假设必须要有真实 measurement 证据——CVR↓ 配 stable measurement 是漏斗问题不是 tracking 问题（`measurement_stable` 是强反证）；recent budget/bid change 从 fatigue 的 hard exclusion 变成 confounder——真疲劳证据 + 刚调预算 = 两个 supported 候选并存 → investigate 而不是武断换素材；**诊断 ≠ 动作**——budget_constraint 打满但 CPA 110 vs target 50 → `increase` 被 eligibility 拦截（`action_eligibility=not_eligible` → hold），CPA 32 vs 50 且无近期变更才允许 small increase，刚调过预算 → wait；**样本决定证据强度**——150 impressions 的 CTR -25% 是 weak 证据（不能支撑疲劳），100k impressions 同样 -25% 是 normal 证据；pay 5→3 的 -40% 不算数，500→300 才算；下游指标（cvr/pay/install rate）用更保守的 12%/15% 阈值 + 真实转化数门槛。
 
 v3.6.1 起 **Calibration Reliability**：scale eligibility 服从 selected platform 的 provenance——Meta 刚调过预算不再阻塞 Google 的扩量判断（平台级 action context 只用该平台自己的 facts/signals）；measurement cap 从 ID 白名单改为 **domain 分类**——`install_measurement_issue` / `shared_measurement_issue` 在 measurement invalid 时仍可正常评估（invalid 本身就是它们的证据），新增 `reporting_anomaly` 真实 measurement 证据信号；**sample 缺失 ≠ sufficient**——三态（sufficient/insufficient/unknown），无 impressions 的 CTR -25% 是 weak；rate 证据看 **numerator + denominator**——2000 clicks + 2 conversions 的 CVR -40% 不算强证据；**KPI 达标 ≠ 可扩量**——CPA 49 vs 50 是 thin headroom → wait，1-2 个转化 → low_conversion_volume → wait，CPA 31 vs 50 + 200 转化 + 无近期变更才 eligible（分阶段小幅加）；reason codes（`eligibility_reason`）告诉用户为什么暂缓。
+
+v3.6.2 起 **Action Confidence & KPI Alignment**：一个 action 必须被**正确的 KPI、正确的 outcome、正确的平台 scope、足够的置信度**支撑——missing outcome volume 直接挡掉 scale（CPA 30/50 但没给转化量 → `missing_outcome_volume` → wait，impressions 再多也不能代替转化量）；**measurement/maturity = unknown 可以继续调查但不可以批准加量**（positive safety 要求 stable/sufficient）；**primary KPI 不再按 CPA→CPI→ROAS 硬编码优先**——`primary_kpi` 显式声明（或只有单个 target 时自动推断），多 target 无声明 → `ambiguous_primary_kpi` → 先问清楚（CPI $3 好看但 Pay CPA $140，主要 KPI 是付费就不该因为 CPI 扩量）；**outcome volume 必须匹配 KPI**——pay CPA 用 payments、purchase CPA 用 purchases、CPI 用 installs，1000 installs 永远不能支撑 pay CPA 扩量；**不同平台的独立问题不是 rival 是 parallel issue**——Google 可以扩量的同时 Meta 素材疲劳单独处理（`parallel_issues` 解释用，不阻塞主判断）；**explicit trend 字符串与 numeric change_pct 同等样本校准**——`ctr_trend="down"` 配 150 impressions 同样是 weak，绕不过 sample calibration。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 

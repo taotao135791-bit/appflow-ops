@@ -61,6 +61,11 @@ class DecisionIntelligenceResult:
     action_eligibility: str | None = None
     # v3.6.1: short reason for a blocked/deferred scale action.
     eligibility_reason: str | None = None
+    # v3.6.2: supported independent issues on OTHER platforms — parallel
+    # issues for explanation, never rivals that block the selected
+    # platform's action (Google may scale while Meta fatigue is recorded
+    # here).
+    parallel_issues: tuple[str, ...] = ()
     # v3.5.5: safety warnings per NON-selected platform (e.g.
     # {"meta": ("measurement_invalid",)}) — a warning on one platform is
     # never a veto on an independent diagnosis for another.
@@ -123,6 +128,7 @@ def from_convergence(
         safety_block=convergence.safety_block,
         action_eligibility=convergence.action_eligibility,
         eligibility_reason=convergence.eligibility_reason,
+        parallel_issues=convergence.parallel_issues,
         platform_warnings=dict(platform_warnings or {}),
         evidence=evidence,
     )

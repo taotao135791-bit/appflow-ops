@@ -549,6 +549,16 @@ def test_eval_case(case) -> None:
             assert observed == strength, (
                 f"{case['id']}: {signal_id} strength {observed} != {strength}"
             )
+    # v3.6.2: parallel-issue assertions — supported independent issues
+    # on OTHER platforms (e.g. expected_parallel_issues: [creative_fatigue])
+    # must be recorded without blocking the selected platform's action.
+    if case.get("expected_parallel_issues") is not None:
+        assert set(result_full.parallel_issues) == set(
+            case["expected_parallel_issues"]
+        ), (
+            f"{case['id']}: parallel_issues {result_full.parallel_issues} != "
+            f"{case['expected_parallel_issues']}"
+        )
 
 
 def test_eval_case_set_size() -> None:

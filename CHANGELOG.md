@@ -2,6 +2,54 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.6.2 — 2026-08-14
+
+### Added
+
+- **Primary KPI resolution**: `resolve_primary_kpi_context()` derives
+  the governing KPI from an explicit `primary_kpi` (or legacy
+  `optimization_goal` / `conversion_event`) or from EXACTLY ONE present
+  target — multiple targets without a declaration are
+  `ambiguous_primary_kpi` (scale defers, never a hardcoded CPA-first
+  guess). Supported enum: cpi / cpa / registration_cpa / pay_cpa /
+  purchase_cpa / roas.
+- **KPI-aligned outcome volume**: `resolve_kpi_outcome_volume()` maps
+  the primary KPI to ITS outcome (CPI→installs, pay CPA→payments,
+  purchase CPA→purchases, ROAS→purchases/conversions) — first-available
+  `_outcome_volume()` semantics are gone.
+- **Scope-aware rival classification**: `is_material_rival()` — a
+  platform-bound top only faces same-platform supported candidates and
+  shared/run-level candidates as material rivals; supported candidates
+  on other platforms are `parallel_issues` (explanation only, never a
+  veto). Shared/run tops keep the conservative global semantics.
+- **Trend-representation invariance**: explicit trend strings
+  (`ctr_trend: "down"`) go through the SAME sample-sufficiency
+  calibration as numeric `ctr_change_pct` — the same business fact has
+  the same strength regardless of input encoding.
+
+### Fixed
+
+- **Scale eligibility no longer succeeds with missing outcome volume**: a
+  good CPA without the KPI-matched outcome count is
+  `missing_outcome_volume` → wait; impressions never stand in for
+  conversions (large impressions do not unlock scale).
+- **`measurement=unknown` and `maturity=unknown` no longer qualify for
+  scale**: scale requires measurement==stable and maturity==sufficient
+  (`measurement_unknown` / `maturity_unknown` defer the action while
+  investigation may continue).
+- **Install volume can no longer satisfy pay/purchase KPI scale
+  evidence**: pay CPA with 1000 installs but no payments is
+  `missing_outcome_volume`.
+- **Different-platform independent hypotheses no longer automatically
+  block each other**: Google scale stays eligible while Meta fatigue is
+  recorded as a parallel issue (previously the global runner-up forced
+  a run-wide investigate).
+- **Explicit trend strings no longer bypass sample-strength
+  calibration**: `ctr_trend="down"` on 150 impressions is weak, exactly
+  like the numeric encoding.
+- **Multiple KPI targets no longer rely on hardcoded CPA/CPI/ROAS
+  precedence**: ambiguity defers scale until the primary KPI is known.
+
 ## 3.6.1 — 2026-08-14
 
 ### Fixed

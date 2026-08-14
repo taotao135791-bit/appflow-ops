@@ -163,6 +163,27 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
                 lines.append(
                     "先别加。素材/漏斗还有未解决的候选问题，先把这些风险排除再考虑扩。"
                 )
+            # v3.6.2: positive-evidence reasons — unknown volume/safety and
+            # KPI ambiguity defer scale instead of guessing.
+            elif result.eligibility_reason == "missing_outcome_volume":
+                lines.append(
+                    "先别加。成本看起来有空间，但我还不知道这个成本是建立在多少个转化上的"
+                    "——先确认有效转化量，再决定是否扩量。"
+                )
+            elif result.eligibility_reason == "measurement_unknown":
+                lines.append(
+                    "先别加。数据可靠性（measurement）还没确认，先确认回传/归因状态，"
+                    "再判断这个成本是否可信。"
+                )
+            elif result.eligibility_reason == "maturity_unknown":
+                lines.append(
+                    "先别加。样本成熟度（maturity）还没确认，先确认数据成熟度再判断。"
+                )
+            elif result.eligibility_reason == "ambiguous_primary_kpi":
+                lines.append(
+                    "先别加。同时存在多个目标 KPI（比如 CPI 与 Pay CPA），当前不知道主目标"
+                    "是哪个——先明确 primary KPI，再决定按哪个指标判断扩量。"
+                )
             else:
                 lines.append("缺 KPI/效率数据，暂时不能判断是否值得加量，先观察。")
         elif result.action_eligibility == "eligible" and result.top_hypothesis in (
@@ -181,6 +202,22 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
                     f"{result.top_platform} 可以按自己的效率和样本做判断；"
                     f"{warning_names} 的问题不影响它，那边继续观察。"
                 )
+            # v3.6.2: parallel issues — supported independent problems on
+            # OTHER platforms are explained, never treated as rivals that
+            # block this platform's scale.
+            if result.parallel_issues:
+                issue_names = "、".join(_label(h) for h in result.parallel_issues[:2])
+                if result.top_platform and result.top_platform != "cross_platform":
+                    lines.append(
+                        f"{result.top_platform} 可以单独考虑小幅扩量；"
+                        f"{issue_names}是另一条独立问题，不应该把 {result.top_platform} 一起卡住——"
+                        f"{result.top_platform} 按自己的效率和样本走，那边单独处理。"
+                    )
+                else:
+                    lines.append(
+                        f"同时存在独立问题（{issue_names}），但那是另一条问题，"
+                        "不影响当前判断。"
+                    )
     elif (
         result.convergence_status == "investigate"
         and result.safety_block == "measurement_invalid"
@@ -215,7 +252,21 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
     elif result.convergence_status == "wait" and result.safety_block:
         lines.append("样本/数据成熟度不足，先别调，观察一个完整窗口。")
     elif result.convergence_status == "wait":
-        lines.append("现在证据还不够，先别调。")
+        # v3.6.2: explicit-trend tiny-sample case — a small CTR dip on a
+        # tiny sample never justifies a swap; name the sample problem.
+        if result.top_hypothesis in (
+            "creative_fatigue",
+            "creative_message_mismatch",
+        ) and (
+            result.evidence is not None
+            and result.evidence.signal_strength.get("ctr_trend_down") == "weak"
+        ):
+            lines.append(
+                "CTR 看起来在掉，但样本还太小，现在不足以判素材疲劳。"
+                "先继续积累曝光，不建议因为这一小段波动马上换素材。"
+            )
+        else:
+            lines.append("现在证据还不够，先别调。")
     else:
         lines.append("证据不足以收敛到单一原因，先保持观察。")
 

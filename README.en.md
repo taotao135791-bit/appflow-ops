@@ -295,7 +295,7 @@ table.
 ### Three Steps To Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.1/install.sh | bash -s -- --ref=v3.6.1
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.2/install.sh | bash -s -- --ref=v3.6.2
 ```
 
 Then talk to your AI coding assistant in natural language:
@@ -498,6 +498,24 @@ strong CVR decline); KPI pass is necessary but not sufficient for scale
 — marginal headroom (CPA 49 vs 50) → wait, 1-2 conversions → wait,
 comfortable headroom + volume + settled changes → small staged
 increase, with `eligibility_reason` codes explaining the deferral.
+
+From v3.6.2 an action must be supported by the CORRECT KPI, correct
+outcome evidence, correct platform scope, and sufficient confidence
+(Action Confidence & KPI Alignment): missing outcome volume blocks
+scale (`missing_outcome_volume` — CPA 30/50 with no conversion count
+waits; impressions never stand in for conversions); `measurement=unknown`
+and `maturity=unknown` are acceptable for investigation but not for
+scale approval (positive safety: stable/sufficient required); the
+PRIMARY KPI comes from `primary_kpi` (or a single present target) —
+multiple targets without a declaration are `ambiguous_primary_kpi`
+(never a hardcoded CPA-first precedence; CPI $3 with pay CPA $140
+defers until the goal is clear); outcome volume is KPI-aligned (pay CPA
+→ payments, purchase CPA → purchases, CPI → installs — 1000 installs
+never justify pay-CPA scale); supported hypotheses on OTHER platforms
+are parallel issues, not material rivals (Google may scale while Meta
+fatigue is handled separately); explicit trend strings go through the
+same sample calibration as numeric change_pct (`ctr_trend="down"` on
+150 impressions is weak, never normal).
 
 The project knows what it is building: **the reasoning paradigm is defined,
 the deterministic foundation is in place, and the rest is being built toward

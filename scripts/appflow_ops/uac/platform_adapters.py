@@ -88,6 +88,10 @@ _COMMON_METRIC_KEYS = (
     "registrations",
     "purchases",
     "payments",
+    # v3.6.2: canonical outcome volume is common envelope — KPI-matched
+    # scale eligibility (generic CPA → conversions) needs it on every
+    # platform, not only Google.
+    "conversions",
     "cpi",
     "cpa",
     # v3.6.0: KPI targets are common envelope — action eligibility
@@ -96,6 +100,20 @@ _COMMON_METRIC_KEYS = (
     "target_cpi",
     "target_roas",
     "roas",
+    # v3.6.2: KPI-aligned eligibility — the full primary-KPI envelope
+    # (declaration + family targets/actuals + revenue for ROAS) is common
+    # on every platform: the correct KPI, not a hardcoded CPA-first
+    # precedence, drives target/actual comparison and outcome volume.
+    "primary_kpi",
+    "optimization_goal",
+    "conversion_event",
+    "target_pay_cpa",
+    "target_registration_cpa",
+    "target_purchase_cpa",
+    "pay_cpa",
+    "registration_cpa",
+    "purchase_cpa",
+    "revenue",
     # v3.6.0: recent-change confounders are common envelope — a declared
     # recent budget/bid change gates scale eligibility on every platform.
     "recent_budget_change",

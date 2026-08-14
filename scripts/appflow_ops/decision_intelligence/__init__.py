@@ -1,4 +1,4 @@
-"""Ads Decision Intelligence facade (v3.6.0).
+"""Ads Decision Intelligence facade (v3.6.2).
 
 Public entry points — callers should never import internal modules:
 
@@ -10,12 +10,17 @@ Public entry points — callers should never import internal modules:
              action_context)
     resolve_evaluation_safety(evaluation, safety_context)
     scale_eligibility(facts) / thresholds_for(family) / sample_sufficient
+    resolve_primary_kpi_context(facts) / resolve_kpi_outcome_volume(kpi)
+    is_material_rival(top, candidate)
 """
 
 from __future__ import annotations
 
 from .calibration import (
     METRIC_CALIBRATION,
+    PRIMARY_KPIS,
+    resolve_kpi_outcome_volume,
+    resolve_primary_kpi_context,
     sample_sufficient,
     scale_eligibility,
     thresholds_for,
@@ -57,6 +62,7 @@ from .ranking import (
     RankedHypothesis,
     SafetyContext,
     converge,
+    is_material_rival,
     rank_hypotheses,
     resolve_evaluation_safety,
 )
@@ -79,6 +85,7 @@ __all__ = [
     "META_HYPOTHESES",
     "METRIC_CALIBRATION",
     "OPERATIONAL_DOMAINS",
+    "PRIMARY_KPIS",
     "SIGNAL_IDS",
     "SIGNAL_LABELS",
     "TIKTOK_HYPOTHESES",
@@ -102,11 +109,14 @@ __all__ = [
     "evaluate_hypothesis",
     "hypothesis_by_id",
     "is_cross_platform_request",
+    "is_material_rival",
     "observations_comparable",
     "operational_domain",
     "primary_domain",
     "rank_hypotheses",
     "resolve_evaluation_safety",
+    "resolve_kpi_outcome_volume",
+    "resolve_primary_kpi_context",
     "sample_sufficient",
     "scale_eligibility",
     "signals_from_metrics",

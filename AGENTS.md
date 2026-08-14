@@ -250,3 +250,26 @@ python3 scripts/sync_skill_layout.py --check
 - **Action eligibility for one platform must never inherit another
   platform's recent changes.** Platform-bound action context comes from
   the selected platform's own facts, signals and safety.
+- **Never use install volume to justify scaling against a pay or
+  purchase KPI.** Outcome evidence must match the KPI being optimized
+  (pay CPA → payments, purchase CPA → purchases, ROAS → purchases/
+  conversions); missing KPI-matched volume defers scale
+  (missing_outcome_volume) — impressions never stand in for
+  conversions.
+- **If multiple KPI targets exist and no primary KPI is known, do not
+  guess.** Explicit primary_kpi (or a single present target) drives the
+  target/actual comparison and the outcome-volume check; multiple
+  targets without a declaration are ambiguous_primary_kpi → defer.
+- **`measurement=unknown` and `maturity=unknown` are acceptable for
+  investigation but not for scale approval.** Scale requires
+  measurement==stable and maturity==sufficient — unknown safety defers
+  the action while the diagnosis may still be ranked.
+- **A supported hypothesis on another media platform is not
+  automatically a rival to the selected platform's diagnosis.** Same-
+  platform supported candidates and shared/run-level candidates are
+  material rivals; different-platform independent issues are parallel
+  issues that never block the selected platform's action.
+- **Explicit trend labels do not bypass sample sufficiency.** ctr_trend=
+  "down" on 150 impressions is weak evidence, exactly like
+  ctr_change_pct=-25% on 150 impressions; a trend string with no sample
+  facts is weak too.

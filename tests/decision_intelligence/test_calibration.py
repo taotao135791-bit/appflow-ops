@@ -307,7 +307,8 @@ def test_budget_constraint_bad_cpa_forbids_increase() -> None:
 
 def test_budget_constraint_good_cpa_allows_small_increase() -> None:
     # Case 7: budget hit cap + CPA 32 vs target 50 + measurement stable +
-    # maturity sufficient + no recent change → small increase eligible.
+    # maturity sufficient + outcome volume + no recent change → small
+    # increase eligible.
     ranked = _budget_constraint_evals()
     result = _converge_with(
         ranked,
@@ -316,6 +317,7 @@ def test_budget_constraint_good_cpa_allows_small_increase() -> None:
             "spend_hit_cap": True,
             "cpa": 32.0,
             "target_cpa": 50.0,
+            "conversions": 200,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },
@@ -369,49 +371,76 @@ def test_invalid_measurement_blocks_scale() -> None:
 
 def test_scale_eligibility_helper() -> None:
     # v3.6.1: (state, reason) tuple; KPI pass is necessary, not sufficient.
-    assert scale_eligibility({"cpa": 30.0, "target_cpa": 50.0, "conversions": 100}) == (
-        "eligible",
-        None,
-    )
-    assert scale_eligibility({"cpa": 110.0, "target_cpa": 50.0}) == (
-        "not_eligible",
-        None,
-    )
-    assert scale_eligibility({"cpi": 2.0, "target_cpi": 1.5}) == (
-        "not_eligible",
-        None,
-    )
-    assert scale_eligibility({"roas": 3.0, "target_roas": 2.0, "conversions": 50}) == (
-        "eligible",
-        None,
-    )
+    # v3.6.2: scale requires POSITIVE safety (stable/sufficient), a known
+    # primary KPI, and KPI-matched outcome volume — missing any of them
+    # defers scale.
+    stable_mature = {
+        "measurement_state": "stable",
+        "maturity_state": "sufficient",
+    }
+    assert scale_eligibility(
+        {**stable_mature, "cpa": 30.0, "target_cpa": 50.0, "conversions": 100}
+    ) == ("eligible", None)
+    assert scale_eligibility(
+        {**stable_mature, "cpa": 110.0, "target_cpa": 50.0, "conversions": 100}
+    ) == ("not_eligible", None)
+    assert scale_eligibility(
+        {**stable_mature, "cpi": 2.0, "target_cpi": 1.5, "installs": 100}
+    ) == ("not_eligible", None)
+    assert scale_eligibility(
+        {
+            **stable_mature,
+            "roas": 3.0,
+            "target_roas": 2.0,
+            "purchases": 50,
+        }
+    ) == ("eligible", None)
     assert scale_eligibility({"measurement_state": "invalid"}) == (
         "not_eligible",
         "measurement_unreliable",
     )
-    assert scale_eligibility({"maturity_state": "insufficient"}) == (
-        "not_eligible",
-        "maturity_insufficient",
-    )
     assert scale_eligibility(
-        {"recent_budget_change": True, "cpa": 10.0, "target_cpa": 50.0}
+        {"measurement_state": "stable", "maturity_state": "insufficient"}
+    ) == ("not_eligible", "maturity_insufficient")
+    # v3.6.2: unknown measurement/maturity defers scale (positive evidence
+    # required — investigation may continue, scale may not).
+    assert scale_eligibility(
+        {"measurement_state": "unknown", "cpa": 30.0, "target_cpa": 50.0}
+    ) == ("needs_more_evidence", "measurement_unknown")
+    assert scale_eligibility(
+        {
+            "measurement_state": "stable",
+            "maturity_state": "unknown",
+            "cpa": 30.0,
+            "target_cpa": 50.0,
+        }
+    ) == ("needs_more_evidence", "maturity_unknown")
+    assert scale_eligibility(
+        {
+            "recent_budget_change": True,
+            "cpa": 10.0,
+            "target_cpa": 50.0,
+            "measurement_state": "stable",
+            "maturity_state": "sufficient",
+        }
     ) == ("not_eligible", "recent_change")
-    assert scale_eligibility({}) == ("needs_more_evidence", None)
+    assert scale_eligibility({}) == ("needs_more_evidence", "measurement_unknown")
     # v3.6.1: thin headroom (49 vs 50) defers scale.
-    assert scale_eligibility({"cpa": 49.0, "target_cpa": 50.0, "conversions": 100}) == (
-        "needs_more_evidence",
-        "thin_kpi_headroom",
-    )
+    assert scale_eligibility(
+        {**stable_mature, "cpa": 49.0, "target_cpa": 50.0, "conversions": 100}
+    ) == ("needs_more_evidence", "thin_kpi_headroom")
     # v3.6.1: good CPA but tiny outcome volume defers scale.
-    assert scale_eligibility({"cpa": 30.0, "target_cpa": 50.0, "conversions": 2}) == (
-        "needs_more_evidence",
-        "low_conversion_volume",
-    )
-    # v3.6.1: no volume fact + small impressions = weak sample.
-    assert scale_eligibility({"cpa": 30.0, "target_cpa": 50.0, "impressions": 150}) == (
-        "needs_more_evidence",
-        "weak_sample",
-    )
+    assert scale_eligibility(
+        {**stable_mature, "cpa": 30.0, "target_cpa": 50.0, "conversions": 2}
+    ) == ("needs_more_evidence", "low_conversion_volume")
+    # v3.6.2: good CPA but NO outcome volume defers scale — impressions
+    # can prove a CTR sample, never a stable CPA (missing volume reason).
+    assert scale_eligibility(
+        {**stable_mature, "cpa": 30.0, "target_cpa": 50.0, "impressions": 150}
+    ) == ("needs_more_evidence", "missing_outcome_volume")
+    assert scale_eligibility(
+        {**stable_mature, "cpa": 30.0, "target_cpa": 50.0, "impressions": 100000}
+    ) == ("needs_more_evidence", "missing_outcome_volume")
 
 
 # ── D. Signal Strength vs Sample Sufficiency ─────────────────────────────
@@ -498,6 +527,10 @@ def test_large_pay_sample_is_material() -> None:
                 "pay_rate_change_pct": -0.4,
                 "registrations": 1000,
                 "payments": 300,
+                # v3.6.2: install_rate_trend is sample-calibrated too —
+                # a real campaign brings clicks AND installs (numerator).
+                "clicks": 5000,
+                "installs": 300,
                 "install_rate_trend": "stable",
             }
         }
@@ -616,6 +649,7 @@ def test_runtime_e2e_budget_cap_good_cpa_scales(workspace) -> None:
             "spend_hit_cap": True,
             "cpa": 32.0,
             "target_cpa": 50.0,
+            "conversions": 200,
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },

@@ -1,4 +1,4 @@
-"""Business calibration for Ads Decision Intelligence (v3.6.1).
+"""Business calibration for Ads Decision Intelligence (v3.6.2).
 
 Thin constants + helpers — deliberately NOT an architecture layer.
 Calibration themes (Decision Quality Calibration):
@@ -13,11 +13,17 @@ F. scale eligibility requires headroom, outcome volume, stability, and
    no unresolved recent-change/rival risk — a marginal KPI pass is
    never enough ("Better to miss a scale opportunity than to recommend
    a bad scale").
+G. the PRIMARY KPI (explicit or unambiguously implied by a single
+   target) drives the target/actual comparison, the headroom judgment
+   AND the outcome-volume check — never a hardcoded CPA→CPI→ROAS
+   precedence, and never an install volume standing in for a pay/purchase
+   KPI (v3.6.2).
 
-The first version of every threshold is CONSERVATIVE: prefer fewer false
-positives over more sensitivity. Values are internal operational
-heuristics, not universal benchmarks — expected to be tuned by real
-cases in v3.6.x.
+An action must be supported by the correct KPI, correct outcome evidence,
+correct platform scope, and sufficient confidence (v3.6.2 goal).
+
+Values are internal operational heuristics, not universal benchmarks —
+expected to be tuned by real cases in v3.6.x.
 """
 
 from __future__ import annotations
@@ -164,7 +170,8 @@ SCALE_ACTIONS = frozenset({"increase", "scale"})
 # Eligibility states (lightweight, deliberately no confidence framework).
 ELIGIBILITY_STATES = ("eligible", "not_eligible", "needs_more_evidence")
 
-# Short reason codes for deferring/blocking a scale action.
+# Short reason codes for deferring/blocking a scale action (v3.6.2
+# adds the positive-safety and KPI-alignment reasons).
 ELIGIBILITY_REASONS = (
     "thin_kpi_headroom",
     "low_conversion_volume",
@@ -173,7 +180,164 @@ ELIGIBILITY_REASONS = (
     "material_rival",
     "measurement_unreliable",
     "maturity_insufficient",
+    "missing_outcome_volume",
+    "measurement_unknown",
+    "maturity_unknown",
+    "ambiguous_primary_kpi",
 )
+
+# ── Primary KPI (v3.6.2) ────────────────────────────────────────────────
+
+# The only KPI types the current product needs. An explicit primary_kpi
+# outside this set is UNKNOWN (conservative) — never silently coerced.
+PRIMARY_KPIS = (
+    "cpi",
+    "cpa",
+    "registration_cpa",
+    "pay_cpa",
+    "purchase_cpa",
+    "roas",
+)
+
+# primary_kpi → (target_key, actual_key, outcome_key, direction).
+# direction: "lower" = actual below target is better; "higher" = above.
+_KPI_SPECS: dict[str, tuple[str, str, str, str]] = {
+    "cpi": ("target_cpi", "cpi", "installs", "lower"),
+    "cpa": ("target_cpa", "cpa", "conversions", "lower"),
+    "registration_cpa": (
+        "target_registration_cpa",
+        "registration_cpa",
+        "registrations",
+        "lower",
+    ),
+    "pay_cpa": ("target_pay_cpa", "pay_cpa", "payments", "lower"),
+    "purchase_cpa": (
+        "target_purchase_cpa",
+        "purchase_cpa",
+        "purchases",
+        "lower",
+    ),
+    # ROAS outcome: purchases preferred, canonical conversions fallback
+    # (revenue evidence is implied by the ROAS ratio itself).
+    "roas": ("target_roas", "roas", "conversions", "higher"),
+}
+
+# Facts keys consulted when the observation declares its primary KPI
+# (any string value; ``primary_kpi`` wins over the legacy hints).
+_PRIMARY_KPI_KEYS = ("primary_kpi", "optimization_goal", "conversion_event")
+
+
+def resolve_primary_kpi(facts: Mapping[str, object]) -> tuple[str | None, str | None]:
+    """(kpi_type, reason): which KPI governs THIS action (v3.6.2).
+
+    - explicit ``primary_kpi`` (or legacy ``optimization_goal`` /
+      ``conversion_event``) in the supported enum → that KPI;
+    - no explicit declaration and EXACTLY ONE target exists → that KPI
+      (backward compatible — a single-target account implies its goal);
+    - multiple targets without a declaration → (None,
+      "ambiguous_primary_kpi") — never silently pick CPA first;
+    - no targets at all → (None, None) (no KPI context).
+    """
+    for key in _PRIMARY_KPI_KEYS:
+        declared = facts.get(key)
+        if isinstance(declared, str) and declared:
+            normalized = declared.strip().lower()
+            if normalized in PRIMARY_KPIS:
+                return normalized, None
+            return None, "ambiguous_primary_kpi"  # unknown value: no guessing
+    present_targets = [
+        kpi
+        for kpi, (target_key, _, _, _) in _KPI_SPECS.items()
+        if isinstance(facts.get(target_key), (int, float))
+    ]
+    if len(present_targets) == 1:
+        return present_targets[0], None
+    if len(present_targets) > 1:
+        return None, "ambiguous_primary_kpi"
+    return None, None
+
+
+def resolve_kpi_outcome_volume(
+    kpi_type: str, facts: Mapping[str, object]
+) -> int | None:
+    """The outcome count MATCHING the KPI being optimized (v3.6.2):
+    CPI → installs, registration CPA → registrations, pay CPA → payments,
+    purchase CPA → purchases, generic CPA → canonical conversions, ROAS →
+    purchases (fallback conversions). NEVER first-available across KPIs —
+    1000 installs cannot stand in for a pay-CPA scale decision."""
+    spec = _KPI_SPECS.get(kpi_type)
+    if spec is None:
+        return None
+    _, _, outcome_key, _ = spec
+    if kpi_type == "roas":
+        outcome_keys: tuple[str, ...] = ("purchases", "conversions")
+    else:
+        outcome_keys = (outcome_key,)
+    for key in outcome_keys:
+        value = facts.get(key)
+        if isinstance(value, (int, float)):
+            return int(value)
+    return None
+
+
+def resolve_primary_kpi_context(
+    facts: Mapping[str, object],
+) -> dict[str, object] | None:
+    """One lightweight resolution of the KPI context for the current
+    action (v3.6.2). Returns None when no KPI context exists at all;
+    otherwise a plain dict with:
+
+    - ``kpi_type``: the governing KPI (None when ambiguous)
+    - ``target`` / ``actual``: numeric target and actual (None when the
+      fact is missing)
+    - ``outcome_volume``: the KPI-matched outcome count (None when
+      missing)
+    - ``direction``: "lower" | "higher" (which way is better)
+    - ``headroom``: strong_headroom | thin_headroom | no_headroom | None
+    - ``reason``: ambiguous_primary_kpi | thin_kpi_headroom | None
+    """
+    kpi_type, kpi_reason = resolve_primary_kpi(facts)
+    if kpi_type is None and kpi_reason is None:
+        return None  # no KPI context at all
+    context: dict[str, object] = {
+        "kpi_type": kpi_type,
+        "target": None,
+        "actual": None,
+        "outcome_volume": None,
+        "direction": None,
+        "headroom": None,
+        "reason": kpi_reason,
+    }
+    if kpi_type is None:
+        return context
+    target_key, actual_key, _, direction = _KPI_SPECS[kpi_type]
+    target = facts.get(target_key)
+    actual = facts.get(actual_key)
+    if kpi_type == "cpa" and not isinstance(actual, (int, float)):
+        actual = facts.get("cost_per_result")  # platform alias for CPA
+    if isinstance(target, (int, float)) and isinstance(actual, (int, float)):
+        context["target"] = float(target)
+        context["actual"] = float(actual)
+        context["direction"] = direction
+        if direction == "higher":
+            if float(actual) >= float(target) / KPI_HEADROOM_RATIO:
+                context["headroom"] = "strong_headroom"
+            elif float(actual) >= float(target):
+                context["headroom"] = "thin_headroom"
+                context["reason"] = "thin_kpi_headroom"
+            else:
+                context["headroom"] = "no_headroom"
+        else:
+            if float(actual) <= float(target) * KPI_HEADROOM_RATIO:
+                context["headroom"] = "strong_headroom"
+            elif float(actual) <= float(target):
+                context["headroom"] = "thin_headroom"
+                context["reason"] = "thin_kpi_headroom"
+            else:
+                context["headroom"] = "no_headroom"
+    context["outcome_volume"] = resolve_kpi_outcome_volume(kpi_type, facts)
+    return context
+
 
 # Conservative headroom ratio (internal operational heuristic, NOT a
 # universal benchmark): an actual CPA within 15% of target is THIN
@@ -186,65 +350,61 @@ MIN_SCALE_CONVERSIONS = 20
 
 
 def _kpi_headroom(facts: Mapping[str, object]) -> tuple[str | None, str | None]:
-    """(headroom, reason): strong_headroom | thin_headroom | no_headroom |
-    None (no KPI context). CPA/CPI: below target; ROAS: above target —
-    never mixed into the same mathematical direction."""
-    target_cpa = facts.get("target_cpa")
-    cpa = facts.get("cpa") or facts.get("purchase_cpa") or facts.get("cost_per_result")
-    if isinstance(target_cpa, (int, float)) and isinstance(cpa, (int, float)):
-        if float(cpa) <= float(target_cpa) * KPI_HEADROOM_RATIO:
-            return "strong_headroom", None
-        if float(cpa) <= float(target_cpa):
-            return "thin_headroom", "thin_kpi_headroom"
-        return "no_headroom", None
-    target_cpi = facts.get("target_cpi")
-    cpi = facts.get("cpi")
-    if isinstance(target_cpi, (int, float)) and isinstance(cpi, (int, float)):
-        if float(cpi) <= float(target_cpi) * KPI_HEADROOM_RATIO:
-            return "strong_headroom", None
-        if float(cpi) <= float(target_cpi):
-            return "thin_headroom", "thin_kpi_headroom"
-        return "no_headroom", None
-    roas = facts.get("roas")
-    target_roas = facts.get("target_roas")
-    if isinstance(roas, (int, float)) and isinstance(target_roas, (int, float)):
-        if float(roas) >= float(target_roas) / KPI_HEADROOM_RATIO:
-            return "strong_headroom", None
-        if float(roas) >= float(target_roas):
-            return "thin_headroom", "thin_kpi_headroom"
-        return "no_headroom", None
-    return None, None
+    """(headroom, reason) resolved from the PRIMARY KPI (v3.6.2) — never
+    a hardcoded CPA→CPI→ROAS precedence. None/None when no KPI context.
+    ``ambiguous_primary_kpi`` surfaces when multiple targets exist without
+    a declaration (the caller must not guess)."""
+    context = resolve_primary_kpi_context(facts)
+    if context is None:
+        return None, None
+    if context.get("kpi_type") is None:
+        reason = context.get("reason")
+        return None, str(reason) if reason else None
+    headroom = context.get("headroom")
+    reason = context.get("reason")
+    return (str(headroom) if headroom else None), (str(reason) if reason else None)
 
 
 def _outcome_volume(facts: Mapping[str, object]) -> int | None:
-    """Absolute outcome volume for the selected platform (any canonical
-    conversion count). None when no outcome volume fact exists."""
-    for key in ("conversions", "purchases", "payments", "installs"):
-        value = facts.get(key)
-        if isinstance(value, (int, float)):
-            return int(value)
-    return None
+    """Legacy wrapper: outcome volume of the (implied or declared)
+    primary KPI — never first-available across KPI families (v3.6.2)."""
+    kpi_type, _ = resolve_primary_kpi(facts)
+    if kpi_type is None:
+        return None
+    return resolve_kpi_outcome_volume(kpi_type, facts)
 
 
 def scale_eligibility(
     facts: Mapping[str, object],
 ) -> tuple[str, str | None]:
     """(state, reason_code): whether a scaling action is currently
-    eligible — v3.6.1.
+    eligible — v3.6.2.
 
     Diagnosis and action eligibility are DIFFERENT: ``budget_constraint``
     proves the campaign hits its budget cap, it does NOT prove that
-    increasing the budget is a good idea. KPI pass is NECESSARY but NOT
-    SUFFICIENT — eligibility also requires KPI headroom (a marginal pass
-    is thin), sufficient outcome volume (1-2 conversions are never
-    evidence of sustainable efficiency), and no unresolved recent-change
-    risk. Missing KPI/volume context → ``needs_more_evidence``
-    (conservative: wait).
+    increasing the budget is a good idea. Scale requires POSITIVE
+    evidence on every axis (v3.6.2):
+
+    - measurement explicitly ``stable`` (``unknown`` is not enough —
+      investigation may continue on unknown safety, scale may not);
+    - maturity explicitly ``sufficient``;
+    - the PRIMARY KPI is known (explicit declaration or a single target;
+      multiple targets without a declaration → ``ambiguous_primary_kpi``);
+    - headroom on THAT KPI is strong (a marginal pass is thin);
+    - the KPI-MATCHED outcome volume exists and is sufficient (pay CPA
+      never borrows installs; missing outcome volume is not scale
+      evidence — impressions cannot stand in for conversions).
     """
-    if str(facts.get("measurement_state") or "") == "invalid":
+    measurement = str(facts.get("measurement_state") or "")
+    if measurement == "invalid":
         return "not_eligible", "measurement_unreliable"
-    if str(facts.get("maturity_state") or "") == "insufficient":
+    if measurement == "unknown" or not measurement:
+        return "needs_more_evidence", "measurement_unknown"
+    maturity = str(facts.get("maturity_state") or "")
+    if maturity == "insufficient":
         return "not_eligible", "maturity_insufficient"
+    if maturity == "unknown" or not maturity:
+        return "needs_more_evidence", "maturity_unknown"
     if (
         facts.get("recent_budget_change") is True
         or facts.get("recent_bid_change") is True
@@ -258,13 +418,14 @@ def scale_eligibility(
     if headroom == "thin_headroom":
         return "needs_more_evidence", reason
     if headroom is None:
+        if reason == "ambiguous_primary_kpi":
+            return "needs_more_evidence", "ambiguous_primary_kpi"
         return "needs_more_evidence", None  # no KPI context
     volume = _outcome_volume(facts)
-    if volume is not None and volume < MIN_SCALE_CONVERSIONS:
-        return "needs_more_evidence", "low_conversion_volume"
     if volume is None:
-        # No outcome volume fact: a small impression base is weak sample.
-        impressions = facts.get("impressions")
-        if isinstance(impressions, (int, float)) and float(impressions) < 5000:
-            return "needs_more_evidence", "weak_sample"
+        # v3.6.2: unknown outcome volume is NOT scale evidence — impressions
+        # can prove a CTR sample, never a stable CPA/pay CPA.
+        return "needs_more_evidence", "missing_outcome_volume"
+    if volume < MIN_SCALE_CONVERSIONS:
+        return "needs_more_evidence", "low_conversion_volume"
     return "eligible", None

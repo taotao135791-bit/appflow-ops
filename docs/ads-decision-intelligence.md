@@ -478,3 +478,67 @@ and `shared_measurement_issue` stay evaluable (and can be supported)
 while non-measurement diagnoses remain capped. `reporting_anomaly`
 (event loss / tracking break / platform-vs-source discrepancy) is real
 measurement evidence on every platform.
+
+## Action Confidence & KPI Alignment (v3.6.2)
+
+> An action must be supported by the correct KPI, correct outcome
+> evidence, correct platform scope, and sufficient confidence.
+
+### Primary KPI
+
+> When multiple targets exist, AppFlow must know which KPI governs the
+> action. It must not silently choose one.
+
+A hardcoded CPA→CPI→ROAS precedence is gone. The primary KPI comes from
+`primary_kpi` (or legacy `optimization_goal` / `conversion_event`), or —
+when no declaration exists — from EXACTLY ONE present target. Multiple
+targets without a declaration → `ambiguous_primary_kpi` → scale defers
+(`needs_more_evidence`), never a guess. Supported enum: `cpi` / `cpa` /
+`registration_cpa` / `pay_cpa` / `purchase_cpa` / `roas`.
+
+### KPI-aligned Outcome Volume
+
+> Outcome volume must correspond to the KPI being optimized.
+
+`_outcome_volume()`'s first-available semantics are gone.
+`resolve_kpi_outcome_volume(primary_kpi, facts)` maps the KPI to ITS
+outcome: CPI → installs, registration CPA → registrations, pay CPA →
+payments, purchase CPA → purchases, generic CPA → canonical conversions
+(never silently borrowing installs), ROAS → purchases (fallback
+conversions). `missing_outcome_volume` blocks scale — impressions can
+prove a CTR sample, never a stable CPA/pay CPA.
+
+### Positive Safety Requirement
+
+> Scaling requires positive measurement and maturity evidence; unknown
+> is not sufficient.
+
+`scale_eligibility()` requires `measurement == stable` and `maturity ==
+sufficient` — `unknown` returns `needs_more_evidence` with
+`measurement_unknown` / `maturity_unknown`. Investigation may continue
+on unknown safety; scale may not.
+
+### Scope-aware Rival Semantics
+
+> Independent issues on different platforms are parallel issues, not
+> automatically competing hypotheses.
+
+`is_material_rival(top, candidate)` (a thin helper — no Rival Graph):
+a platform-bound top faces a material rival only when the candidate is
+supported on the SAME platform, or is a shared/run-level candidate that
+could invalidate the platform action. A supported candidate on ANOTHER
+platform is a PARALLEL issue — recorded in `parallel_issues` for
+explanation, never a veto (Google may scale while Meta fatigue is
+handled separately). Shared/run tops keep the conservative global
+semantics.
+
+### Trend-representation Invariance
+
+> Equivalent evidence representations should receive equivalent
+> calibration strength.
+
+Explicit trend strings (`ctr_trend: "down"`) go through the SAME sample
+sufficiency calibration as numeric `ctr_change_pct` — a `down` label on
+150 impressions is WEAK, never normal; with no sample facts it is WEAK
+too. The same business fact has the same strength regardless of input
+encoding.

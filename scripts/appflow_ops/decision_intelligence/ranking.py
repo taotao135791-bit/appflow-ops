@@ -1,4 +1,4 @@
-"""Ranking and convergence for Ads Decision Intelligence (v3.5.5).
+"""Ranking and convergence for Ads Decision Intelligence (v3.6.2).
 
 Ranking is deterministic and repeatable — never pseudo-probabilities.
 Status priority: supported > unverified > insufficient_evidence >
@@ -10,10 +10,14 @@ evidence, and a review condition; when nothing is supported, the answer
 is wait/investigate with the most decisive missing evidence named —
 never a forced recommendation.
 
-A materially supported runner-up (status=supported with a material
-score) is a MAJOR ALTERNATIVE: score gap alone never eliminates it —
-the runtime converges to investigate plus the next discriminating
-evidence instead of a confident action (v3.5.1).
+Rival semantics are SCOPE-AWARE (v3.6.2): a supported hypothesis on
+another media platform is NOT automatically a competing explanation —
+"another platform's independent issue" is a PARALLEL issue that never
+blocks this platform's action. A material rival is only (a) a supported
+candidate on the SAME platform, or (b) a shared/run-level candidate that
+could invalidate the platform action; a shared/run top keeps the
+conservative global semantics (any supported candidate is a material
+alternative).
 
 Safety follows the SELECTED evaluation's provenance (v3.5.5): a
 platform-bound top consumes that platform's own measurement/maturity
@@ -131,8 +135,13 @@ class Convergence:
     # v3.6.1: short reason for a blocked/deferred scale action
     # (thin_kpi_headroom | low_conversion_volume | weak_sample |
     # recent_change | measurement_unreliable | maturity_insufficient |
-    # None).
+    # missing_outcome_volume | measurement_unknown | maturity_unknown |
+    # ambiguous_primary_kpi | None).
     eligibility_reason: str | None = None
+    # v3.6.2: supported hypotheses on OTHER platforms (independent
+    # platform-bound issues) — they are parallel issues for explanation,
+    # never material rivals that block this platform's action.
+    parallel_issues: tuple[str, ...] = ()
 
 
 def rank_hypotheses(
@@ -176,6 +185,35 @@ def _discriminating_evidence(
     top_required = set(top.hypothesis.required_evidence)
     runner_required = set(runner.hypothesis.required_evidence)
     return tuple(sorted(runner_required - top_required))[:3]
+
+
+def is_material_rival(
+    top: HypothesisEvaluation, candidate: HypothesisEvaluation
+) -> bool:
+    """Scope-aware rival classification (v3.6.2): is ``candidate`` a real
+    competing explanation for the SELECTED diagnosis?
+
+    - a shared/run-level top keeps the conservative global semantics —
+      any supported candidate is a material alternative;
+    - a platform-bound top faces a material rival only when the
+      candidate is (a) supported on the SAME platform, or (b) a
+      shared/run-level candidate that could invalidate the platform
+      action;
+    - a supported candidate on ANOTHER media platform is a PARALLEL
+      issue, never a competing explanation ("Meta fatigue" does not
+      block "Google may scale").
+    """
+    if candidate.status != "supported":
+        return False
+    top_scope = top.hypothesis.evaluation_scope
+    if top_scope in ("shared", "run"):
+        return True  # conservative: shared top faces any supported rival
+    if candidate.hypothesis.evaluation_scope in ("shared", "run"):
+        return True  # a shared issue can undermine a platform action
+    # Both platform-bound: same platform → real rival; different
+    # platform → parallel issue. (None == None keeps legacy library
+    # semantics where every evaluation is in the same scope.)
+    return candidate.platform == top.platform
 
 
 def converge(
@@ -266,17 +304,22 @@ def converge(
     if top.status == "supported" and (
         top.score >= 6 or (top.score >= CONVERGE_SCORE_THRESHOLD and not top.missing)
     ):
-        # A materially supported runner-up is a MAJOR ALTERNATIVE: score
-        # gap alone never eliminates it (v3.5.1). Confident convergence is
-        # only allowed when the runner-up is weakened/excluded or lacks
-        # material support.
-        runner = ranked[1].evaluation if len(ranked) > 1 else None
-        major_alternative = (
-            runner is not None
-            and runner.status == "supported"
-            and runner.score >= MAJOR_ALTERNATIVE_THRESHOLD
-        )
-        if major_alternative and runner is not None:
+        # Scope-aware rival scan (v3.6.2): the FIRST material rival in
+        # rank order blocks confident convergence — a materially
+        # supported runner-up is a MAJOR ALTERNATIVE (v3.5.1) and score
+        # gap alone never eliminates it. Supported hypotheses on OTHER
+        # platforms are collected as PARALLEL issues (explanation only).
+        material_rival: HypothesisEvaluation | None = None
+        parallel_issues: list[str] = []
+        for ev in ranked[1:]:
+            candidate = ev.evaluation
+            if candidate.status != "supported":
+                continue
+            if is_material_rival(top, candidate):
+                material_rival = candidate
+                break
+            parallel_issues.append(candidate.hypothesis.id)
+        if material_rival is not None:
             return Convergence(
                 decision="investigate",
                 top_hypothesis=top.hypothesis.id,
@@ -284,14 +327,17 @@ def converge(
                 rationale=(
                     (
                         f"候选原因并存：{top.hypothesis.id} 与 "
-                        f"{runner.hypothesis.id} 都有实质支持，不能仅凭分差收敛；"
+                        f"{material_rival.hypothesis.id} 都有实质支持，不能仅凭分差收敛；"
                         f"先补充区分性证据"
                     ),
                 ),
                 exclusions=exclusions,
                 missing_evidence=missing,
-                material_alternatives=(top.hypothesis.id, runner.hypothesis.id),
-                next_discriminating_evidence=_discriminating_evidence(top, runner),
+                material_alternatives=(top.hypothesis.id, material_rival.hypothesis.id),
+                next_discriminating_evidence=_discriminating_evidence(
+                    top, material_rival
+                ),
+                parallel_issues=tuple(parallel_issues),
                 review_condition="补齐区分性证据后再收敛",
                 converged=False,
             )
@@ -322,6 +368,7 @@ def converge(
             review_condition="按约定窗口（X spend / Y impressions）复查",
             action_eligibility=eligibility,
             eligibility_reason=eligibility_reason,
+            parallel_issues=tuple(parallel_issues),
             converged=True,
         )
 
