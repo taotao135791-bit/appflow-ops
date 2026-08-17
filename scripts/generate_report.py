@@ -28,7 +28,7 @@ from datetime import datetime
 
 # Version stamp shown in PDF header/footer. Keep in sync with
 # appflow.plugin.json `version`.
-__version__ = "3.6.4"
+__version__ = "3.6.5"
 
 try:
     from reportlab.lib import colors

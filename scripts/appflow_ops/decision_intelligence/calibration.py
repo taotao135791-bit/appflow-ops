@@ -128,6 +128,15 @@ def thresholds_for(metric_family: str) -> tuple[float, float]:
     return float(stable), float(material)
 
 
+def kpi_outcome_key(kpi_type: str) -> str | None:
+    """The cumulative counter KEY matching a KPI family (v3.6.5):
+    CPI → installs, pay CPA → payments, ... — the state-native decision
+    window subtracts THIS counter between a comparable pre-change
+    baseline and the current observation, never a borrowed metric."""
+    spec = _KPI_SPECS.get(kpi_type)
+    return spec[2] if spec is not None else None
+
+
 def sample_sufficiency(metrics: Mapping[str, object], metric_family: str) -> str:
     """sufficient | insufficient | unknown (v3.6.1).
 
@@ -661,16 +670,34 @@ def evaluate_action_readiness(
     Eligibility says the action is principled; readiness says it is
     safe to execute NOW. After the last confirmed material Change,
     another material action requires enough NEW evidence: elapsed time
-    AND KPI-matched window outcomes (``window_outcomes`` fact). Missing
-    either dimension defers — time alone is not enough, and lifetime
-    totals never prove post-change readiness. No pending change → ready
-    (eligibility governs).
+    AND KPI-matched window outcomes. Missing either dimension defers —
+    time alone is not enough, and lifetime totals never prove
+    post-change readiness. No pending change → ready (eligibility
+    governs).
+
+    v3.6.5: the window outcome comes from the STATE-DERIVED decision
+    window first (``window_context["window_outcomes"]`` +
+    ``window_status`` — reconstructed by the runtime from persisted
+    observations and confirmed changes); the legacy caller-supplied
+    ``window_outcomes`` fact is a compatibility fallback only. A
+    window whose counters are not comparable (entity change, counter
+    reset, missing baseline) waits — never a guessed delta.
     """
     window = window_context or {}
     change_at = window.get("last_change_effective_at")
     current_at = window.get("current_observed_at")
     if not isinstance(change_at, str) or not isinstance(current_at, str):
         return "ready", None, None  # no pending change
+    window_status = window.get("window_status")
+    if window_status == "not_comparable":
+        # Cumulative counters cannot be subtracted across entity
+        # changes or counter resets (v3.6.5 §12-14) — wait, never a
+        # negative or guessed outcome count.
+        return "wait", "counter_not_comparable", "more_evidence"
+    if window_status == "unknown":
+        # Missing baseline / missing counter / unknown identity: the
+        # runtime could not reconstruct the post-change window.
+        return "wait", "recent_change_unsettled", "more_evidence"
     elapsed = _hours_between(change_at, current_at)
     if elapsed is None:
         return "wait", "recent_change_unsettled", "more_evidence"
@@ -680,7 +707,12 @@ def evaluate_action_readiness(
     min_new = spec["min_new_outcomes"]
     assert isinstance(min_new, Mapping)
     min_outcomes = min_new.get(kpi_type or "cpa")
-    window_outcomes = facts.get("window_outcomes")
+    window_outcomes = window.get("window_outcomes")
+    if not isinstance(window_outcomes, (int, float)):
+        # Compatibility fallback: legacy caller-supplied fact (v3.6.5
+        # §45 — derived state always wins; this is only read when the
+        # runtime could not derive a window at all).
+        window_outcomes = facts.get("window_outcomes")
     if (
         isinstance(min_hours, (int, float))
         and isinstance(min_outcomes, (int, float))

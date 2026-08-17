@@ -685,3 +685,87 @@ magnitude is small | normal (never aggressive; numeric Safety remains
 the final cap); descale is always small and requires measurement
 stable + mature sample + persistent negative trend + no recent change
 (no ping-pong).
+
+## State-Native Decision Windows (v3.6.5)
+
+> Decision windows should be derived from persisted observations and
+> confirmed changes whenever possible. Callers should not be required to
+> pre-compute post-change outcome counts.
+
+Timing is a native consequence of PERSISTED STATE. The runtime
+reconstructs "what happened since the last confirmed change" from the
+bounded state it already loads:
+
+```text
+selected platform/entity
+→ latest relevant confirmed Change
+→ comparable pre-change baseline Observation
+→ current Observation
+→ derived KPI-aligned post-change outcome delta
+```
+
+`derive_window_outcomes()` returns a light `DecisionWindow` (platform,
+change_type, change_effective_at, baseline/current outcomes,
+window_outcomes, status) so the answer can be audited: "上次预算调整前
+Pay=150，现在 Pay=152 → 这次调整后新增 2 个 Pay → 窗口还不成熟".
+
+### Post-Change Outcome Derivation
+
+> The relevant outcome count is the delta of the KPI-aligned cumulative
+> counter between a comparable pre-change baseline and the current
+> observation.
+
+The baseline is the LATEST comparable observation at or before the
+change's effective_at (never the immediately previous follow-up): a
+follow-up at 195 derives 195 − 150 = 45 against the change-window
+baseline, not 195 − 152. The counter is KPI-aligned (Pay CPA → payments,
+CPI → installs — never a borrowed metric). State-derived values have
+priority: a conflicting caller `window_outcomes` is recorded for audit
+(`provided_window_outcomes_conflict`), never silently used.
+
+### Counter Comparability
+
+> A delta must not be computed across entity changes, counter resets,
+> incompatible scopes, or incompatible metric definitions.
+
+- entity/scope mismatch (campaign A baseline vs campaign B current) →
+  `unknown`
+- counter decreased (150 → 20 in the same scope) → `not_comparable`
+  (counter reset), never a negative delta
+- missing baseline / first counter reading after the change / unknown
+  identity → `unknown`
+
+Both `unknown` and `not_comparable` defer the action (readiness waits);
+the wait names the reason (`counter_not_comparable`).
+
+### Timing Provenance
+
+> Platform-bound timing decisions use that platform's own changes,
+> timestamps, and KPI outcomes. Another platform's recent change must
+> not delay the selected platform.
+
+A platform-bound top reads THAT platform's latest relevant Change, its own
+current observation timestamp (never `next(iter(...))`), and its own KPI
+counter. Shared/run tops stay conservative: every relevant platform's
+window must be ready, and any unsettled platform delays the shared action
+(a single ready platform is never borrowed for the shared conclusion).
+
+### Descale Windows
+
+> Lifetime conversion volume does not justify a reverse action. Descale
+> readiness requires enough new evidence after the latest material change.
+
+Descale uses the SAME readiness gate as scale (`evaluate_action_readiness`
+— one system, never a parallel variant). A reverse action after an
+increase needs the post-change window to be mature; a temporary KPI dip
+right after a change waits, never an immediate decrease (no ping-pong).
+
+### Creative Windows
+
+> Confirmed creative changes influence creative test readiness through
+> state, not caller-supplied booleans.
+
+A confirmed creative Change enters the next run's context automatically:
+the runtime derives `recent_creative_change` from the persisted Change, so
+a new creative with low post-change impressions holds without any caller
+hand-writing `recent_creative_change=true`.

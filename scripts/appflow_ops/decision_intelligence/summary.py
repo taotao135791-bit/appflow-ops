@@ -127,6 +127,25 @@ _REVIEW_TRIGGER_LABELS: dict[str, str] = {
     "more_evidence": "补充更多证据",
 }
 
+# outcome metric key → user-facing noun (v3.6.5 §20): the answer names
+# the ACTUAL KPI counter the derived window measured.
+_OUTCOME_LABELS: dict[str, str] = {
+    "installs": "安装",
+    "conversions": "转化",
+    "registrations": "注册",
+    "payments": "付费",
+    "purchases": "购买",
+}
+
+_CHANGE_LABELS: dict[str, str] = {
+    "budget": "预算",
+    "bid": "出价",
+    "creative": "素材",
+    "campaign_restart": "campaign 重启",
+    "campaign": "campaign",
+    "audience": "受众",
+}
+
 
 def _label(signal_or_hypothesis: str) -> str:
     return SIGNAL_LABELS.get(
@@ -145,6 +164,31 @@ def _parallel_label(issue: object) -> str:
     if isinstance(platform, str) and platform and platform != "cross_platform":
         return f"{platform} 侧的{label}"
     return label
+
+
+def _window_wait_sentence(result: DecisionIntelligenceResult) -> str | None:
+    """v3.6.5 §20/62/65: the wait answer cites the STATE-DERIVED window —
+    "上次预算调整后目前只新增了 2 个付费，这个窗口还不够成熟" — instead of
+    an opaque "窗口不成熟". Returns None when no derived window exists
+    (the generic wait wording applies)."""
+    window = result.decision_window
+    if window is None:
+        return None
+    change_label = _CHANGE_LABELS.get(str(window.change_type or ""), "调整")
+    if window.status == "not_comparable":
+        outcome = _OUTCOME_LABELS.get(str(window.outcome_metric or ""), "转化")
+        return (
+            f"先别动。当前{outcome}计数和上次{change_label}调整前的数据不可直接比较，"
+            "我不能可靠判断这次调整后到底新增了多少有效转化。"
+        )
+    if window.status == "derived" and isinstance(window.window_outcomes, float):
+        outcome = _OUTCOME_LABELS.get(str(window.outcome_metric or ""), "转化")
+        count = int(window.window_outcomes)
+        return (
+            f"先别动。上次{change_label}调整后目前只新增了 {count} 个{outcome}，"
+            "这个窗口还不够成熟——先继续跑，等调整后的新样本再多一些再判断。"
+        )
+    return None
 
 
 def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
@@ -174,13 +218,17 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
         # evidence; name the next review trigger. This is MORE specific
         # than the generic eligibility reasons, so it comes first.
         if result.action_readiness == "wait" and result.wait_reason:
-            trigger = _REVIEW_TRIGGER_LABELS.get(
-                result.next_review_trigger or "", "积累更多证据"
-            )
-            lines.append(
-                f"先别动。上次调整后的新样本还不够，暂时不能确认当前表现是新稳定水平"
-                f"——等{trigger}或进入下一个稳定窗口再判断。"
-            )
+            window_sentence = _window_wait_sentence(result)
+            if window_sentence is not None:
+                lines.append(window_sentence)
+            else:
+                trigger = _REVIEW_TRIGGER_LABELS.get(
+                    result.next_review_trigger or "", "积累更多证据"
+                )
+                lines.append(
+                    f"先别动。上次调整后的新样本还不够，暂时不能确认当前表现是新稳定水平"
+                    f"——等{trigger}或进入下一个稳定窗口再判断。"
+                )
         elif result.action_eligibility == "not_eligible" and (
             result.recommended_action in ("hold", "wait")
         ):
@@ -334,13 +382,17 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
             # v3.6.4 §M/N: wait must say what it is waiting for — the
             # previous material change has not accumulated enough NEW
             # evidence; name the next review trigger.
-            trigger = _REVIEW_TRIGGER_LABELS.get(
-                result.next_review_trigger or "", "积累更多证据"
-            )
-            lines.append(
-                f"先别动。上次调整后的新样本还不够，暂时不能确认当前表现是新稳定水平"
-                f"——等{trigger}或进入下一个稳定窗口再判断。"
-            )
+            window_sentence = _window_wait_sentence(result)
+            if window_sentence is not None:
+                lines.append(window_sentence)
+            else:
+                trigger = _REVIEW_TRIGGER_LABELS.get(
+                    result.next_review_trigger or "", "积累更多证据"
+                )
+                lines.append(
+                    f"先别动。上次调整后的新样本还不够，暂时不能确认当前表现是新稳定水平"
+                    f"——等{trigger}或进入下一个稳定窗口再判断。"
+                )
     elif (
         result.convergence_status == "investigate"
         and result.safety_block == "measurement_invalid"

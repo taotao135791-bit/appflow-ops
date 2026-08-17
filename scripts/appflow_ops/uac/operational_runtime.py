@@ -184,26 +184,6 @@ class OperationalResult:
     decision_id: str | None = None
 
 
-def _latest_change_effective_at(
-    change_context: Mapping[str, object] | None,
-) -> str | None:
-    """The latest confirmed material Change time from the evidence
-    change context (v3.6.4): keys are ``last_<type>_change_effective_at``
-    (e.g. last_budget_change_effective_at) plus the generic
-    ``change_effective_at`` — never assume a bare ``last_change_*`` key.
-    """
-    if not change_context:
-        return None
-    candidates = [
-        value
-        for key, value in change_context.items()
-        if key == "change_effective_at"
-        or (key.startswith("last_") and key.endswith("_change_effective_at"))
-    ]
-    timestamps = [str(value) for value in candidates if isinstance(value, str)]
-    return max(timestamps) if timestamps else None
-
-
 def _platform_bounded_state(
     session: StateSession, platforms: tuple[str, ...] | None
 ) -> dict[str, Any]:
@@ -625,37 +605,123 @@ class PlatformOperationalRun:
         ):
             action_context.update(per_platform[selected.platform])
             platform_signals = evidence.signals_by_platform.get(selected.platform, {})
-            for key in ("recent_budget_change", "recent_bid_change"):
+            # v3.6.5: creative timing signals are STATE-DERIVED (the
+            # evidence layer derives them from confirmed Changes) and
+            # enter the action context here — callers never need to
+            # hand-write recent_creative_change / recent_campaign_restart.
+            for key in (
+                "recent_budget_change",
+                "recent_bid_change",
+                "recent_creative_change",
+                "recent_campaign_restart",
+            ):
                 if platform_signals.get(key):
                     action_context[key] = True
         else:
             for platform_facts in per_platform.values():
                 action_context.update(platform_facts)
-            for key in ("recent_budget_change", "recent_bid_change"):
+            for key in (
+                "recent_budget_change",
+                "recent_bid_change",
+                "recent_creative_change",
+                "recent_campaign_restart",
+            ):
                 if evidence.signals.get(key):
                     action_context[key] = True
+        # v3.6.5: STATE-NATIVE decision windows — the runtime derives the
+        # post-change outcome delta from persisted observations and
+        # confirmed changes (per platform): latest relevant Change →
+        # comparable pre-change baseline → current counter → KPI-aligned
+        # delta. Timing provenance follows the SELECTED evaluation: a
+        # platform-bound top uses THAT platform's change, timestamp and
+        # KPI counter; another platform's recent change never delays it.
+        # Callers no longer supply window_outcomes (derived state wins;
+        # a conflicting caller value is recorded, never silently used).
+        from appflow_ops.decision_intelligence.calibration import (
+            evaluate_action_readiness,
+        )
+        from appflow_ops.decision_intelligence.windows import (
+            DecisionWindow,
+            derive_window_outcomes,
+        )
+
+        decision_windows: dict[str, DecisionWindow] = {}
+        for platform in observed_platforms:
+            bucket = by_platform.get(platform) or {}
+            decision_windows[platform] = derive_window_outcomes(
+                facts=per_platform.get(platform) or {},
+                changes=bucket.get("changes") or (),
+                observations=bucket.get("observations") or (),
+                platform=platform,
+                current_observed_at=current_observed_at.get(platform),
+                current_event_ids=current_event_ids,
+            )
+
+        def _window_context_for(
+            window: DecisionWindow | None,
+        ) -> dict[str, object] | None:
+            if window is None or not window.change_effective_at:
+                return None
+            return {
+                "last_change_effective_at": window.change_effective_at,
+                "current_observed_at": window.current_observed_at,
+                "window_outcomes": window.window_outcomes,
+                "window_status": window.status,
+                "window_platform": window.platform,
+            }
+
+        selected_platform = (
+            selected.platform
+            if selected is not None
+            and selected.platform
+            and selected.platform != "cross_platform"
+            else None
+        )
+        decision_window: DecisionWindow | None = None
+        window_context: dict[str, object] | None = None
+        if selected_platform is not None:
+            decision_window = decision_windows.get(selected_platform)
+            window_context = _window_context_for(decision_window)
+        else:
+            # Shared/run top (v3.6.5 §29-31): conservative — EVERY
+            # relevant platform's window must be ready; any unsettled
+            # platform delays the shared action. Never borrow one
+            # platform's ready window for a shared conclusion.
+            for platform in observed_platforms:
+                window = decision_windows.get(platform)
+                context = _window_context_for(window)
+                if context is None:
+                    continue
+                readiness, _, _ = evaluate_action_readiness(
+                    per_platform.get(platform) or {}, context
+                )
+                if readiness != "ready":
+                    decision_window = window
+                    window_context = context
+                    break
+                if decision_window is None:
+                    decision_window = window
+                    window_context = context
+        if (
+            decision_window is not None
+            and decision_window.status == "derived"
+            and selected_platform is not None
+        ):
+            provided = (per_platform.get(selected_platform) or {}).get(
+                "window_outcomes"
+            )
+            derived = decision_window.window_outcomes
+            if provided is not None and provided != derived:
+                # v3.6.5 §46: state-derived value has priority; the
+                # conflicting caller value is recorded for audit, never
+                # silently used.
+                if window_context is not None:
+                    window_context["provided_window_outcomes_conflict"] = provided
         convergence = converge(
             ranked,
             safety_context=safety_context,
             action_context=action_context or None,
-            # v3.6.4: the decision window — last confirmed material
-            # Change and the current observation time — gates action
-            # READINESS (eligibility != readiness): a second material
-            # action needs enough NEW evidence since the change.
-            window_context=(
-                {
-                    "last_change_effective_at": _latest_change_effective_at(
-                        evidence.change_context
-                    ),
-                    "current_observed_at": (
-                        next(iter(current_observed_at.values()), None)
-                        if current_observed_at
-                        else None
-                    ),
-                }
-                if evidence.change_context
-                else None
-            ),
+            window_context=window_context,
         )
         from appflow_ops.decision_intelligence.calibration import (
             resolve_primary_kpi,
@@ -679,6 +745,7 @@ class PlatformOperationalRun:
             ),
             evidence=evidence,
             primary_kpi=primary_kpi,
+            decision_window=decision_window,
         )
 
     def record_decision_from_intelligence(self) -> str | None:

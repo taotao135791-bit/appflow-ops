@@ -499,6 +499,8 @@ def test_now_what_early_followup(workspace) -> None:
             "target_pay_cpa": 100.0,
             "pay_cpa": 70.0,
             "payments": 150,
+            "entity_level": "account",
+            "aggregate_scope": "account",
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },
@@ -529,7 +531,8 @@ def test_now_what_early_followup(workspace) -> None:
             "target_pay_cpa": 100.0,
             "pay_cpa": 78.0,
             "payments": 152,
-            "window_outcomes": 2,
+            "entity_level": "account",
+            "aggregate_scope": "account",
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },
@@ -537,6 +540,11 @@ def test_now_what_early_followup(workspace) -> None:
         observed_at="2026-08-13T12:00:00Z",
     )
     follow = run2.evaluate_decision_intelligence()
+    # v3.6.5: window_outcomes is DERIVED from state (150 → 152 = 2 new
+    # payments since the confirmed change) — never hand-written.
+    assert follow.decision_window is not None
+    assert follow.decision_window.status == "derived"
+    assert follow.decision_window.window_outcomes == 2.0
     assert follow.recommended_action in ("hold", "wait")
     assert follow.wait_reason == "recent_change_unsettled"
     assert follow.next_review_trigger == "more_pay_outcomes"
@@ -556,6 +564,8 @@ def test_now_what_mature_followup(workspace) -> None:
             "target_pay_cpa": 100.0,
             "pay_cpa": 70.0,
             "payments": 150,
+            "entity_level": "account",
+            "aggregate_scope": "account",
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },
@@ -582,7 +592,8 @@ def test_now_what_mature_followup(workspace) -> None:
             "target_pay_cpa": 100.0,
             "pay_cpa": 72.0,
             "payments": 220,
-            "window_outcomes": 45,
+            "entity_level": "account",
+            "aggregate_scope": "account",
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },
@@ -590,6 +601,11 @@ def test_now_what_mature_followup(workspace) -> None:
         observed_at="2026-08-14T10:30:00Z",
     )
     result = run2.evaluate_decision_intelligence()
+    # v3.6.5: derived from the change-window baseline (150), not 220 -
+    # the previous follow-up count (152).
+    assert result.decision_window is not None
+    assert result.decision_window.status == "derived"
+    assert result.decision_window.window_outcomes == 70.0
     assert result.recommended_action == "increase"
     assert result.action_readiness == "ready"
     assert result.action_magnitude == "small"
@@ -609,6 +625,8 @@ def test_now_what_bad_mature_followup(workspace) -> None:
             "target_pay_cpa": 100.0,
             "pay_cpa": 70.0,
             "payments": 150,
+            "entity_level": "account",
+            "aggregate_scope": "account",
             "measurement_state": "stable",
             "maturity_state": "sufficient",
         },
@@ -635,7 +653,8 @@ def test_now_what_bad_mature_followup(workspace) -> None:
             "target_pay_cpa": 100.0,
             "pay_cpa": 135.0,
             "payments": 260,
-            "window_outcomes": 80,
+            "entity_level": "account",
+            "aggregate_scope": "account",
             "pay_rate_change_pct": -0.35,
             "registrations": 1200,
             "measurement_state": "stable",

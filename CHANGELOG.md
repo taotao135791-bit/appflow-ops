@@ -2,6 +2,49 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.6.5 — 2026-08-17
+
+State-Native Decision Windows: decision timing becomes a native
+consequence of persisted state, not caller-supplied arithmetic.
+
+### Added
+
+- state-native post-change decision window derivation
+  (`derive_window_outcomes` / `resolve_window_baseline` /
+  `resolve_relevant_change` / `counter_is_comparable`): the runtime
+  reconstructs the KPI-aligned outcome delta between a comparable
+  pre-change baseline and the current observation — callers no longer
+  pre-compute `window_outcomes`.
+- KPI-aligned window outcome deltas (Pay CPA → payments, CPI → installs —
+  never a borrowed metric).
+- platform-scoped timing provenance: a platform-bound top uses that
+  platform's own latest change, current timestamp, and KPI counter; a
+  light `DecisionWindow` audit record is exposed on the result.
+- counter comparability safeguards: entity mismatch → unknown; a decreased
+  counter → `not_comparable` (counter reset), never a negative delta;
+  missing baseline / first post-change reading → unknown.
+- state-derived creative change readiness: a confirmed creative Change
+  enters the next run's context automatically; low post-change
+  impressions hold without caller booleans.
+- post-change descale readiness: descale uses the SAME readiness gate as
+  scale; lifetime volume never substitutes for the post-change window.
+
+### Fixed
+
+- timing no longer depends on callers manually supplying
+  `window_outcomes`; the state-derived value has priority and a
+  conflicting caller value is recorded (`provided_window_outcomes_conflict`),
+  never silently used.
+- Meta changes can no longer delay Google platform-bound timing decisions.
+- timing no longer uses arbitrary cross-platform observation timestamps
+  (`next(iter(...))` is gone for the selected platform).
+- lifetime outcome volume can no longer substitute for post-change descale
+  evidence (reverse-action ping-pong protected).
+- creative timing no longer requires caller-supplied
+  `recent_creative_change`.
+- cumulative counter resets no longer produce invalid negative window
+  outcomes.
+
 ## 3.6.4 — 2026-08-14
 
 ### Added

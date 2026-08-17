@@ -24,6 +24,7 @@ from .ranking import (
     ParallelIssue,
     RankedHypothesis,
 )
+from .windows import DecisionWindow
 
 CONVERGENCE_STATUSES = ("converged", "investigate", "wait", "insufficient_evidence")
 
@@ -96,6 +97,10 @@ class DecisionIntelligenceResult:
     # v3.5.2: evidence provenance (per-platform signals, shared signals,
     # historical comparisons) — audit support, not default output.
     evidence: EvidenceResult | None = None
+    # v3.6.5: the STATE-DERIVED decision window behind action readiness —
+    # latest relevant confirmed Change, comparable pre-change baseline,
+    # KPI-aligned outcome delta (or the reason it could not be derived).
+    decision_window: DecisionWindow | None = None
 
 
 def convergence_status(convergence: Convergence) -> str:
@@ -120,6 +125,7 @@ def from_convergence(
     evidence: EvidenceResult | None = None,
     platform_warnings: dict[str, tuple[str, ...]] | None = None,
     primary_kpi: str | None = None,
+    decision_window: DecisionWindow | None = None,
 ) -> DecisionIntelligenceResult:
     """Build the public result from pipeline internals (single assembly
     point so the runtime entry and tests share identical semantics).
@@ -162,6 +168,7 @@ def from_convergence(
         primary_kpi=primary_kpi,
         platform_warnings=dict(platform_warnings or {}),
         evidence=evidence,
+        decision_window=decision_window,
     )
 
 

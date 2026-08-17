@@ -140,6 +140,9 @@ _BOOL_KEYS: dict[str, str] = {
     "new_creative_also_dropping": "new_creative_also_dropping",
     "multi_creative_impacted": "multi_creative_impacted",
     "only_one_creative_declines": "only_one_creative_declines",
+    # v3.6.5: creative-age evidence (a real optimizer fact) satisfies the
+    # fatigue hypothesis's required creative_age_data evidence.
+    "creative_age_data": "creative_age_data",
     "reach_growth_slowing": "reach_growth_slowing",
     "delivery_concentrated": "delivery_concentrated",
     "audience_expansion": "audience_expansion",

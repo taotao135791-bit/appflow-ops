@@ -1,4 +1,4 @@
-"""Ads Decision Intelligence facade (v3.6.2).
+"""Ads Decision Intelligence facade (v3.6.5).
 
 Public entry points — callers should never import internal modules:
 
@@ -12,6 +12,7 @@ Public entry points — callers should never import internal modules:
     scale_eligibility(facts) / thresholds_for(family) / sample_sufficient
     resolve_primary_kpi_context(facts) / resolve_kpi_outcome_volume(kpi)
     is_material_rival(top, candidate)
+    derive_window_outcomes(...) → state-native decision window (v3.6.5)
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ from .calibration import (
     TIMING_CALIBRATION,
     evaluate_action_readiness,
     evaluate_descale_candidate,
+    kpi_outcome_key,
     normalize_goal_to_kpi,
     resolve_action_lever,
     resolve_action_magnitude,
@@ -90,6 +92,15 @@ from .summary import (
     SIGNAL_LABELS,
     summarize_decision_intelligence,
 )
+from .windows import (
+    MATERIAL_CHANGE_TYPES,
+    WINDOW_STATUSES,
+    DecisionWindow,
+    counter_is_comparable,
+    derive_window_outcomes,
+    resolve_relevant_change,
+    resolve_window_baseline,
+)
 
 __all__ = [
     "ACTION_MAGNITUDES",
@@ -99,6 +110,7 @@ __all__ = [
     "CROSS_PLATFORM_HYPOTHESES",
     "HYPOTHESIS_STATUSES",
     "KPI_SCALE_MINIMUMS",
+    "MATERIAL_CHANGE_TYPES",
     "META_HYPOTHESES",
     "METRIC_CALIBRATION",
     "OPERATIONAL_DOMAINS",
@@ -107,8 +119,10 @@ __all__ = [
     "SIGNAL_LABELS",
     "TIKTOK_HYPOTHESES",
     "TIMING_CALIBRATION",
+    "WINDOW_STATUSES",
     "Convergence",
     "DecisionIntelligenceResult",
+    "DecisionWindow",
     "EvidenceResult",
     "HypothesisEvaluation",
     "HypothesisSpec",
@@ -122,8 +136,10 @@ __all__ = [
     "comparable_identity",
     "converge",
     "convergence_status",
+    "counter_is_comparable",
     "decision_attribution",
     "derive_change_pcts",
+    "derive_window_outcomes",
     "detect_operational_domain",
     "evaluate_action_readiness",
     "evaluate_descale_candidate",
@@ -132,6 +148,7 @@ __all__ = [
     "hypothesis_by_id",
     "is_cross_platform_request",
     "is_material_rival",
+    "kpi_outcome_key",
     "normalize_goal_to_kpi",
     "observations_comparable",
     "operational_domain",
@@ -144,6 +161,8 @@ __all__ = [
     "resolve_kpi_outcome_volume",
     "resolve_primary_kpi",
     "resolve_primary_kpi_context",
+    "resolve_relevant_change",
+    "resolve_window_baseline",
     "sample_sufficient",
     "scale_eligibility",
     "shared_candidate_blocks_action",

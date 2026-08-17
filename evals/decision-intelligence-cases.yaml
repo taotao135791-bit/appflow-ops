@@ -3994,3 +3994,124 @@
   forbidden_actions:
   - increase
   - scale
+- id: di_window_counter_not_comparable
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      primary_kpi: pay_cpa
+      target_pay_cpa: 100.0
+      pay_cpa: 60.0
+      payments: 20
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    primary_kpi: pay_cpa
+    target_pay_cpa: 100.0
+    pay_cpa: 60.0
+    payments: 20
+    measurement_state: stable
+    maturity_state: sufficient
+  window_context:
+    last_change_effective_at: "2026-08-14T09:00:00Z"
+    current_observed_at: "2026-08-15T09:00:00Z"
+    window_status: not_comparable
+  acceptable_top:
+  - budget_constraint
+  expected_action_readiness: wait
+  expected_wait_reason: counter_not_comparable
+  acceptable_actions:
+  - hold
+  - wait
+  forbidden_actions:
+  - increase
+  - scale
+  - decrease
+- id: di_window_unknown_defers
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      primary_kpi: pay_cpa
+      target_pay_cpa: 100.0
+      pay_cpa: 60.0
+      payments: 150
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    primary_kpi: pay_cpa
+    target_pay_cpa: 100.0
+    pay_cpa: 60.0
+    payments: 150
+    measurement_state: stable
+    maturity_state: sufficient
+  window_context:
+    last_change_effective_at: "2026-08-14T09:00:00Z"
+    current_observed_at: "2026-08-15T09:00:00Z"
+    window_status: unknown
+  acceptable_top:
+  - budget_constraint
+  expected_action_readiness: wait
+  acceptable_actions:
+  - hold
+  - wait
+  forbidden_actions:
+  - increase
+  - scale
+- id: di_window_derived_overrides_caller
+  platform_scope:
+  - meta
+  domain: bid_budget
+  per_platform_metrics:
+    meta:
+      budget_utilization_high: true
+      spend_hit_cap: true
+      primary_kpi: pay_cpa
+      target_pay_cpa: 100.0
+      pay_cpa: 60.0
+      payments: 152
+      window_outcomes: 50
+      measurement_state: stable
+      maturity_state: sufficient
+  measurement: stable
+  maturity: sufficient
+  action_context:
+    budget_utilization_high: true
+    spend_hit_cap: true
+    primary_kpi: pay_cpa
+    target_pay_cpa: 100.0
+    pay_cpa: 60.0
+    payments: 152
+    window_outcomes: 50
+    measurement_state: stable
+    maturity_state: sufficient
+  window_context:
+    last_change_effective_at: "2026-08-14T09:00:00Z"
+    current_observed_at: "2026-08-14T11:00:00Z"
+    window_outcomes: 2.0
+    window_status: derived
+  acceptable_top:
+  - budget_constraint
+  expected_eligibility: eligible
+  expected_action_readiness: wait
+  expected_wait_reason: recent_change_unsettled
+  acceptable_actions:
+  - hold
+  - wait
+  forbidden_actions:
+  - increase
+  - scale

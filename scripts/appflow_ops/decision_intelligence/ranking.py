@@ -548,9 +548,28 @@ def converge(
             # endless wait (never right after a change, never on a tiny
             # sample, never without a negative trend in the evidence).
             if evaluate_descale_candidate(action_context, top.supporting):
-                action = "decrease"
-                eligibility = "eligible"
-                action_readiness = "ready"
+                # v3.6.5 §32-38/§J: lifetime maturity does NOT prove the
+                # post-change window is mature — a reverse action
+                # (decrease after an increase, or the other way) needs
+                # the SAME readiness gate as scale, consuming the
+                # state-derived decision window. One readiness system,
+                # never a parallel descale variant.
+                (
+                    descale_readiness,
+                    descale_wait_reason,
+                    descale_trigger,
+                ) = evaluate_action_readiness(action_context, window_context)
+                if descale_readiness != "ready":
+                    # Unsettled window: hold even with huge lifetime
+                    # counts (no ping-pong right after a change).
+                    action = "wait"
+                    action_readiness = descale_readiness
+                    wait_reason = descale_wait_reason
+                    next_review_trigger = descale_trigger
+                else:
+                    action = "decrease"
+                    eligibility = "eligible"
+                    action_readiness = "ready"
         # v3.6.4 §H/J: magnitude (small/normal/none) and the ONE lever.
         material_context_ids = tuple(m.hypothesis_id for m in material_contexts)
         magnitude = resolve_action_magnitude(

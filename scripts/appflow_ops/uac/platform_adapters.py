@@ -168,6 +168,10 @@ _COMMON_METRIC_KEYS = (
     "new_creative_also_dropping",
     "multi_creative_impacted",
     "only_one_creative_declines",
+    # v3.6.5: creative-age evidence is a real optimizer fact ("I have
+    # creative age data") — common envelope so the fatigue hypothesis's
+    # required evidence can be satisfied from observations.
+    "creative_age_data",
     "reach_growth_slowing",
     "delivery_concentrated",
     "audience_expansion",

@@ -317,3 +317,19 @@ python3 scripts/sync_skill_layout.py --check
   decisions.** Fatigue with acceptable overall KPI → refresh; weak or
   confounded evidence → retest; a specific consistent loser with
   sufficient sample → pause; a new creative in its test window → hold.
+- **Never ask the caller to provide a derived post-change outcome count
+  when the runtime can reconstruct it from persisted state.** `window_outcomes`
+  is derived state, not primary observation input.
+- **Timing provenance follows the selected evaluation.** Do not use
+  another platform's latest change or observation timestamp for a
+  platform-bound action.
+- **Never subtract cumulative counters across entity changes or detected
+  counter resets.** A decreased counter is `not_comparable`, never a
+  negative outcome count.
+- **Lifetime maturity does not prove that the current post-change
+  decision window is mature.** Reverse actions need enough new evidence
+  after the latest material change.
+- **A reverse action must be justified by evidence accumulated after the
+  previous material change** (no budget/bid ping-pong).
+- **Confirmed creative changes must influence creative test readiness
+  through state, not caller-supplied booleans.**
