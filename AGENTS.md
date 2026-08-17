@@ -333,3 +333,14 @@ python3 scripts/sync_skill_layout.py --check
   previous material change** (no budget/bid ping-pong).
 - **Confirmed creative changes must influence creative test readiness
   through state, not caller-supplied booleans.**
+- **Never subtract two outcome values unless their counter semantics are
+  explicitly comparable** (both declared cumulative).
+- **A platform match is not enough for change attribution when entity
+  identity is available.**
+- **Do not let a change on Campaign A reset Campaign B's decision window.**
+- **Creative changes do not automatically reset budget scale/descale
+  windows.**
+- **Relevant change types depend on the action family being evaluated.**
+- **Compare parsed timezone-aware instants, not ISO strings.**
+- **Interval outcome values may inform diagnosis but must not be treated
+  as cumulative counters.**

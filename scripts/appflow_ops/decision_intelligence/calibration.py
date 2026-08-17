@@ -689,14 +689,26 @@ def evaluate_action_readiness(
     if not isinstance(change_at, str) or not isinstance(current_at, str):
         return "ready", None, None  # no pending change
     window_status = window.get("window_status")
+    window_reason = window.get("window_reason")
     if window_status == "not_comparable":
         # Cumulative counters cannot be subtracted across entity
         # changes or counter resets (v3.6.5 §12-14) — wait, never a
         # negative or guessed outcome count.
         return "wait", "counter_not_comparable", "more_evidence"
     if window_status == "unknown":
-        # Missing baseline / missing counter / unknown identity: the
-        # runtime could not reconstruct the post-change window.
+        # Missing baseline / missing counter / unknown identity / unknown
+        # count semantics (v3.6.6): the runtime could not reconstruct the
+        # post-change window. The reason names WHICH semantic is missing.
+        if window_reason == "unknown_count_semantics":
+            return "wait", "unknown_count_semantics", "more_evidence"
+        if window_reason == "interval":
+            # Interval counts are independent reporting periods, never
+            # subtractable (v3.6.6 §4).
+            return "wait", "interval_counts_not_subtractable", "more_evidence"
+        if window_reason == "legacy_change_scope_unknown":
+            return "wait", "legacy_change_scope_unknown", "more_evidence"
+        if window_reason == "invalid_timestamp":
+            return "wait", "invalid_timestamp", "more_evidence"
         return "wait", "recent_change_unsettled", "more_evidence"
     elapsed = _hours_between(change_at, current_at)
     if elapsed is None:

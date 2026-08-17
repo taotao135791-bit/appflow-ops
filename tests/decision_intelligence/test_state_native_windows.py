@@ -38,7 +38,13 @@ from appflow_ops.runtime import PlatformOperationalRun
 from appflow_ops.uac.run_lifecycle import StateAccess
 from appflow_ops.uac.workspace import initialize_workspace
 
-ACCOUNT = {"entity_level": "account", "aggregate_scope": "account"}
+ACCOUNT = {
+    "entity_level": "account",
+    "aggregate_scope": "account",
+    # v3.6.6: outcome counters declare their semantics — state-native
+    # deltas are only derived from explicit cumulative counters.
+    "count_mode": "cumulative",
+}
 
 
 def _change(
@@ -536,7 +542,7 @@ def test_timing_uses_selected_platform_change(workspace) -> None:
     # Google has NO pending change of its own: the window says so
     # explicitly (never a borrowed Meta change).
     assert result.decision_window is not None
-    assert result.decision_window.status == "no_pending_change"
+    assert result.decision_window.status == "no_relevant_change"
     assert result.decision_window.change_effective_at is None
     assert result.recommended_action == "increase"
     run2.finish()
@@ -819,5 +825,5 @@ def test_shared_timing_is_conservative() -> None:
 
 def test_decision_window_dataclass_defaults() -> None:
     window = DecisionWindow()
-    assert window.status == "no_pending_change"
+    assert window.status == "no_relevant_change"
     assert window.window_outcomes is None

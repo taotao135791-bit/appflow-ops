@@ -769,3 +769,74 @@ A confirmed creative Change enters the next run's context automatically:
 the runtime derives `recent_creative_change` from the persisted Change, so
 a new creative with low post-change impressions holds without any caller
 hand-writing `recent_creative_change=true`.
+
+## Window Semantics & Entity Attribution (v3.6.6)
+
+> Make every derived decision window semantically valid before
+> calibrating its duration. Correct window semantics beat better timing
+> thresholds.
+
+### Count Semantics
+
+> Outcome counts must declare whether they are cumulative, interval-based,
+> or unknown before the runtime derives post-change deltas.
+
+A number is not automatically a cumulative counter: `payments = 20` may be
+a lifetime total OR today's / last-24h value. `count_mode`
+(`cumulative | interval | unknown`, per-metric `<metric>_count_mode`
+overrides the generic `count_mode`) declares the semantic. Only explicit
+`cumulative` counters are subtractable; missing semantics are `unknown`
+(never assumed cumulative), and readiness waits rather than pretending.
+
+### Entity-Scoped Changes
+
+> A confirmed change belongs to an entity scope. A campaign-level change
+> must not reset another campaign's decision window merely because both
+> belong to the same platform.
+
+`record_confirmed_change()` accepts the Observation identity vocabulary
+(`entity_level` / `entity_key` / `aggregate_scope` / `breakdown_scope`).
+`resolve_relevant_change()` matches platform AND entity identity: an exact
+entity match wins, a different entity is never relevant, and a legacy
+entity-less change is only adopted by an account-level selection
+(campaign-level selections report `legacy_change_scope_unknown` rather
+than silently adopting it). Reverse-action protection is therefore
+entity-scoped: Campaign A's scale never holds Campaign B back.
+
+### Action-Specific Window Resets
+
+> Budget, bid, creative, audience, and restart changes do not have
+> identical effects on every action family.
+
+`RELEVANT_CHANGE_TYPES_BY_ACTION_FAMILY`: budget/bid/campaign_restart
+gate scale/descale; creative/campaign_restart gate the creative test
+window. A creative change is a confounder/context for budget scaling but
+does NOT automatically reset the scale/descale window. The window resolver
+takes the action family explicitly.
+
+### Interval Metrics
+
+> Interval metrics remain valid for diagnosis and trend analysis but are
+> not directly subtractable as cumulative post-change counters.
+
+Two independent daily readings (20 → 25) are never subtracted; the window
+is `unknown` (reason `interval`) and the action waits. Future versions may
+support interval aggregation across bounded windows, but v3.6.6 only
+derives post-change deltas from semantically comparable cumulative
+counters.
+
+### Timestamp Semantics
+
+> Decision-window ordering compares timezone-aware instants rather than
+> raw timestamp strings.
+
+`parse_event_time()` normalizes ISO-8601 to a timezone-aware UTC instant;
+window ordering and baseline selection use these instants, so mixed
+offsets (`10:00+08:00` vs `03:00Z`) compare correctly. Unparsable
+timestamps are `invalid_timestamp` (handled conservatively).
+
+### Multi-Entity Boundary
+
+The runtime currently evaluates one active current observation per
+platform context. Entity attribution prevents cross-entity contamination
+but does not yet imply full multi-entity portfolio orchestration.

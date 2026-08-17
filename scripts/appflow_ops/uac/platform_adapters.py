@@ -144,6 +144,17 @@ _COMMON_METRIC_KEYS = (
     "entity_key",
     "aggregate_scope",
     "breakdown_scope",
+    # v3.6.6: outcome count semantics — a number is not automatically a
+    # cumulative counter. ``count_mode`` (cumulative | interval | unknown)
+    # declares the shared semantic; per-metric ``<metric>_count_mode``
+    # overrides for observations whose counters have different periods.
+    # Missing semantics are treated as unknown, never assumed cumulative.
+    "count_mode",
+    "payments_count_mode",
+    "installs_count_mode",
+    "registrations_count_mode",
+    "purchases_count_mode",
+    "conversions_count_mode",
     # Decision Intelligence evidence bridge (v3.5.1): explicit trend
     # strings, numeric relative movement, and boolean operational facts
     # pass through observation projection so raw evidence can reach the

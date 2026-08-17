@@ -167,22 +167,45 @@ def _parallel_label(issue: object) -> str:
 
 
 def _window_wait_sentence(result: DecisionIntelligenceResult) -> str | None:
-    """v3.6.5 §20/62/65: the wait answer cites the STATE-DERIVED window —
-    "上次预算调整后目前只新增了 2 个付费，这个窗口还不够成熟" — instead of
-    an opaque "窗口不成熟". Returns None when no derived window exists
-    (the generic wait wording applies)."""
+    """v3.6.5 §20/62/65 + v3.6.6 PART P: the wait answer cites the
+    STATE-DERIVED window and WHY it cannot be used — never an opaque
+    "窗口不成熟". Returns None when no derived window exists (the
+    generic wait wording applies)."""
     window = result.decision_window
     if window is None:
         return None
     change_label = _CHANGE_LABELS.get(str(window.change_type or ""), "调整")
+    outcome = _OUTCOME_LABELS.get(str(window.outcome_metric or ""), "转化")
+    reason = window.reason
+    if reason == "interval":
+        # §52: two independent reporting intervals are not subtractable.
+        return (
+            f"这两次{outcome}数据是独立统计区间，不是累计计数，不能直接相减判断"
+            f"上次{change_label}调整后新增了多少{outcome}。先不做二次动作。"
+        )
+    if reason in ("unknown_count_semantics",):
+        return (
+            f"先别动。当前{outcome}计数的统计口径（累计还是区间）没有明确，我不能"
+            f"可靠判断上次{change_label}调整后到底新增了多少{outcome}。"
+        )
+    if reason == "legacy_change_scope_unknown":
+        # §53: the last change has no entity scope; never assume it is the
+        # selected entity's window.
+        return (
+            f"最近那次{change_label}没有明确的实体归属，我不会把它当成当前对象的"
+            "调整窗口，先不下结论。"
+        )
     if window.status == "not_comparable":
-        outcome = _OUTCOME_LABELS.get(str(window.outcome_metric or ""), "转化")
+        if reason == "count_mode_mismatch":
+            return (
+                f"先别动。调整前后的{outcome}统计口径不一致（一个累计、一个区间），"
+                "不能直接相减。"
+            )
         return (
             f"先别动。当前{outcome}计数和上次{change_label}调整前的数据不可直接比较，"
             "我不能可靠判断这次调整后到底新增了多少有效转化。"
         )
     if window.status == "derived" and isinstance(window.window_outcomes, float):
-        outcome = _OUTCOME_LABELS.get(str(window.outcome_metric or ""), "转化")
         count = int(window.window_outcomes)
         return (
             f"先别动。上次{change_label}调整后目前只新增了 {count} 个{outcome}，"
@@ -350,11 +373,31 @@ def summarize_decision_intelligence(result: DecisionIntelligenceResult) -> str:
                     "无法判断到底哪个动作起作用。"
                 )
         elif result.recommended_action == "decrease":
-            # v3.6.4 §I: real descale — mature persistent deterioration.
-            lines.append(
-                "现在可以收一点。数据已经成熟，成本持续明显高于目标，而且不是刚调整"
-                "造成的短期波动。建议先小幅降低，不要一次砍太多。"
-            )
+            # v3.6.4 §I + v3.6.6 PART P: real descale — mature persistent
+            # deterioration, justified by the STATE-DERIVED post-change
+            # window ("上次调整前累计 200 个 Pay，现在 245 → 新增 45，窗口已成熟").
+            window = result.decision_window
+            if (
+                window is not None
+                and window.status == "derived"
+                and isinstance(window.window_outcomes, float)
+                and isinstance(window.baseline_outcomes, float)
+                and isinstance(window.current_outcomes, float)
+            ):
+                outcome = _OUTCOME_LABELS.get(str(window.outcome_metric or ""), "转化")
+                change_label = _CHANGE_LABELS.get(str(window.change_type or ""), "调整")
+                lines.append(
+                    f"现在可以考虑小幅收一点。上次{change_label}调整前累计 "
+                    f"{int(window.baseline_outcomes)} 个{outcome}，现在是 "
+                    f"{int(window.current_outcomes)} 个，也就是调整后新增了 "
+                    f"{int(window.window_outcomes)} 个{outcome}，这个窗口已经足够成熟；"
+                    "成本仍持续明显高于目标，不太像短期波动。建议先小幅降低，不要一次砍太多。"
+                )
+            else:
+                lines.append(
+                    "现在可以收一点。数据已经成熟，成本持续明显高于目标，而且不是刚调整"
+                    "造成的短期波动。建议先小幅降低，不要一次砍太多。"
+                )
         elif result.recommended_action in ("refresh", "retest", "pause", "hold") and (
             result.action_lever == "creative"
         ):

@@ -2,6 +2,45 @@
 
 All notable changes to AppFlow Ops are documented here.
 
+## 3.6.6 — 2026-08-17
+
+Window Semantics & Entity Attribution: every derived decision window is
+made semantically valid before its duration is calibrated.
+
+### Added
+
+- explicit cumulative/interval/unknown outcome count semantics
+  (`count_mode`, per-metric `<metric>_count_mode`); only declared
+  cumulative counters are subtractable.
+- entity attribution for confirmed changes (`entity_level` / `entity_key`
+  / `aggregate_scope` / `breakdown_scope` on `record_confirmed_change`),
+  reusing the Observation identity vocabulary.
+- action-family-specific decision-window reset rules
+  (`RELEVANT_CHANGE_TYPES_BY_ACTION_FAMILY`); the window resolver takes
+  the action family explicitly.
+- timezone-aware decision-window ordering (`parse_event_time` compares
+  parsed instants, never ISO strings).
+- full runtime-native mature descale coverage (State → Runtime →
+  `decrease`, no hand-written window outcomes).
+- window `reason` codes (`unknown_count_semantics` / `count_mode_mismatch`
+  / `counter_reset` / `entity_mismatch` / `missing_baseline` /
+  `invalid_timestamp` / `legacy_change_scope_unknown`).
+
+### Fixed
+
+- interval outcome values are no longer incorrectly subtracted as
+  cumulative counters.
+- campaign-level changes can no longer reset another campaign's window.
+- creative changes no longer automatically reset scale/descale timing.
+- reverse-action protection no longer crosses entity boundaries.
+- mixed timezone offsets no longer rely on lexical timestamp ordering.
+- mature descale is now verified through the canonical runtime path.
+
+### Changed
+
+- the "no relevant confirmed change" window status is now named
+  `no_relevant_change` (was `no_pending_change`).
+
 ## 3.6.5 — 2026-08-17
 
 State-Native Decision Windows: decision timing becomes a native

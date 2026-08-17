@@ -398,12 +398,18 @@ class StateStore:
         effective_at: str | None = None,
         platform: str | None = None,
         run_id: str | None = None,
+        entity_level: str | None = None,
+        entity_key: str | None = None,
+        aggregate_scope: str | None = None,
+        breakdown_scope: str | None = None,
     ) -> str:
         """Record a confirmed account/operation change. Unconfirmed user
         statements belong in an observation with evidence_status=reported,
         not here. ``effective_at`` is optional and only for changes with a
         real execution-time difference. ``platform`` attributes the change
-        to its platform."""
+        to its platform; the optional entity identity fields (v3.6.6)
+        attribute it to a specific entity scope — a change belongs to an
+        entity, not only to a platform."""
 
         payload: dict[str, Any] = {
             "change_type": change_type,
@@ -415,6 +421,16 @@ class StateStore:
             payload["magnitude"] = magnitude
         if effective_at is not None:
             payload["effective_at"] = effective_at
+        # v3.6.6: entity attribution reuses the Observation identity
+        # vocabulary (no second entity model).
+        if entity_level is not None:
+            payload["entity_level"] = entity_level
+        if entity_key is not None:
+            payload["entity_key"] = entity_key
+        if aggregate_scope is not None:
+            payload["aggregate_scope"] = aggregate_scope
+        if breakdown_scope is not None:
+            payload["breakdown_scope"] = breakdown_scope
         return self._append(
             event_type="change",
             platform=platform,

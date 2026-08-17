@@ -646,6 +646,14 @@ class PlatformOperationalRun:
         )
 
         decision_windows: dict[str, DecisionWindow] = {}
+        # v3.6.6: relevant change types depend on the ACTION FAMILY being
+        # evaluated — a creative change resets the creative test window,
+        # never the budget scale/descale window.
+        window_family = (
+            "creative"
+            if (selected is not None and selected.hypothesis.domain == "creative")
+            else "scale"
+        )
         for platform in observed_platforms:
             bucket = by_platform.get(platform) or {}
             decision_windows[platform] = derive_window_outcomes(
@@ -653,6 +661,7 @@ class PlatformOperationalRun:
                 changes=bucket.get("changes") or (),
                 observations=bucket.get("observations") or (),
                 platform=platform,
+                action_family=window_family,
                 current_observed_at=current_observed_at.get(platform),
                 current_event_ids=current_event_ids,
             )
@@ -667,6 +676,7 @@ class PlatformOperationalRun:
                 "current_observed_at": window.current_observed_at,
                 "window_outcomes": window.window_outcomes,
                 "window_status": window.status,
+                "window_reason": window.reason,
                 "window_platform": window.platform,
             }
 
@@ -950,6 +960,10 @@ class PlatformOperationalRun:
         effective_at: str | None = None,
         target_platform: str | None = None,
         refs: tuple[str, ...] = (),
+        entity_level: str | None = None,
+        entity_key: str | None = None,
+        aggregate_scope: str | None = None,
+        breakdown_scope: str | None = None,
     ) -> str | None:
         """Record a confirmed change ONLY after execution is confirmed.
 
@@ -957,6 +971,10 @@ class PlatformOperationalRun:
         a cross-platform run REQUIRES an explicit ``target_platform`` that
         belongs to the run's scope (a recommendation never becomes a
         Change, and a Change is never mislabeled to another platform).
+        Entity attribution (v3.6.6): a change belongs to an entity, not
+        only a platform — the optional identity fields reuse the
+        Observation identity vocabulary so a Campaign A budget change
+        can never reset Campaign B's decision window.
         """
         self._require_started()
         platform: str | None
@@ -983,6 +1001,10 @@ class PlatformOperationalRun:
             effective_at=effective_at,
             refs=refs,
             platform=platform,
+            entity_level=entity_level,
+            entity_key=entity_key,
+            aggregate_scope=aggregate_scope,
+            breakdown_scope=breakdown_scope,
         )
 
     def record_outcome(

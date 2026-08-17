@@ -123,9 +123,15 @@ def _change_digest(
     evidence_status: str,
     effective_at: str | None,
     platform: str | None,
+    entity_level: str | None = None,
+    entity_key: str | None = None,
+    aggregate_scope: str | None = None,
+    breakdown_scope: str | None = None,
 ) -> str:
     """Business identity of one change. ``effective_at`` and ``platform``
     participate: budget +20% on Meta vs TikTok are different changes.
+    Entity identity fields participate too (v3.6.6): a budget change on
+    Campaign A is a different change from one on Campaign B.
     """
 
     return _stable_digest(
@@ -139,6 +145,10 @@ def _change_digest(
             "origin": origin,
             "evidence_status": evidence_status,
             "effective_at": effective_at,
+            "entity_level": entity_level,
+            "entity_key": entity_key,
+            "aggregate_scope": aggregate_scope,
+            "breakdown_scope": breakdown_scope,
         }
     )
 
@@ -314,10 +324,15 @@ class StateSession:
         source_digest: str | None = None,
         refs: tuple[str, ...] = (),
         platform: str | None = None,
+        entity_level: str | None = None,
+        entity_key: str | None = None,
+        aggregate_scope: str | None = None,
+        breakdown_scope: str | None = None,
     ) -> str | None:
         """Record a change ONLY after execution is confirmed (operator
         confirmation or deterministic evidence). A recommendation alone
-        must never reach this method."""
+        must never reach this method. Optional entity identity fields
+        (v3.6.6) attribute the change to a specific entity scope."""
 
         digest = source_digest or _change_digest(
             change_type=change_type,
@@ -328,6 +343,10 @@ class StateSession:
             evidence_status=evidence_status,
             effective_at=effective_at,
             platform=platform,
+            entity_level=entity_level,
+            entity_key=entity_key,
+            aggregate_scope=aggregate_scope,
+            breakdown_scope=breakdown_scope,
         )
         dedupe_key = ("change", digest)
         if dedupe_key in self._written:
@@ -343,6 +362,10 @@ class StateSession:
             refs=refs,
             platform=platform,
             run_id=self.run_id,
+            entity_level=entity_level,
+            entity_key=entity_key,
+            aggregate_scope=aggregate_scope,
+            breakdown_scope=breakdown_scope,
         )
         self._written.add(dedupe_key)
         return event_id

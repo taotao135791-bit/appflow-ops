@@ -219,7 +219,7 @@ The runtime decides.
 ### 三步开始
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.5/install.sh | bash -s -- --ref=v3.6.5
+curl -fsSL https://raw.githubusercontent.com/taotao135791-bit/appflow-ops/v3.6.6/install.sh | bash -s -- --ref=v3.6.6
 ```
 
 然后在你的 AI 编程助手里直接说自然语言：
@@ -312,6 +312,8 @@ v3.6.3 起 **Decision Attribution & Goal Semantics**：判断正确还必须要�
 v3.6.4 起 **Optimization Timing & Action Sequencing**：AppFlow 开始知道"即使我知道该做什么，也不代表现在就是做它的时机"——**eligibility ≠ readiness**（上次 confirmed Change 之后必须积累足够的新证据：elapsed time + KPI-matched `window_outcomes`，lifetime totals 不能证明 post-change readiness；刚 +20% 预算 2 小时后的 CPA 变差 → wait 不是 decrease，不会 ping-pong）；**decision window 从最近一次 material Change 开始**（无 Change 则 previous→current）；**一次只动一个 material lever**（budget_constraint → 先动预算，bid_constraint → 先动出价，双 supported → investigate 不同时改）；**scale 有 magnitude**（small/normal，深层 KPI 与 market context 只 small，numeric Safety 仍是最终上限）；**descale 只在成熟持续恶化时 small decrease**（stable + mature + persistent negative trend + no recent change）；**creative fatigue 区分 refresh/retest/pause/hold**（整体 KPI 可接受 → 补新素材不动预算；证据弱或受近期调整影响 → 重测；明确 loser + 样本足 → 暂停；新素材测试窗口内 → hold）；**wait 必须说等什么**（`wait_reason` + `next_review_trigger`："等积累更多付费或进入下一个稳定窗口"）；goal 三源共同校验（optimization_goal=install + conversion_event=pay → ambiguous 不猜；purchase event + ROAS target → 不静默选 Purchase CPA）。
 
 v3.6.5 起 **Decision Window 成为 State 的原生结果**（State-Native Decision Windows）：AppFlow 不再要求调用方手工算"上次调整后新增了多少转化"——Runtime 从持久化的 Observation 与 confirmed Change 自己重建：`selected platform/entity → 最近一次相关 confirmed Change → 可比的前置 baseline Observation → 当前 Observation → KPI-aligned 的 post-change outcome delta`。**counter 可比性**是硬约束——entity/scope 变化（Campaign A baseline 对 Campaign B current）→ unknown；同 scope 下 counter 反而变小（150→20）→ `not_comparable`（counter reset），绝不产生 -130 这种负 delta；missing baseline / Change 后才第一次见到 counter / identity 未知 → unknown，两者都让 readiness 进入 wait 并说明原因。**timing provenance 跟随 selected evaluation**——platform-bound top 用该平台自己的最新 Change、自己的当前时间戳（不再 `next(iter(...))`）、自己的 KPI counter；Meta 的 Change 绝不再拖延 Google 的判断；shared/run top 保持保守（所有相关平台窗口都 ready 才 ready，任一未 settle 就拖延整体，绝不拿单平台的 ready 窗口冒充 shared 结论）。**descale 复用同一 readiness 门**——lifetime 有 500 个 Pay 也不能证明上次 Scale 后已经适合 Descale，反向动作必须看到 Change 后积累的新证据（no ping-pong）。**creative Change 通过 State 生效**——confirmed creative Change 自动进入下一 run 的 context，新素材低曝光自动 hold，无需调用方手填 `recent_creative_change=true`。state-derived 的 `window_outcomes` 优先于调用方提供的值（冲突时记录 `provided_window_outcomes_conflict`，绝不静默采用）。
+
+v3.6.6 起 **每个派生的 Decision Window 在语义与实体归属上真的成立**（Window Semantics & Entity Attribution）：**计数语义**——一个数字不自动是累计计数器，`payments=20` 可能是 lifetime 也可能是当日值；只有显式 `count_mode=cumulative` 才允许 `current−baseline`，interval（独立统计区间）绝不参与相减，缺失语义一律 unknown 再 wait（支持 per-metric `<metric>_count_mode`）。**Change 实体归属**——confirmed Change 复用 Observation 的 identity 词表（entity_level/entity_key/aggregate_scope），`resolve_relevant_change` 同时匹配平台与实体：Campaign A 的预算调整绝不重置 Campaign B 的窗口，反向动作保护也不跨实体；legacy 无实体 Change 只对 account 级兼容，campaign 级报 `legacy_change_scope_unknown` 而不静默认领。**action-family 专属 reset**——budget/bid/campaign_restart 门控 scale/descale，creative/campaign_restart 门控创意测试窗口；换素材本身不会把预算扩量窗口清零。**时间戳按真实 instant 比较**——`parse_event_time` 归一为时区感知 UTC，混合时区（10:00+08:00 vs 03:00Z）顺序正确，不再靠字符串字典序。**完整 Runtime-native mature descale**——State→Runtime→`decrease` 全程无手填 window_outcomes。完成本版后冻结 Window plumbing，进入 v3.7.0 Platform Timing Calibration。
 
 这个项目知道自己在构建什么：**推理范式已经定义，确定性基础已经就位，其余部分按此方向逐步实现。**
 
